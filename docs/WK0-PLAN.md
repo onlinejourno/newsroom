@@ -5,15 +5,17 @@ Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 buil
 ## Day-by-day
 
 ### Mon Jun 1 — Read + classify
-- [ ] Read `~/Desktop/eip-handover.zip → premortem.md` (25 KB)
-- [ ] Skim `~/projects/journalism agents/docs/`:
+- [x] Read `~/Desktop/eip-handover.zip → premortem.md` (267 lines, 18 failure modes)
+- [x] Skim `~/projects/journalism agents/docs/`:
   - [x] `founder_honest_assessment.md`
-  - [ ] `hindu_implementation_priority.md`
-  - [ ] `integrated_vision_complete.md`
-  - [ ] `onlinejournalism_platform_rethink.md`
-  - [ ] `newsroom_agentic_stack_toolkit.md`
-- [ ] Skim `~/Data Protection/discover-dashboard/CLAUDE.md` and `CONTEXT.md`
-- [ ] Capture notes in `.scratch/wk0-reading-notes.md`
+  - [x] `hindu_implementation_priority.md`
+  - [x] `integrated_vision_complete.md`
+  - [x] `onlinejournalism_platform_rethink.md`
+  - [x] `newsroom_agentic_stack_toolkit.md`
+- [x] Skim `~/Data Protection/discover-dashboard/CLAUDE.md` and `CONTEXT.md`
+- [x] Capture notes in `docs/notes/wk0-mon-reading.md`
+
+**Mon outcome:** five plan additions surfaced (cost simulator, portal-health module, doc-first discipline, adapter-contract ADR, module auto-deactivation). Six discover-dashboard ADRs to harvest. See `docs/notes/wk0-mon-reading.md`.
 
 ### Tue Jun 2 — Asset ledger
 - [ ] Walk each existing project; per file or dir, tag REUSE / REWRITE / REFERENCE / RETIRE
