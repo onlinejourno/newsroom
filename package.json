@@ -1,0 +1,24 @@
+{
+  "name": "onlinejourno-platform",
+  "private": true,
+  "version": "0.0.0",
+  "description": "OnlineJourno Platform — editorial intelligence for newsrooms.",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "author": "Subhash Rai",
+  "homepage": "https://onlinejourno.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onlinejourno/platform.git"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "echo 'Wk 1 — not yet wired'",
+    "build": "echo 'Wk 1 — not yet wired'",
+    "lint": "echo 'Wk 1 — not yet wired'",
+    "test": "echo 'Wk 1 — not yet wired'"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,23 @@
+[project]
+name = "onlinejourno-platform-py"
+version = "0.0.0"
+description = "OnlineJourno Platform — Python workers and shared libraries."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Subhash Rai" }]
+
+[tool.uv.workspace]
+members = [
+  "apps/worker",
+  "packages/scoring-py",
+  "packages/ingest-py",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = []
