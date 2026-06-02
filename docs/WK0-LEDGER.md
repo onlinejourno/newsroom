@@ -258,6 +258,16 @@ Empty directory. RETIRE.
 
 ---
 
+## 6b. `~/Data Protection/` top-level files
+
+Two files at the parent directory of `discover-dashboard`. Caught Tue Jun 2 (founder pointer).
+
+| Path | Tag | Notes |
+|------|-----|-------|
+| `Editorial Intelligence Dashboard Architecture.rtf` (130 KB, 494 lines) | REFERENCE | Canonical scoring methodology — Discover, News, Search, SEO+E-E-A-T, SQEG (YMYL / Page Quality / Needs Met), recirculation. Same content as `discover-dashboard/Discover_Dashboard_Scoring_Mechanisms.docx`. Use as authoritative reference for `m-discover-seo` module port. Cites Google's public guidelines + SEJ periodic table. |
+| `data_broker_tracker.md` (7 KB) | IGNORE | Personal PII opt-out tracker (Whitepages, Spokeo, BeenVerified etc.). Not project-related. |
+| `.claude/launch.json` + `settings.local.json` | IGNORE | Claude Code session config; not project content. |
+
 ## 7. `~/Desktop/EIP-Tour/`
 
 | Path | Tag | Notes |
