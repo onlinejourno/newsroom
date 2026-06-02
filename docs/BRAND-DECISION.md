@@ -100,11 +100,60 @@ Full token set locked in `docs/adr/0013-design-tokens.md`. Reference CSS at `doc
 
 ## License plan
 
-- Spine and apps: proprietary, all rights reserved, single-owner copyright (`LICENSE.md`).
-- Modules under `packages/modules/`: case-by-case. Default proprietary; selected modules may be open-sourced (MIT) in Year 2 once stable, as community positioning.
-- Refuse GPL deps in spine; allow in isolated modules only if the module's license matches.
+Locked Wed Jun 3: **Apache License 2.0** for the platform code from Day 1. Sibling MIT licensing for public data layers when those reach community-ready state.
+
+| Layer | License | Why |
+|-------|---------|-----|
+| `apps/web`, `packages/spine`, `packages/modules/*` | **Apache 2.0** | Permissive, journalist-trusted, contributor-friendly, neutral on commercial reuse; matches the moral / transparency dimension of editorial work. |
+| `packages/spine/catalogues/*`, `packages/spine/templates/*`, source registry data | **MIT** (when published Y2+) | Public data; lowest friction for newsroom-community contributions. |
+| Plugin SDK (Y2+) | **MIT** | Marketplace expansion. |
+| Confidential customer data (briefs, editorial DNA, journalist preferences, rejected items) | **Customer-owned** | Never uploaded, never aggregated, never shared. Non-negotiable. |
+
+Source repository becomes public when schema and ADRs are stable enough not to be embarrassing — earliest Wk 10–12, possibly later. Until then, the repo lives on private GitHub but is unambiguously Apache 2.0 from the first commit (see `LICENSE.md`).
+
+Refuse GPL / AGPL / LGPL dependencies in the core. Apache 2.0 is compatible only with permissive upstream licenses (MIT, BSD, Apache, ISC). GPL dependencies, if ever needed for a niche module, live in their own module with their own licence.
+
+## Business model
+
+Locked Wed Jun 3: **indie open-source sustainability**, not venture growth.
+
+- Founder: solo, bootstrap, ~₹2,000/month sustainable burn until first revenue.
+- First paying customer target: Wk 12–16 (late Aug / Sept 2026).
+- Year-1 ARR target: ₹15–30 lakh (1–3 paying customers + services).
+- Year-3 ARR ceiling: ₹50 lakh – 1.5 cr realistic.
+- Not VC-investable as scoped; venture path explicitly declined.
+
+### Revenue lanes (priority order)
+
+| Lane | Description | Y1 |
+|------|-------------|----|
+| Managed SaaS hosting | `app.onlinejourno.com` for newsrooms without ops capacity; tier-priced | Primary |
+| Setup + onboarding | One-time fee per customer; configures their newsroom, beats, sources, editorial DNA | Primary |
+| Custom source onboarding | Per-source flat fee for non-standard / niche sources | Secondary |
+| Training + workshops | One-day or remote sessions for newsroom teams | Secondary |
+| Accuracy + consistency audits | Monthly subscription; reviews shortlist + brief quality vs. editor expectations | Y2+ |
+| Plugin marketplace | Y2+ — third-party plugins with revenue share | Y2+ |
+| GitHub Sponsors / OpenCollective | Voluntary support from non-customer community | Y2+ |
+| Newsroom consulting | Bespoke advisory engagements | Opportunistic |
+
+### Sustainability rules (codified in ADR 0026)
+
+- Single-maintainer badge on the public repo; expectations explicit.
+- GitHub Issues triage = 1 hour Monday + 1 hour Friday; no always-on response.
+- Major releases quarterly, not monthly.
+- One protected deep-work day per week for product, not OSS chores.
+- Accept project may die; do not over-invest emotionally.
+
+## Funding stance
+
+- No VC pursuit. Vertical newsroom-tech is too small for venture economics and a wrong-shape fit for this founder's values.
+- Open to grant funding once values fit verified — Google News Initiative, Meta Journalism Project, ICFJ are paused due to Big Tech wariness; revisit when comfortable separating program from funder.
+- Open to angel investment only if a values-aligned editorial-tech angel surfaces; no active pitching.
+- Future entity formation (OPC or Pvt Ltd in India) gated on first paying customer or first concrete investor conversation, whichever comes first.
 
 ## Investor readiness (light-touch Y1)
+
+Even with no active pitching, basic hygiene avoids future debt.
 
 - `docs/IP-PROVENANCE.md` updated with every external dependency and reused asset.
 - `docs/CAP-TABLE.md` shows 100% Subhash Rai, with a note on intended assignment to NewCo on incorporation.

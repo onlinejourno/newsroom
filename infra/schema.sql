@@ -15,14 +15,17 @@ create extension if not exists "vector";
 -- ============================================================
 
 create table tenants (
-  id              uuid primary key default gen_random_uuid(),
-  slug            text unique not null,
-  name            text not null,
-  tier            text not null check (tier in ('tier_1','tier_2','tier_3','self')),
-  region          text not null default 'IN',
-  config          jsonb not null default '{}'::jsonb,  -- newsroom.yaml materialised
-  created_at      timestamptz not null default now(),
-  archived_at     timestamptz
+  id                 uuid primary key default gen_random_uuid(),
+  slug               text unique not null,
+  name               text not null,
+  tier               text not null check (tier in ('tier_1','tier_2','tier_3','self')),
+  region             text not null default 'IN',
+  primary_locale     text not null default 'en-IN',     -- e.g. en-IN, ta-IN, pt-BR, sv-SE
+  supported_locales  text[] not null default '{en-IN}', -- UI + brief output locales
+  data_residency     text not null default 'IN',        -- region for storage adapter (ADR 0023)
+  config             jsonb not null default '{}'::jsonb,  -- newsroom.yaml materialised
+  created_at         timestamptz not null default now(),
+  archived_at        timestamptz
 );
 
 create table users (
@@ -32,6 +35,7 @@ create table users (
   display_name    text,
   role            text not null check (role in ('admin','editor','journalist','viewer')),
   beat_focus      text[] not null default '{}',
+  locale          text not null default 'en-IN',     -- per-user UI + brief locale; falls back to tenant primary_locale
   mode            text not null default 'senior' check (mode in ('rookie','senior')),
   created_at      timestamptz not null default now(),
   archived_at     timestamptz,
@@ -43,18 +47,21 @@ create table users (
 -- ============================================================
 
 create table sources (
-  id              uuid primary key default gen_random_uuid(),
-  tenant_id       uuid not null references tenants(id) on delete cascade,
-  kind            text not null check (kind in ('rss','sitemap','homepage','article','robots','social','api','manual')),
-  name            text not null,
-  url             text not null,
-  rss_url         text,
-  deuze_type      text check (deuze_type in ('mainstream','index_category','meta_comment','share_discussion')),
-  beat_tags       text[] not null default '{}',
-  enabled         boolean not null default true,
-  quality_score   real,                          -- learned over time
-  false_alarm_rate real,                         -- learned over time
-  created_at      timestamptz not null default now()
+  id                 uuid primary key default gen_random_uuid(),
+  tenant_id          uuid not null references tenants(id) on delete cascade,
+  kind               text not null check (kind in ('rss','sitemap','homepage','article','robots','social','api','manual')),
+  name               text not null,
+  url                text not null,
+  rss_url            text,
+  deuze_type         text check (deuze_type in ('mainstream','index_category','meta_comment','share_discussion')),
+  beat_tags          text[] not null default '{}',
+  expected_languages text[] not null default '{en}',   -- ISO 639-1 codes; agents check ingestion-language matches
+  enabled            boolean not null default true,
+  quality_score      real,                              -- learned over time
+  false_alarm_rate   real,                              -- learned over time
+  last_seen_at       timestamptz,                       -- portal-health: when last successful ingest
+  consecutive_failures integer not null default 0,      -- portal-health: rises until threshold triggers editorial alert
+  created_at         timestamptz not null default now()
 );
 
 create index on sources (tenant_id, enabled);
@@ -146,6 +153,7 @@ create table briefs (
   for_user        uuid not null references users(id) on delete cascade,
   beat_id         uuid references beats(id),
   edition_date    date not null,
+  locale          text not null default 'en-IN',  -- output locale; brief composed in this language
   composed_at     timestamptz not null default now(),
   delivery_status text not null default 'pending' check (delivery_status in ('pending','delivered','failed')),
   delivery_channel text not null default 'email' check (delivery_channel in ('email','web','both')),
@@ -248,9 +256,54 @@ create table tenant_audit (
 );
 
 -- ============================================================
+-- Beats — language config per beat (ADR 0019)
+-- ============================================================
+
+alter table beats
+  add column if not exists locale text not null default 'en-IN';   -- output locale for briefs on this beat
+
+-- ============================================================
+-- Portal-health alerts (premortem #6 — scraper rot, ADR 0014 m-portal-health)
+-- ============================================================
+
+create table portal_health_alerts (
+  id              uuid primary key default gen_random_uuid(),
+  tenant_id       uuid not null references tenants(id) on delete cascade,
+  source_id       uuid not null references sources(id) on delete cascade,
+  raised_at       timestamptz not null default now(),
+  severity        text not null check (severity in ('info','warning','critical')),
+  reason          text not null,                  -- e.g. 'no signal for 24h', 'parse failure 3x', 'redirect detected'
+  acknowledged_at timestamptz,
+  acknowledged_by uuid references users(id),
+  resolved_at     timestamptz
+);
+
+create index on portal_health_alerts (tenant_id, raised_at desc) where resolved_at is null;
+
+-- ============================================================
+-- Eval gates (per-language launch gating, ADR 0020)
+-- ============================================================
+
+create table eval_gates (
+  tenant_id       uuid not null references tenants(id) on delete cascade,
+  capability      text not null,                   -- e.g. 'brief_composer'
+  locale          text not null,                   -- e.g. 'hi-IN'
+  passed          boolean not null default false,
+  f1_score        real,
+  reviewed_at     timestamptz,
+  reviewer_email  text,
+  notes           text,
+  primary key (tenant_id, capability, locale)
+);
+
+-- ============================================================
 -- Notes
 -- ============================================================
 -- 1. Row-level security policies are NOT in this draft. Wk 1 adds them per ADR 0005.
 -- 2. Module-owned tables (e.g. framing_pej_codings, discover_seo_scores) will be added
 --    via per-module migrations under packages/modules/<name>/storage/ — ADR 0006.
 -- 3. Vector dimension 1024 is a placeholder; finalise once embedding model is chosen.
+-- 4. Multilingual support: locale fields on tenants, users, briefs, beats; expected_languages
+--    on sources; language detection on signals — together cover ADRs 0018-0020.
+-- 5. Portal-health alerts surface scraper-rot as editorial signal, not silent engineering
+--    alert (premortem #6, ADR 0014).

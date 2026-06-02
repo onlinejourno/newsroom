@@ -34,14 +34,14 @@ Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 buil
 **Wed outcome:** marketing surface live at `onlinejourno.com`. Hosting strategy locked in BRAND-DECISION: WordPress on Bluehost for marketing, Fly.io PAYG Mumbai (BOM) for product (Y1 ~₹250-2,500/mo). Subdomain reservation plan for `app.`, `api.`, `docs.`, `status.` documented.
 
 ### Thu Jun 4 — Schema + MVP scope
-- [ ] Refine `infra/schema.sql` after reading news-intel + EIP schemas
-- [ ] Lock tenancy model (row-level `tenant_id`)
-- [ ] Fill `docs/MVP-SCOPE.md` — markets/regulatory beat, source list, success criteria
+- [x] Refine `infra/schema.sql` — added `tenants.primary_locale` / `supported_locales` / `data_residency`, `users.locale`, `briefs.locale`, `beats.locale`, `sources.expected_languages` / `last_seen_at` / `consecutive_failures`, `portal_health_alerts` table, `eval_gates` table
+- [x] Lock tenancy model (row-level `tenant_id`) — ADR 0005 locked
+- [x] Fill `docs/MVP-SCOPE.md` — markets/regulatory wedge, 25 sources, two-agent architecture, success criteria, free-pilot framing, multilingual posture
 
 ### Fri Jun 5 — Design partner + reconcile
-- [ ] List 3 warm-network publishers for markets/regulatory pilot
-- [ ] Draft personalized outreach for each (1 paragraph)
-- [ ] Cross-check Wk 0 docs against premortem; fill `docs/PREMORTEM-RECONCILIATION.md`
+- [ ] List 3 warm-network publishers for markets/regulatory pilot — TEMPLATE in place; **needs founder input**
+- [ ] Draft personalized outreach for each (1 paragraph) — blocked on above
+- [x] Cross-check Wk 0 docs against premortem; fill `docs/PREMORTEM-RECONCILIATION.md` — 18 EIP failure modes mapped: 8 addressed, 4 partial, 6 N/A, 0 unaddressed
 - [ ] End-of-week review; capture any slipped items into Wk 1 backlog
 
 ### Sat–Sun — Buffer (review only)
@@ -50,15 +50,18 @@ Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 buil
 
 | # | Deliverable | Status |
 |---|-------------|--------|
-| 1 | `docs/WK0-LEDGER.md` filled | pending |
-| 2 | `docs/PREMORTEM-RECONCILIATION.md` filled | pending |
-| 3 | `docs/BRAND-DECISION.md` filled | DONE |
-| 4 | `infra/schema.sql` draft | pending |
-| 5 | `docs/MVP-SCOPE.md` filled | pending |
-| 6 | `docs/DESIGN-PARTNER-SHORTLIST.md` filled | pending |
-| A | Empty repo created, named, licensed | DONE (local) |
-| B | Repo pushed to GitHub | pending |
-| C | Domain `onlinejourno.com` reserved | DONE |
+| 1 | `docs/WK0-LEDGER.md` filled | DONE Tue |
+| 2 | `docs/PREMORTEM-RECONCILIATION.md` filled | DONE Wed compressed |
+| 3 | `docs/BRAND-DECISION.md` filled | DONE Mon, expanded Wed |
+| 4 | `infra/schema.sql` draft | DONE Wed compressed |
+| 5 | `docs/MVP-SCOPE.md` filled | DONE Wed compressed |
+| 6 | `docs/DESIGN-PARTNER-SHORTLIST.md` filled | TEMPLATE — needs founder input |
+| A | Empty repo created, named, licensed | DONE Mon |
+| B | Repo pushed to GitHub | DONE Mon |
+| C | Domain `onlinejourno.com` reserved + live | DONE Wed |
+| D | Visual identity locked (ADR 0013, BRAND visual section) | DONE Wed |
+| E | License set (Apache 2.0, LICENSE.md + NOTICE) | DONE Wed compressed |
+| F | ADRs 0024 (Apache 2.0), 0025 (voluntary contribution), 0026 (sustainability) | DONE Wed compressed |
 
 ## Hard rules for Wk 0
 
