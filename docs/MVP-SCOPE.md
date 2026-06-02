@@ -17,11 +17,12 @@ Expansion to other beats happens after the MVP shortlist is trusted by one edito
 
 ## Single design partner
 
-The MVP runs for **one newsroom** in production. Selection criteria in `docs/DESIGN-PARTNER-SHORTLIST.md`.
+The MVP runs for **one newsroom** in production through Y1. Selection criteria in `docs/DESIGN-PARTNER-SHORTLIST.md`.
 
 - Free pilot for the first 8 weeks (Wk 8 → Wk 16).
 - Paid conversion conversation at Wk 12 (around the time the editor has used the brief for 14 days).
-- A second design partner enters Wk 13–16, with similar pilot terms.
+- A second design partner is pursued only after the first converts to paid and remains stable for ≥4 weeks. Concurrent design partners doubles support load without doubling product progress; solo-founder capacity is the hard limit.
+- Shortlist holds three candidates as insurance against rejection or champion exit — not as a multi-customer plan.
 
 ## Source list (target: 20–30 sources)
 

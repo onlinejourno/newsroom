@@ -55,7 +55,7 @@ Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 buil
 | 3 | `docs/BRAND-DECISION.md` filled | DONE Mon, expanded Wed |
 | 4 | `infra/schema.sql` draft | DONE Wed compressed |
 | 5 | `docs/MVP-SCOPE.md` filled | DONE Wed compressed |
-| 6 | `docs/DESIGN-PARTNER-SHORTLIST.md` filled | TEMPLATE — needs founder input |
+| 6 | `docs/DESIGN-PARTNER-SHORTLIST.md` filled | TEMPLATE shipped; founder fills 3 candidate names + outreach Mon Jun 8 |
 | A | Empty repo created, named, licensed | DONE Mon |
 | B | Repo pushed to GitHub | DONE Mon |
 | C | Domain `onlinejourno.com` reserved + live | DONE Wed |
