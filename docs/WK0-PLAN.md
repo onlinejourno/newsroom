@@ -25,10 +25,13 @@ Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 buil
 **Tue outcome:** ~300 files inventoried across 8 locations. ~80 REUSE, ~12 REWRITE, ~120 REFERENCE, ~25 RETIRE, ~5 CONFIDENTIAL (do not carry), ~21 IGNORE (Goldrush — different product category, founder decision). 10 additional ADRs surfaced (0007–0016) — 6 are direct ports from discover-dashboard, 4 new (adapter contracts, module deactivation, plug-in registry extensibility, two-tier fetch). Five open questions for Fri reconcile.
 
 ### Wed Jun 3 — Repo + license + IP
-- [ ] Push `onlinejourno/platform` to GitHub (private)
-- [ ] Confirm `LICENSE.md` and `IP-PROVENANCE.md` stub
-- [ ] Decide module open-source plan (deferred; private Y1, modules MIT Y2+)
-- [ ] Domain DNS pointed (`onlinejourno.com` → placeholder page or Vercel)
+- [x] Push `onlinejourno/platform` to GitHub (private) — done Mon
+- [x] Confirm `LICENSE.md` and `IP-PROVENANCE.md` stub
+- [x] Decide module open-source plan — deferred; private Y1, modules MIT Y2+ (recorded in BRAND-DECISION)
+- [x] Domain DNS pointed — `onlinejourno.com` live on Bluehost.in WordPress; GoDaddy nameservers set to `ns1.bluehost.com` / `ns2.bluehost.com`
+- [x] Fly.io account created (Wk 1 will reserve `onlinejourno-platform` app name + set hard ₹2,000 spend cap)
+
+**Wed outcome:** marketing surface live at `onlinejourno.com`. Hosting strategy locked in BRAND-DECISION: WordPress on Bluehost for marketing, Fly.io PAYG Mumbai (BOM) for product (Y1 ~₹250-2,500/mo). Subdomain reservation plan for `app.`, `api.`, `docs.`, `status.` documented.
 
 ### Thu Jun 4 — Schema + MVP scope
 - [ ] Refine `infra/schema.sql` after reading news-intel + EIP schemas
