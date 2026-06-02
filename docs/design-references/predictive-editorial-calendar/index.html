@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Predictive Editorial Calendar — Demo</title>
+<link rel="icon" href="ds/logo.png" type="image/png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Noto+Serif:ital,wght@0,400;1,400&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/colors_and_type.css" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="shell.jsx"></script>
+<script type="text/babel" src="timeline.jsx"></script>
+<script type="text/babel" src="views.jsx"></script>
+<script type="text/babel" src="detail.jsx"></script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100vh; }
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: #f0ece4;
+    color: #111;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #e6e0d4; }
+  ::-webkit-scrollbar-thumb { background: #b8b0a0; }
+  button { font-family: inherit; }
+  button:hover { filter: brightness(0.95); }
+  a { color: #1f5c38; }
+  input:focus, select:focus { outline: 2px solid #2D7A4F; outline-offset: -2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+function App() {
+  const [activeTab, setActiveTab] = React.useState('calendar');
+  const [selectedEvent, setSelectedEvent] = React.useState(null);
+  const [filters, setFilters] = React.useState({
+    beat: 'all',
+    minConfidence: 0.4,
+    horizon: 90,
+    search: '',
+  });
+
+  // Upcoming events, after filters
+  const filteredEvents = React.useMemo(() => {
+    return EVENTS.filter(e => {
+      if (filters.beat !== 'all' && e.beat !== filters.beat) return false;
+      if (e.confidence < filters.minConfidence) return false;
+      const d = daysBetween(TODAY_ISO, e.deadline);
+      if (d < 0) return false; // past-due not shown here
+      if (d > filters.horizon) return false;
+      if (filters.search) {
+        const q = filters.search.toLowerCase();
+        const hay = (e.who + ' ' + e.what + ' ' + e.originalText + ' ' + (e.location || '')).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [filters]);
+
+  const todayLabel = TODAY.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const showFilters = activeTab === 'calendar' || activeTab === 'list';
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f0ece4' }}>
+      <HeaderMast activeTab={activeTab} setActiveTab={setActiveTab} todayLabel={todayLabel} />
+      {showFilters && (
+        <FilterStrip
+          filters={filters} setFilters={setFilters}
+          eventsTotal={EVENTS.length} eventsShown={filteredEvents.length}
+        />
+      )}
+
+      <main style={{ maxWidth: 1320, margin: '0 auto', padding: '24px 28px 60px' }}>
+        {activeTab === 'calendar' && (
+          <TimelineView events={filteredEvents} horizon={filters.horizon} onSelect={setSelectedEvent} />
+        )}
+        {activeTab === 'list' && (
+          <ListView events={filteredEvents} onSelect={setSelectedEvent} />
+        )}
+        {activeTab === 'pastdue' && (
+          <PastDueView onSelect={setSelectedEvent} />
+        )}
+        {activeTab === 'pipeline' && (
+          <PipelineView />
+        )}
+      </main>
+
+      <footer style={{
+        borderTop: '2px solid #111', padding: '16px 28px', background: '#fff',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 14 }}>
+          OnlineJournalism<span style={{ color: '#666' }}>.in</span> &nbsp;·&nbsp;
+          <span style={{ fontWeight: 400, color: '#666', fontFamily: "'Source Sans 3', sans-serif" }}>
+            Predictive Editorial Calendar
+          </span>
+        </div>
+        <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 11, color: '#888' }}>
+          A 4-week solo build · LLM-first, agents used surgically · code in git, article data in Postgres
+        </div>
+      </footer>
+
+      <EventDrawer event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

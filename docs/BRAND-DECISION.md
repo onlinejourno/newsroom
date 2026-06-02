@@ -72,7 +72,26 @@ Self-managed VPS = founder time on Postgres tuning, Node version managing, syste
 - **Voice:** newsroom-native, terse, technical when needed, never marketing-fluff.
 - **Tagline (working):** "Editorial intelligence, built by journalists."
 - **Audience:** working reporters and section editors first; CTOs and product managers second; publishers third.
-- **Visual:** dark mode default; serif for editorial copy, sans for product UI; sparingly used colour.
+
+### Visual identity (locked Wed Jun 2)
+
+OnlineJourno inherits the OnlineJournalism.in design system. Sibling products, one brand family.
+
+- **Logo mark:** triangular geometric mark (orange / red / magenta gradient on radiating lines, forming three fans). Used on light backgrounds and at large sizes. At small sizes (favicon, masthead), uses a dark monochrome variant.
+- **Primary brand colour:** `#2D7A4F` (forest green).
+- **Page background:** `#f0ece4` (warm cream / "paper").
+- **Ink:** `#1A1A1A`.
+- **Urgency / breaking / past-due:** `#D32B2B`.
+- **Mid lead-time / warning:** `#b35d00` (amber).
+- **Type stack:** Playfair Display (display) + Noto Serif (body) + Source Sans 3 (UI). All Google Fonts. Noto Serif covers Indic + Cyrillic + CJK + Arabic — multilingual-ready.
+- **Aesthetic:** broadsheet newspaper. Flat edges, minimal rounding, sparing shadows, rule lines and paper contrast do the lifting.
+
+Full token set locked in `docs/adr/0013-design-tokens.md`. Reference CSS at `docs/design-references/colors_and_type.css`. Working React prototype at `docs/design-references/predictive-editorial-calendar/`. Live assets at `apps/web/public/brand/`.
+
+### Wordmark plan
+
+- OJ.in publication: existing "OnlineJournalism.in" wordmark (red square monogram + serif text).
+- OnlineJourno platform: dedicated "OnlineJourno" wordmark to be designed Wk 8+. Mark + palette + type stack stay shared.
 
 ## Trademark plan
 

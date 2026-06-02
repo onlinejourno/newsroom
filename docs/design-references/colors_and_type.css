@@ -1,0 +1,309 @@
+/*
+ * OnlineJournalism.in — Design System
+ * colors_and_type.css
+ *
+ * CSS custom properties for colour and typography.
+ * IOJ-only branding. Editorial / broadsheet aesthetic.
+ *
+ * Font substitutions (awaiting actual files):
+ *   Display serif  → Playfair Display (Google Fonts)
+ *   Body serif     → Noto Serif (Google Fonts)
+ *   UI sans        → Source Sans 3 (Google Fonts)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Noto+Serif:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+/* ─────────────────────────────────────────────
+   BASE PALETTE
+───────────────────────────────────────────── */
+:root {
+  /* IOJ greens — brand */
+  --ioj-green-900:  #143d26;
+  --ioj-green-800:  #1f5c38;
+  --ioj-green-600:  #2D7A4F;   /* primary brand accent */
+  --ioj-green-400:  #48a870;
+  --ioj-green-100:  #e6f5ec;
+
+  /* Reds — urgency / past-due semantics */
+  --red-700:  #b01e1e;
+  --red-600:  #D32B2B;   /* past-due, breaking, section bars */
+  --red-500:  #e84040;
+  --red-100:  #fdeaea;
+
+  /* Amber — mid lead-time semantics */
+  --amber-600: #b35d00;
+  --amber-100: #f7ecd9;
+
+  /* Neutral grays */
+  --gray-950:  #0d0d0d;
+  --gray-900:  #1A1A1A;   /* primary text / ink */
+  --gray-800:  #333333;
+  --gray-700:  #4d4d4d;
+  --gray-600:  #666666;   /* secondary text, bylines */
+  --gray-500:  #888888;
+  --gray-400:  #aaaaaa;
+  --gray-300:  #cccccc;
+  --gray-200:  #E0E0E0;   /* borders */
+  --gray-100:  #F0F0EE;
+  --gray-50:   #F5F5F2;
+  --paper:     #f0ece4;   /* warm off-white page background */
+  --white:     #FFFFFF;
+
+  /* ─────────────────────────────────────────────
+     SEMANTIC COLOURS (IOJ)
+  ───────────────────────────────────────────── */
+  --color-brand:      var(--ioj-green-600);
+  --color-brand-dark: var(--ioj-green-800);
+  --color-brand-bg:   var(--ioj-green-100);
+  --color-urgent:     var(--red-600);
+  --color-urgent-bg:  var(--red-100);
+
+  --color-fg-1:    var(--gray-900);   /* primary text */
+  --color-fg-2:    var(--gray-600);   /* secondary text / meta */
+  --color-fg-3:    var(--gray-400);   /* placeholder / disabled */
+  --color-fg-inv:  var(--white);      /* text on dark bg */
+
+  --color-bg-page: var(--paper);      /* outer page background */
+  --color-bg-card: var(--white);      /* card / surface */
+  --color-bg-nav:  var(--white);      /* navigation background */
+  --color-bg-dark: var(--gray-900);   /* dark header band — ink */
+
+  --color-border:    var(--gray-200);
+  --color-rule:      #d4cfc6;         /* warm rule line */
+  --color-rule-soft: #e6e0d4;
+  --color-link:       var(--ioj-green-800);
+  --color-link-hover: var(--ioj-green-900);
+
+  --color-section-bar: var(--ioj-green-600);  /* top border on sections */
+  --color-tag-bg:      var(--gray-900);
+  --color-tag-text:    var(--white);
+}
+
+/* ─────────────────────────────────────────────
+   TYPOGRAPHY SCALE
+───────────────────────────────────────────── */
+:root {
+  /* Font families */
+  --font-display:  'Playfair Display', 'Georgia', 'Times New Roman', serif;
+  --font-body:     'Noto Serif', 'Georgia', serif;
+  --font-ui:       'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:     'Courier New', Courier, monospace;
+
+  /* Font sizes — base 16px, major-third scale */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 16px;
+  --text-md:   18px;
+  --text-lg:   20px;
+  --text-xl:   24px;
+  --text-2xl:  30px;
+  --text-3xl:  38px;
+  --text-4xl:  48px;
+  --text-5xl:  60px;
+
+  /* Line heights */
+  --leading-tight:  1.2;
+  --leading-snug:   1.35;
+  --leading-normal: 1.55;
+  --leading-loose:  1.75;
+
+  /* Letter spacing */
+  --tracking-tight:  -0.02em;
+  --tracking-normal:  0;
+  --tracking-wide:    0.05em;
+  --tracking-widest:  0.12em;
+
+  /* Font weights */
+  --weight-light:    300;
+  --weight-regular:  400;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extrabold:800;
+}
+
+/* ─────────────────────────────────────────────
+   SEMANTIC TYPE ROLES
+───────────────────────────────────────────── */
+:root {
+  /* Display / Masthead */
+  --type-masthead-font:    var(--font-display);
+  --type-masthead-size:    var(--text-4xl);
+  --type-masthead-weight:  var(--weight-bold);
+  --type-masthead-leading: var(--leading-tight);
+
+  /* Headlines */
+  --type-h1-font:    var(--font-display);
+  --type-h1-size:    var(--text-3xl);
+  --type-h1-weight:  var(--weight-bold);
+  --type-h1-leading: var(--leading-tight);
+  --type-h1-tracking:var(--tracking-tight);
+
+  --type-h2-font:    var(--font-display);
+  --type-h2-size:    var(--text-2xl);
+  --type-h2-weight:  var(--weight-bold);
+  --type-h2-leading: var(--leading-snug);
+
+  --type-h3-font:    var(--font-display);
+  --type-h3-size:    var(--text-xl);
+  --type-h3-weight:  var(--weight-semibold);
+  --type-h3-leading: var(--leading-snug);
+
+  /* Section / Card headlines */
+  --type-card-headline-font:    var(--font-display);
+  --type-card-headline-size:    var(--text-lg);
+  --type-card-headline-weight:  var(--weight-bold);
+  --type-card-headline-leading: var(--leading-snug);
+
+  /* Body copy */
+  --type-body-font:    var(--font-body);
+  --type-body-size:    var(--text-md);
+  --type-body-weight:  var(--weight-regular);
+  --type-body-leading: var(--leading-loose);
+
+  /* Deck / standfirst */
+  --type-deck-font:    var(--font-body);
+  --type-deck-size:    var(--text-lg);
+  --type-deck-weight:  var(--weight-regular);
+  --type-deck-leading: var(--leading-normal);
+
+  /* Byline / meta */
+  --type-byline-font:    var(--font-ui);
+  --type-byline-size:    var(--text-sm);
+  --type-byline-weight:  var(--weight-semibold);
+  --type-byline-tracking:var(--tracking-wide);
+  --type-byline-color:   var(--color-fg-2);
+
+  /* Section label / category tag */
+  --type-label-font:     var(--font-ui);
+  --type-label-size:     var(--text-xs);
+  --type-label-weight:   var(--weight-bold);
+  --type-label-tracking: var(--tracking-widest);
+  --type-label-transform:uppercase;
+
+  /* Navigation */
+  --type-nav-font:    var(--font-ui);
+  --type-nav-size:    var(--text-base);
+  --type-nav-weight:  var(--weight-semibold);
+
+  /* Caption */
+  --type-caption-font:    var(--font-ui);
+  --type-caption-size:    var(--text-sm);
+  --type-caption-weight:  var(--weight-regular);
+  --type-caption-color:   var(--color-fg-2);
+
+  /* UI / Button */
+  --type-ui-font:    var(--font-ui);
+  --type-ui-size:    var(--text-base);
+  --type-ui-weight:  var(--weight-semibold);
+}
+
+/* ─────────────────────────────────────────────
+   SPACING SCALE (8px base)
+───────────────────────────────────────────── */
+:root {
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  --content-width-article: 680px;
+  --content-width-section: 1200px;
+  --content-width-full:    1440px;
+  --gutter-desktop:        24px;
+  --gutter-mobile:         16px;
+}
+
+/* ─────────────────────────────────────────────
+   BORDER RADIUS
+───────────────────────────────────────────── */
+:root {
+  --radius-none:   0;
+  --radius-sm:     2px;
+  --radius-md:     4px;
+  --radius-pill:   100px;
+}
+
+/* ─────────────────────────────────────────────
+   SHADOWS
+───────────────────────────────────────────── */
+:root {
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 2px 8px rgba(0,0,0,0.10);
+  --shadow-lg:  0 4px 20px rgba(0,0,0,0.12);
+}
+
+/* ─────────────────────────────────────────────
+   BASE ELEMENT STYLES (opt-in via .ds-base)
+───────────────────────────────────────────── */
+.ds-base {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--leading-loose);
+  color: var(--color-fg-1);
+  background: var(--color-bg-page);
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
+}
+
+.ds-base h1 {
+  font-family: var(--type-h1-font);
+  font-size: var(--type-h1-size);
+  font-weight: var(--type-h1-weight);
+  line-height: var(--type-h1-leading);
+  letter-spacing: var(--type-h1-tracking);
+  color: var(--color-fg-1);
+}
+.ds-base h2 {
+  font-family: var(--type-h2-font);
+  font-size: var(--type-h2-size);
+  font-weight: var(--type-h2-weight);
+  line-height: var(--type-h2-leading);
+}
+.ds-base h3 {
+  font-family: var(--type-h3-font);
+  font-size: var(--type-h3-size);
+  font-weight: var(--type-h3-weight);
+  line-height: var(--type-h3-leading);
+}
+.ds-base p {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--leading-loose);
+  margin-bottom: var(--space-4);
+}
+.ds-base a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.ds-base a:hover {
+  color: var(--color-link-hover);
+}
+
+/* Section label */
+.ds-label {
+  font-family: var(--type-label-font);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: var(--type-label-transform);
+  color: var(--color-urgent);
+}
+
+/* Byline */
+.ds-byline {
+  font-family: var(--type-byline-font);
+  font-size: var(--type-byline-size);
+  font-weight: var(--type-byline-weight);
+  letter-spacing: var(--type-byline-tracking);
+  color: var(--type-byline-color);
+}
