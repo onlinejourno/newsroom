@@ -246,14 +246,9 @@ Docs-only. All twelve files are REFERENCE for the strategy + scorecard layer.
 
 ## 5. `~/projects/Goldrush`
 
-PHP newsroom resource management (attendance, duty, inventory, staff, users, webhook). 21 files. Out of MVP scope; tagged as a future Y2 module.
+PHP newsroom resource management (attendance, duty, inventory, staff, users, webhook). 21 files. Not editorial intelligence; pure CRUD.
 
-| Path | Tag | Notes |
-|------|-----|-------|
-| All PHP files | DEFER | Y2 module candidate: newsroom resource management. Will rewrite in TS, not port PHP. |
-| `setup.sql` | REFERENCE | Schema design reference for Y2 module. |
-| `.htaccess` | RETIRE | Apache config; OnlineJourno hosts on Fly.io / Render. |
-| `assets/*` | RETIRE | UI rebuilt in Next.js + shadcn. |
+**Founder decision Tue Jun 2:** IGNORE. Out of scope for OnlineJourno. Not even a Y2 candidate — newsroom resource management is a different product category. If revisited, will be a separate product, not a module.
 
 ---
 
@@ -418,6 +413,6 @@ Order in which ported code should arrive in the new repo, lowest-risk first:
 - Tagged REFERENCE: ~120
 - Tagged RETIRE: ~25
 - Tagged CONFIDENTIAL (do not carry): ~5
-- Tagged DEFER (Y2 module): ~21 (Goldrush)
+- Tagged IGNORE (out of scope): ~21 (Goldrush — different product category)
 
 Net: enough proven code in REUSE + REWRITE to build a credible MVP in Wk 1–8 without writing collectors, scorers, or Next.js scaffolding from scratch. The biggest single porting risk is `dashboard/app.py` (160 KB Streamlit) — but it RETIREs entirely; we keep only the scoring lib it sits on.

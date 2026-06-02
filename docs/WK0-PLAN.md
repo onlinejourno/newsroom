@@ -22,7 +22,7 @@ Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 buil
 - [x] Flag risky deps (heavy ML, niche libs, deprecated APIs)
 - [x] Fill `docs/WK0-LEDGER.md`
 
-**Tue outcome:** ~300 files inventoried across 8 locations. ~80 REUSE, ~12 REWRITE, ~120 REFERENCE, ~25 RETIRE, ~5 CONFIDENTIAL (do not carry), ~21 DEFER (Goldrush → Y2 module). 10 additional ADRs surfaced (0007–0016) — 6 are direct ports from discover-dashboard, 4 new (adapter contracts, module deactivation, plug-in registry extensibility, two-tier fetch). Five open questions for Fri reconcile.
+**Tue outcome:** ~300 files inventoried across 8 locations. ~80 REUSE, ~12 REWRITE, ~120 REFERENCE, ~25 RETIRE, ~5 CONFIDENTIAL (do not carry), ~21 IGNORE (Goldrush — different product category, founder decision). 10 additional ADRs surfaced (0007–0016) — 6 are direct ports from discover-dashboard, 4 new (adapter contracts, module deactivation, plug-in registry extensibility, two-tier fetch). Five open questions for Fri reconcile.
 
 ### Wed Jun 3 — Repo + license + IP
 - [ ] Push `onlinejourno/platform` to GitHub (private)
