@@ -2,10 +2,16 @@
 
 Editorial intelligence platform for newsrooms. Source monitoring, framing analysis, story-thread tracking, and AI-assisted editorial brief delivery — built journalist-first, configurable per newsroom.
 
-**Status:** Pre-build. Wk 0 (audit + decisions) in progress.
+**Status:** Wk 0 (audit + decisions) complete Thu Jun 4. Wk 1 build starts Mon Jun 8.
 
 **Owner:** Subhash Rai (sole proprietor, OnlineJourno).
-**Web:** https://onlinejourno.com (product) · https://onlinejournalism.in (publication, first case study)
+
+**Surfaces (Y1):**
+- `https://onlinejourno.com` — marketing site (WordPress on Bluehost), live since Wed Jun 3.
+- `https://app.onlinejourno.com` — product UI for the design partner editor (Fly.io BOM), Wk 8 onwards.
+- `https://try.onlinejourno.com` — static community playground demo, Wk 12–16 onwards (see `docs/PLAYGROUND-PLAN.md`).
+- `https://github.com/onlinejourno/platform` — currently private; flips public Wk 10–12 per `docs/COMMUNITY-LAUNCH-PLAN.md`.
+- `https://onlinejournalism.in` — sibling publication (separate brand, same founder, first case study).
 
 ---
 
@@ -37,19 +43,12 @@ docs/         # ADRs, plans, ledgers, decisions
 - `docs/IP-PROVENANCE.md` — every dep and reused code source, with license
 - `docs/CAP-TABLE.md` — ownership snapshot
 
-## Wk 0 deliverables (Mon Jun 1 → Fri Jun 5 EOD)
+## Wk 0 status (Mon Jun 1 → Thu Jun 4, complete)
 
-| # | Doc | Status |
-|---|-----|--------|
-| 1 | `docs/WK0-LEDGER.md` | template |
-| 2 | `docs/PREMORTEM-RECONCILIATION.md` | stub |
-| 3 | `docs/BRAND-DECISION.md` | filled |
-| 4 | `infra/schema.sql` | draft |
-| 5 | `docs/MVP-SCOPE.md` | stub |
-| 6 | `docs/DESIGN-PARTNER-SHORTLIST.md` | stub |
+All audit and decision deliverables shipped ahead of the Fri Jun 5 hard cap. See `docs/WK0-PLAN.md` for the day-by-day record. Founder's one remaining Wk 0 task: fill three candidate names in `docs/DESIGN-PARTNER-SHORTLIST.md` and send outreach Mon Jun 8.
 
-No production code commits until Wk 1.
+Wk 1 build begins Mon Jun 8. First end-of-week target: one RSS source → ingest → Postgres → minimal Next.js view (the platform's "hello world" thread).
 
 ## License
 
-Proprietary. All rights reserved. See `LICENSE.md`.
+Apache License 2.0. See `LICENSE.md` and `NOTICE`.

@@ -17,13 +17,16 @@ Locked Mon Jun 1, 2026.
 |--------|---------|--------|
 | `onlinejourno.com` (root) | Marketing + blog + signup CTA | **Live** Wed Jun 3 2026 — WordPress on Bluehost.in. Registered at GoDaddy; nameservers pointed to `ns1.bluehost.com` / `ns2.bluehost.com`. |
 | `www.onlinejourno.com` | Alias of root | Redirect → root (configure in Bluehost). |
-| `app.onlinejourno.com` | Product (journalist UX + admin) | **Reserved**; will point at Fly.io BOM when product deploys (Wk 8+). Add CNAME at Bluehost Zone Editor. |
+| `app.onlinejourno.com` | Product (journalist UX + admin) for design partner | **Reserved**; will point at Fly.io BOM when product deploys (Wk 8+). Add CNAME at Bluehost Zone Editor. |
 | `api.onlinejourno.com` | API endpoints | Same Fly.io app as `app.` — same CNAME target. |
+| `try.onlinejourno.com` | Static community playground demo (read-only) | **Wk 12–16 launch.** Hosted on Cloudflare Pages or Vercel free tier; weekly manual content refresh by founder. See `docs/PLAYGROUND-PLAN.md`. |
 | `docs.onlinejourno.com` | Customer docs | Y1+. Point at docs portal when shipped. |
 | `status.onlinejourno.com` | Status page | Y1+. Statuspage / Better Uptime. |
-| `onlinejourno.net` | Park / redirect to `.com` | No active use. |
-| `onlinejourno.info` | Park / redirect to `.com` | No active use. |
-| `onlinejourno.xyz` | Park / redirect to `.com` | No active use. Internal dev later if needed. |
+| `dev.onlinejourno.xyz` | Staging + pre-prod | Founder-only. Set up Wk 1–2. |
+| `lab.onlinejourno.xyz` | Experiments | Founder-only. As needed. |
+| `onlinejourno.xyz` (root) | Reserved for experimental surface | The `.xyz` TLD's experimental connotation makes it the right home for dev / lab. Not customer-facing. |
+| `onlinejourno.net` | Redirect → `.com` | Brand protection only. No active use. |
+| `onlinejourno.info` | Redirect → `.com` Y1; community wiki / how-it-works docs candidate Y2 | Brand protection Y1; possible information-site reuse Y2. |
 | `onlinejourno.store` | Module marketplace / source-bundle store | **Park.** Real plan only after MVP proves. |
 
 ## Hosting decisions (locked Wed Jun 3)

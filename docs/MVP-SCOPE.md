@@ -24,6 +24,18 @@ The MVP runs for **one newsroom** in production through Y1. Selection criteria i
 - A second design partner is pursued only after the first converts to paid and remains stable for ≥4 weeks. Concurrent design partners doubles support load without doubling product progress; solo-founder capacity is the hard limit.
 - Shortlist holds three candidates as insurance against rejection or champion exit — not as a multi-customer plan.
 
+## Layered launch (community surface ships alongside, not instead of)
+
+The MVP also ships two community-facing surfaces in sequence, governed by ADR 0027. These are supplementary to the design partner pilot — not substitutes.
+
+| Surface | When | What it yields | Cost (Y1) |
+|---------|------|----------------|-----------|
+| Design partner editor pilot | Wk 8 | Editorial fit, willingness-to-pay, case study | ~₹500–1,500/mo |
+| Public code repository (`github.com/onlinejourno/platform`) | Wk 10–12 | Code review, contributor pipeline, OSS positioning | ~₹0 |
+| Static community playground (`try.onlinejourno.com`) | Wk 12–16 | Marketing surface, product polish feedback | ~₹0–300/mo |
+
+The editorial signal — whether the shortlist matches a working editor's morning triage — comes only from the design partner. OSS community engagement, however valuable, does not substitute. Sequencing is locked in ADR 0027; full plans in `docs/PLAYGROUND-PLAN.md` and `docs/COMMUNITY-LAUNCH-PLAN.md`.
+
 ## Source list (target: 20–30 sources)
 
 ### Regulators (high priority)

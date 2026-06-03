@@ -4,9 +4,9 @@ Drafted Wed Jun 3, 2026.
 
 ## Target
 
-**One active design partner for Y1.** Three candidates in pipeline as insurance against rejection or champion exit. Second design partner pursued only after the first has converted to paid and remained stable for ≥4 weeks.
+**One active design partner for Y1.** Three candidates in pipeline as insurance against rejection or champion exit. Second and third design partners pursued **sequentially**, not in parallel — second only after the first has converted to paid and remained stable for ≥4 weeks; third only after the second has done likewise.
 
-This is deliberate solo-founder capacity protection. Two concurrent design partners doubles the support load without doubling product progress.
+This is deliberate solo-founder capacity protection. Two concurrent design partners doubles the support load without doubling product progress (ADR 0026 sustainability rules apply). The OSS community surface (`docs/COMMUNITY-LAUNCH-PLAN.md`) and static playground (`docs/PLAYGROUND-PLAN.md`) ship in parallel from Wk 10–16, but they do **not** substitute for editorial signal — that comes only from a working editor running the brief against their actual morning triage.
 
 ## Selection criteria
 

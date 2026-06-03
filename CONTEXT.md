@@ -49,6 +49,18 @@ These give product credibility with editorial leadership. They are not optional 
 
 - `onlinejournalism.in` — Subhash Rai's existing journalism publication. First case study and design partner. Generates real editorial workflow signal for the platform.
 
+## Launch surfaces (Y1)
+
+Three surfaces, each yielding a different kind of feedback, ship in sequence (ADR 0027):
+
+| Surface | Audience | When | What it yields |
+|---------|----------|------|----------------|
+| **Design partner editor pilot** at `app.onlinejourno.com` | One markets/regulatory editor at a mid-size Indian newsroom | Wk 8 | Editorial fit, workflow validation, willingness-to-pay |
+| **Public code repository** at `github.com/onlinejourno/platform` | Developers, OSS contributors, journalist-developers | Wk 10–12 | Code review, contributor pipeline, OSS credibility |
+| **Static community playground** at `try.onlinejourno.com` | Journalists curious about the product, OSS community | Wk 12–16 | Marketing surface, product polish feedback, code-exploration aid |
+
+These are not alternatives. The editor pilot is the only source of editorial signal; the public repo is the only source of code-review signal at solo-founder scale; the playground is the only way the community can engage without a live editor account.
+
 ## Out of scope (Y1)
 
 - CMS / publishing tools (newsrooms keep their existing CMS — Ghost, WordPress, Superdesk, etc.).

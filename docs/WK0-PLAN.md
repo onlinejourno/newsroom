@@ -33,10 +33,13 @@ Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 buil
 
 **Wed outcome:** marketing surface live at `onlinejourno.com`. Hosting strategy locked in BRAND-DECISION: WordPress on Bluehost for marketing, Fly.io PAYG Mumbai (BOM) for product (Y1 ~₹250-2,500/mo). Subdomain reservation plan for `app.`, `api.`, `docs.`, `status.` documented.
 
-### Thu Jun 4 — Schema + MVP scope
+### Thu Jun 4 — Schema + MVP scope + layered launch
 - [x] Refine `infra/schema.sql` — added `tenants.primary_locale` / `supported_locales` / `data_residency`, `users.locale`, `briefs.locale`, `beats.locale`, `sources.expected_languages` / `last_seen_at` / `consecutive_failures`, `portal_health_alerts` table, `eval_gates` table
 - [x] Lock tenancy model (row-level `tenant_id`) — ADR 0005 locked
 - [x] Fill `docs/MVP-SCOPE.md` — markets/regulatory wedge, 25 sources, two-agent architecture, success criteria, free-pilot framing, multilingual posture
+- [x] Lock layered-launch sequencing — ADR 0027 written; `docs/PLAYGROUND-PLAN.md` and `docs/COMMUNITY-LAUNCH-PLAN.md` drafted; `try.onlinejourno.com` and dev/lab subdomains added to BRAND-DECISION
+
+**Thu outcome:** layered launch locked. Three Y1 surfaces in sequence — design partner editor pilot (Wk 8), public code repository (Wk 10–12), static community playground at `try.onlinejourno.com` (Wk 12–16). Each yields different feedback; none substitutes for the others. Editorial signal (shortlist fit) comes only from the design partner; public surfaces are supplementary. Total cost stays under ₹1,800/month per ADR 0026.
 
 ### Fri Jun 5 — Design partner + reconcile
 - [ ] List 3 warm-network publishers for markets/regulatory pilot — TEMPLATE in place; **needs founder input**
