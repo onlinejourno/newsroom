@@ -1,7 +1,10 @@
 # fly.toml — onlinejourno-platform (apps/web, Next.js standalone)
 # Deploys from repo root: fly deploy
 app = "onlinejourno-platform"
-primary_region = "bom"
+# Primary region: prefer BOM (Mumbai, ~30ms from India). Fell back to
+# SIN (Singapore, ~70ms) on 2026-06-03 when BOM had no capacity.
+# Revisit and switch back to BOM when capacity returns.
+primary_region = "sin"
 
 [build]
   dockerfile = "Dockerfile"
