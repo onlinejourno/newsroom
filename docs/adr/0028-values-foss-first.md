@@ -8,7 +8,49 @@ Multiple architectural decisions throughout Wk 0 and Wk 1 prep have implicitly s
 
 Each was selected on pragmatic grounds. Cumulatively, they drift away from the founder's stated identity: an indie open-source maintainer building for a journalism community sceptical of Big Tech, vendor capture, opaque tracking, and commercial-SaaS lock-in.
 
-This ADR locks the values that govern every future technology decision and re-audits the existing ones.
+At the same time, the platform must remain attractive to the broadest possible set of newsrooms, including those already invested in Google Analytics 4, GTM, Adobe Analytics, Segment, Mixpanel, and similar tools. Forcing the founder's values on customers would shrink the market unnecessarily.
+
+This ADR locks the values that govern OnlineJourno's own technology decisions while preserving newsroom freedom to integrate with whatever stack they already operate.
+
+## Scope: two layers, two policies
+
+The policy below operates on **two distinct layers** that are governed by different rules. This separation is binding.
+
+### Layer 1 — OnlineJourno-controlled surfaces (strict)
+
+Everything OnlineJourno (the project, the founder, the codebase) directly owns and operates:
+
+- The platform source code at `github.com/onlinejourno/platform`
+- The marketing site at `onlinejourno.com`
+- The product UX chrome at `app.onlinejourno.com` (the journalist UX, editor UX, admin UI shipped by the platform)
+- The community playground at `try.onlinejourno.com`
+- All OnlineJourno-side ops: uptime monitoring, error tracking, billing, donations, communications
+- The founder's identity and decision-making
+
+These layer-1 surfaces follow the **strict FOSS-first policy** below. No GA4, no Pixel, no commercial surveillance SaaS, ever. Pragmatic tier-4 (commercial SaaS) adoptions for infrastructure (Fly.io, Anthropic, GitHub) are permitted only with documented exit plans.
+
+### Layer 2 — Tenant-controlled surfaces (neutral, configurable)
+
+What newsrooms (tenants) configure and operate on top of the platform:
+
+- Their reader-facing analytics on their own published content
+- Their CMS, social, ad, and revenue tooling
+- Their internal newsroom integrations (Slack, email, Notion, Airtable, etc.)
+- Their own choices about whether to use GA4, Adobe Analytics, Mixpanel, etc.
+
+The platform must remain **neutral and configurable** at layer 2. Newsrooms must be able to plug in whatever they already operate, including Google Analytics 4, Google Tag Manager, Segment, Mixpanel, Adobe Analytics, or any other tool the editorial leadership has chosen — even if those tools would not be acceptable on Layer 1.
+
+The platform's job is to expose configurable hooks (per-tenant analytics provider, per-tenant CMS adapter, per-tenant notification destination), not to dictate which tools the newsroom uses.
+
+#### Layer 2 design rules
+
+1. **Configurable per-tenant**, never hard-coded in source.
+2. **Opt-in defaults**. The platform ships with values-aligned alternatives selected by default (Plausible self-hosted, ntfy, Postgres) but does not block the tenant from switching.
+3. **Adapter contracts on every integration** (per ADR 0007). Adding a new analytics or notification provider is a module, not a fork.
+4. **No platform-imposed scripts**. The platform never injects a third-party script tag the tenant did not explicitly enable through configuration.
+5. **Honest documentation**. The platform documents the privacy implications of each integration; the tenant decides.
+
+This ADR codifies the values that govern Layer 1 only.
 
 ## Decision
 
@@ -22,15 +64,16 @@ This ADR locks the values that govern every future technology decision and re-au
 4. **Commercial SaaS** — last resort. Only when no viable FOSS or no-tracking commercial alternative exists for the solo founder's stage. Always with a written exit plan.
 5. **Big Tech surveillance SaaS** — refused outright (Google Analytics, Facebook Pixel, X advertising, Google News Initiative funding, Meta Journalism Project funding, etc.).
 
-### Implementation rules
+### Implementation rules (Layer 1 only)
 
-1. **Every new dependency** declares which tier it sits in. Tier 4 requires an ADR. Tier 5 is never adopted.
+1. **Every new Layer 1 dependency** declares which tier it sits in. Tier 4 requires an ADR. Tier 5 is never adopted.
 2. **Adapter contracts on every tier-3 and tier-4 vendor** (per ADR 0007) so swapping is days, not months when an FOSS alternative emerges.
-3. **No third-party trackers** in any OnlineJourno-controlled web surface — no Google Analytics, no Facebook Pixel, no Hotjar, no Intercom, no Segment, nothing that fingerprints visitors.
-4. **No commercial-vendor analytics** in journalist-facing UX. First-party analytics only. Reader-facing surfaces use Plausible self-hosted or GoatCounter at most; product UX collects nothing without explicit per-tenant consent.
+3. **No third-party trackers** in any OnlineJourno-controlled Layer 1 surface (`onlinejourno.com`, `app.onlinejourno.com` product chrome, `try.onlinejourno.com`, admin UI of the platform shipped by OnlineJourno) — no Google Analytics, no Facebook Pixel, no Hotjar, no Intercom, no Segment, nothing that fingerprints visitors.
+4. **No commercial-vendor analytics on OnlineJourno's own marketing or admin UX.** Layer 1 first-party analytics only. The platform ships with Plausible self-hosted or GoatCounter as the values-aligned default for tenants who want one; tenants who prefer a commercial analytics vendor configure it at Layer 2.
 5. **Donation channels prefer OpenCollective and LiberaPay** over GitHub Sponsors (which is owned by Microsoft and goes through Stripe / commercial rails). GitHub Sponsors may be enabled as a convenience for users who already have a GitHub account, but is not the primary channel.
-6. **No Big-Tech-funded grants Y1**. Google News Initiative, Meta Journalism Project, ICFJ-via-Facebook are refused. Independent journalism grants (Reuters Institute, IJNet, Indian journalism trusts not funded by Big Tech) remain considered.
+6. **No Big-Tech-funded grants Y1** for OnlineJourno's own funding. Google News Initiative, Meta Journalism Project, ICFJ-via-Facebook are refused. Independent journalism grants (Reuters Institute, IJNet, Indian journalism trusts not funded by Big Tech) remain considered. (Tenants are free to receive funding from anywhere; this rule is about the OnlineJourno project's funding sources only.)
 7. **AI provider lock-in is acknowledged but bounded**. Anthropic API is currently tier-4 (commercial SaaS) for shortlist and brief composition. Adapter contract (ADR 0007) keeps the seam thin. Y3+ revisit: local model option (Ollama, vLLM) for tenants who want zero external-AI dependency.
+8. **Tenant integrations remain neutral.** The platform's admin UI must expose a configurable analytics provider, configurable notification destination, configurable CMS adapter, and configurable identity provider per tenant. Default to values-aligned options; never block the tenant from selecting a commercial alternative.
 
 ## Current-state audit (Wk 1)
 
@@ -56,13 +99,22 @@ The PLAYGROUND-PLAN's recommendation of Cloudflare Pages for `try.onlinejourno.c
 
 This audit is repeated annually (every June) by the founder. Any tier-4 entry whose FOSS or no-tracking alternative has matured during the year is migrated. The review is committed as a dated note in `docs/values-audit/<year>.md`.
 
-## What this ADR refuses
+## What this ADR refuses (on Layer 1 only)
 
-- Google Analytics, Google Tag Manager, Facebook Pixel, Segment, Mixpanel, Amplitude, Hotjar, Intercom — refused outright.
-- X (Twitter) advertising or X-funded distribution — refused.
-- Google News Initiative, Meta Journalism Project, Apple News Initiative funding — refused Y1 (revisit only if funding mechanism cleanly separated from the parent platform's interests).
-- "Best Stack", "Pingdom", "Datadog Synthetic", "New Relic Synthetic" or similar commercial uptime SaaS — refused unless ntfy + cron pattern becomes operationally unworkable, with explicit ADR.
-- Embedded vendor scripts (Stripe embedded, Intercom widget, marketing pixels) in product UX — refused.
+- Google Analytics, Google Tag Manager, Facebook Pixel, Segment, Mixpanel, Amplitude, Hotjar, Intercom embedded on `onlinejourno.com`, `app.onlinejourno.com` product chrome, `try.onlinejourno.com`, or any other OnlineJourno-operated surface — refused outright.
+- X (Twitter) advertising for OnlineJourno's own marketing or X-funded distribution of OnlineJourno content — refused.
+- Google News Initiative, Meta Journalism Project, Apple News Initiative funding **for the OnlineJourno project itself** — refused Y1 (revisit only if funding mechanism cleanly separated from the parent platform's interests).
+- "Best Stack", "Pingdom", "Datadog Synthetic", "New Relic Synthetic" or similar commercial uptime SaaS for OnlineJourno's own monitoring — refused unless ntfy + cron pattern becomes operationally unworkable, with explicit ADR.
+- Embedded vendor scripts (Stripe embedded, Intercom widget, marketing pixels) in OnlineJourno-controlled product UX — refused.
+
+### What this ADR explicitly allows
+
+- A tenant newsroom configuring GA4, GTM, Adobe Analytics, Segment, Mixpanel, or any other vendor at Layer 2 for *their own* reader-facing surfaces — **allowed**, by configuration, with platform-provided adapter.
+- A tenant newsroom integrating with Microsoft Teams, Slack, Office 365, or any other commercial collaboration tool for *their internal* notifications — **allowed**, by configuration.
+- A tenant newsroom receiving funding from Google News Initiative, Meta Journalism Project, or any commercial sponsor — **allowed**; the platform does not police tenant funding choices.
+- A tenant newsroom hosting on a Cloudflare-backed CDN or behind any commercial firewall for their own content — **allowed**.
+
+The platform's neutrality at Layer 2 is what makes it usable by mainstream newsrooms while still letting the OnlineJourno project itself stay FOSS-first.
 
 ## Consequences
 
