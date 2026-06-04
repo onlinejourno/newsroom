@@ -19,6 +19,7 @@ The product is built **journalist-first**. The primary user is the working repor
 4. **Trust ladder, not feature ladder.** Roadmap rungs are "the editor stops double-checking," not "the editor sees a new chart."
 5. **Reject signal beats accept signal.** Capture *why* a journalist skipped an item; that dataset is the moat.
 6. **Source attribution always.** Even in composed briefs, every claim links to the raw release or page.
+7. **FOSS-first for OnlineJourno; configurable for tenants (ADR 0028).** OnlineJourno's own technology decisions (Layer 1) default to FOSS, self-hostable, no-tracking. Commercial SaaS is a last resort with a written exit plan; Big-Tech surveillance vendors (Google Analytics, Facebook Pixel, etc.) are refused on Layer 1 outright; Big-Tech-funded grants are refused for the project Y1. **However, the platform stays neutral and configurable at Layer 2:** newsroom tenants are free to plug in GA4, GTM, Adobe Analytics, Segment, Microsoft Teams, or any other vendor they already operate. The platform exposes adapter hooks for every integration; tenants choose.
 
 ## Domain glossary
 
