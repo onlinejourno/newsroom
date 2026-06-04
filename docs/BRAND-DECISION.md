@@ -136,7 +136,8 @@ Locked Wed Jun 3: **indie open-source sustainability**, not venture growth.
 | Training + workshops | One-day or remote sessions for newsroom teams | Secondary |
 | Accuracy + consistency audits | Monthly subscription; reviews shortlist + brief quality vs. editor expectations | Y2+ |
 | Plugin marketplace | Y2+ — third-party plugins with revenue share | Y2+ |
-| GitHub Sponsors / OpenCollective | Voluntary support from non-customer community | Y2+ |
+| OpenCollective + LiberaPay (primary) | Voluntary support from non-customer community; FOSS-aligned channels per ADR 0028 | Y2+ |
+| GitHub Sponsors (convenience layer) | Optional secondary channel for users already on GitHub; not primary because GitHub is Microsoft-owned and routes via commercial rails | Y2+ |
 | Newsroom consulting | Bespoke advisory engagements | Opportunistic |
 
 ### Sustainability rules (codified in ADR 0026)

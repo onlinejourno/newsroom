@@ -19,6 +19,7 @@ The product is built **journalist-first**. The primary user is the working repor
 4. **Trust ladder, not feature ladder.** Roadmap rungs are "the editor stops double-checking," not "the editor sees a new chart."
 5. **Reject signal beats accept signal.** Capture *why* a journalist skipped an item; that dataset is the moat.
 6. **Source attribution always.** Even in composed briefs, every claim links to the raw release or page.
+7. **FOSS-first, no tracking, self-hostable preferred (ADR 0028).** Every technology decision starts from FOSS and self-hostable. Commercial SaaS is a last resort with a written exit plan. Big-Tech surveillance vendors (Google Analytics, Facebook Pixel, etc.) are refused outright. Big-Tech-funded grants are refused Y1.
 
 ## Domain glossary
 
