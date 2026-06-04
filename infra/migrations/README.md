@@ -28,17 +28,34 @@ For the Apache 2.0 spirit: no migration tool is required. A short shell loop and
 
 ## Extensions
 
-The initial migration assumes the `pgcrypto` and `vector` extensions are available. On macOS:
+The initial migration assumes the `pgcrypto` and `vector` extensions are available.
+
+### macOS (Homebrew)
 
 ```bash
-brew install postgresql@15 pgvector
-brew services start postgresql@15
+brew install postgresql@17 pgvector
+brew services start postgresql@17
+echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zshrc
+exec zsh
 ```
 
-On Debian/Ubuntu:
+**Postgres version note.** Homebrew's `pgvector` formula ships prebuilt
+binaries for Postgres 17 and 18 only as of 2026-06. Postgres 15 or 16 work
+with pgvector but require a source build (`PG_CONFIG=/opt/homebrew/opt/postgresql@15/bin/pg_config brew install --build-from-source pgvector`).
+The path of least resistance on macOS is `postgresql@17`; the platform's
+production target is also `postgresql@17` for parity.
+
+**Anaconda warning.** Anaconda ships its own `pg_config`, `psql`, and
+`python` and silently intercepts the corresponding binaries. If you have
+Anaconda installed, either uninstall it or ensure your shell `PATH` puts
+`/opt/homebrew/opt/postgresql@17/bin` and the platform's `uv`-managed
+virtualenv ahead of `/opt/anaconda3/bin`. Without this, migrations may
+appear to work but bind to the wrong Postgres install.
+
+### Debian / Ubuntu
 
 ```bash
-sudo apt install postgresql-15 postgresql-15-pgvector
+sudo apt install postgresql-17 postgresql-17-pgvector
 sudo systemctl start postgresql
 ```
 

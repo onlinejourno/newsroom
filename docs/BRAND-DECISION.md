@@ -35,7 +35,7 @@ Locked Mon Jun 1, 2026.
 |---------|-------|-----|
 | Marketing (`onlinejourno.com` root + `www`) | **WordPress on Bluehost.in** | Already paid; WP-tuned shared hosting; non-technical edits possible; SEO-friendly. |
 | Product (`app.onlinejourno.com`) | **Fly.io PAYG, Mumbai (BOM) region** | Native Node 20 + Python; Postgres + pgvector co-located; India edge; `flyctl deploy`; pay only for used capacity. |
-| Database | **Self-managed Postgres in Fly machine Y1**, upgrade to managed Postgres add-on when first paying customer arrives | Self-managed ~$2/mo idle; managed = $15/mo min. Defer until revenue justifies. |
+| Database | **Self-managed Postgres 17 + pgvector in Fly machine Y1**, upgrade to managed Postgres add-on when first paying customer arrives | Self-managed ~$2/mo idle; managed = $15/mo min. Defer until revenue justifies. Local dev also Postgres 17 — pgvector via Homebrew has prebuilt extension for 17 and 18 only; earlier versions need source build. |
 | Workers (Python collectors + scorers) | **Separate Fly machine** in same app | Co-located, private network access to Postgres. |
 | Object storage | TBD — likely Cloudflare R2 (egress-free) when scrapers cache pages | Defer until needed. |
 

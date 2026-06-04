@@ -47,7 +47,36 @@ docs/         # ADRs, plans, ledgers, decisions
 
 All audit and decision deliverables shipped ahead of the Fri Jun 5 hard cap. See `docs/WK0-PLAN.md` for the day-by-day record. Founder's one remaining Wk 0 task: fill three candidate names in `docs/DESIGN-PARTNER-SHORTLIST.md` and send outreach Mon Jun 8.
 
-Wk 1 build begins Mon Jun 8. First end-of-week target: one RSS source → ingest → Postgres → minimal Next.js view (the platform's "hello world" thread).
+Wk 1 vertical slice (pulled forward, complete): one RSS source → ingest → Postgres → minimal Next.js view. Confirmed running locally.
+
+## Local development setup
+
+See `docs/SETUP.md` for the full developer onboarding flow (Postgres 17,
+pgvector, uv, Anaconda warning, environment variables, common gotchas).
+
+Quick recap:
+
+```bash
+brew install postgresql@17 pgvector uv
+brew services start postgresql@17
+echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zshrc
+exec zsh
+
+git clone https://github.com/onlinejourno/platform.git
+cd platform
+cp .env.local.example .env
+ln -s ../../.env apps/web/.env   # Next.js reads from apps/web/.env
+
+createdb onlinejourno_dev
+DATABASE_URL=onlinejourno_dev pnpm db:migrate
+DATABASE_URL=onlinejourno_dev pnpm db:seed:dev
+
+pnpm install
+pnpm ingest:install
+pnpm ingest collect --tenant self --beat markets-regulatory
+pnpm dev
+# open http://localhost:3000/en/signals
+```
 
 ## License
 
