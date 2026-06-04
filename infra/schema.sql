@@ -61,7 +61,8 @@ create table sources (
   false_alarm_rate   real,                              -- learned over time
   last_seen_at       timestamptz,                       -- portal-health: when last successful ingest
   consecutive_failures integer not null default 0,      -- portal-health: rises until threshold triggers editorial alert
-  created_at         timestamptz not null default now()
+  created_at         timestamptz not null default now(),
+  constraint sources_tenant_name_unique unique (tenant_id, name)
 );
 
 create index on sources (tenant_id, enabled);

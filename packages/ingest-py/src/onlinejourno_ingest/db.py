@@ -4,6 +4,15 @@ Connection lifecycle, collector run records, and signal upserts. All queries
 include `tenant_id` (ADR 0005 row-level multi-tenancy). Row-level security
 policies are added in a later migration; meanwhile every helper here is
 explicit about its tenant.
+
+Connection semantics
+--------------------
+
+`connect()` is a context manager wrapping `psycopg.connect(...)`. psycopg3
+commits the in-flight transaction on a clean `__exit__` and rolls back on
+an exception. Callers should *not* call `conn.commit()` explicitly inside
+the `with` block — let the contextmanager do it. Use multiple `with
+connect()` blocks if you need each to be its own transaction.
 """
 
 from __future__ import annotations
@@ -11,32 +20,36 @@ from __future__ import annotations
 import os
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterator
+from uuid import UUID
 
 import psycopg
 from dotenv import load_dotenv
 from psycopg.rows import dict_row
+from psycopg.types.json import Json
 
 from onlinejourno_ingest.protocols import Signal
 
 
-def _load_env() -> None:
-    """Load `.env` from the repo root if present."""
+@lru_cache(maxsize=1)
+def _load_env_once() -> None:
+    """Load `.env` from the repo root if present. Called at most once per process."""
     here = Path(__file__).resolve()
     for parent in here.parents:
         candidate = parent / ".env"
         if candidate.exists():
             load_dotenv(candidate)
             return
-        # stop at the repo root marker
+        # stop walking at the repo root marker
         if (parent / "pnpm-workspace.yaml").exists():
             return
 
 
 def database_url() -> str:
     """Return the configured DATABASE_URL or raise."""
-    _load_env()
+    _load_env_once()
     url = os.environ.get("DATABASE_URL")
     if not url:
         raise RuntimeError(
@@ -47,7 +60,12 @@ def database_url() -> str:
 
 @contextmanager
 def connect() -> Iterator[psycopg.Connection]:
-    """Yield a psycopg connection using DATABASE_URL. Caller manages txn."""
+    """Yield a psycopg connection that commits on clean exit, rolls back on error.
+
+    Do not call `conn.commit()` inside the `with` block; psycopg3 commits on
+    `__exit__`. Use a new `with connect()` block when you need a fresh
+    transaction.
+    """
     with psycopg.connect(database_url(), row_factory=dict_row) as conn:
         yield conn
 
@@ -61,8 +79,8 @@ def now_utc() -> datetime:
 # ----------------------------------------------------------------------
 
 
-def tenant_id_for_slug(conn: psycopg.Connection, slug: str) -> str:
-    """Resolve a tenant slug ('self', 'midsize-daily-x') to its uuid."""
+def tenant_id_for_slug(conn: psycopg.Connection, slug: str) -> UUID:
+    """Resolve a tenant slug ('self', 'midsize-daily-x') to its UUID."""
     with conn.cursor() as cur:
         cur.execute("select id from tenants where slug = %s", (slug,))
         row = cur.fetchone()
@@ -73,7 +91,7 @@ def tenant_id_for_slug(conn: psycopg.Connection, slug: str) -> str:
 
 def enabled_sources(
     conn: psycopg.Connection,
-    tenant_id: str,
+    tenant_id: UUID,
     *,
     kind: str | None = None,
     beat_tag: str | None = None,
@@ -101,11 +119,11 @@ def enabled_sources(
 def start_run(
     conn: psycopg.Connection,
     *,
-    tenant_id: str,
+    tenant_id: UUID,
     collector: str,
-    source_id: str | None = None,
-) -> str:
-    """Insert a `collector_runs` row in 'running' state, return its id."""
+    source_id: UUID | None = None,
+) -> UUID:
+    """Insert a `collector_runs` row in 'running' state, return its UUID."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -123,7 +141,7 @@ def start_run(
 def finish_run(
     conn: psycopg.Connection,
     *,
-    run_id: str,
+    run_id: UUID,
     status: str,
     items_count: int,
     notes: str | None = None,
@@ -152,7 +170,7 @@ def upsert_signal(
     conn: psycopg.Connection,
     *,
     signal: Signal,
-    run_id: str | None,
+    run_id: UUID | None,
 ) -> bool:
     """Insert a signal. Returns True if inserted, False if it was a duplicate."""
     with conn.cursor() as cur:
@@ -179,13 +197,13 @@ def upsert_signal(
                 signal.published_at,
                 signal.fetched_at or now_utc(),
                 signal.language,
-                psycopg.types.json.Json(signal.raw_payload),
+                Json(signal.raw_payload),
             ),
         )
         return cur.fetchone() is not None
 
 
-def mark_source_seen(conn: psycopg.Connection, source_id: str) -> None:
+def mark_source_seen(conn: psycopg.Connection, source_id: UUID) -> None:
     """Record a successful ingest for portal-health tracking (ADR 0014)."""
     with conn.cursor() as cur:
         cur.execute(
@@ -199,7 +217,7 @@ def mark_source_seen(conn: psycopg.Connection, source_id: str) -> None:
         )
 
 
-def mark_source_failed(conn: psycopg.Connection, source_id: str) -> None:
+def mark_source_failed(conn: psycopg.Connection, source_id: UUID) -> None:
     """Increment the failure counter for portal-health alerting."""
     with conn.cursor() as cur:
         cur.execute(

@@ -4,6 +4,10 @@ Ported from discover-dashboard's two-protocol convention (AD-001, AD-005,
 AD-009): each collector returns a list of typed `Signal` objects, raises
 `FetchError` on unrecoverable failure, and never leaks raw library types
 (feedparser entries, BeautifulSoup nodes) past this seam.
+
+Identity types are `uuid.UUID` throughout — psycopg returns UUID column
+values as `uuid.UUID`; carrying the same type past the seam avoids the
+silent str/UUID lie that would otherwise show up in dataclass annotations.
 """
 
 from __future__ import annotations
@@ -11,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Protocol
+from uuid import UUID
 
 
 class FetchError(Exception):
@@ -30,8 +35,8 @@ class Signal:
     storage-agnostic; the `db` module knows how to upsert it into Postgres.
     """
 
-    tenant_id: str
-    source_id: str
+    tenant_id: UUID
+    source_id: UUID
     url: str
     url_hash: str
     headline: str | None = None

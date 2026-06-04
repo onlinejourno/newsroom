@@ -20,6 +20,7 @@
     "lint": "pnpm --filter @onlinejourno/web lint",
     "type-check": "pnpm --filter @onlinejourno/web type-check",
     "db:migrate": "for f in infra/migrations/[0-9]*.sql; do echo \"-- $f --\"; psql \"${DATABASE_URL:-onlinejourno_dev}\" -f \"$f\" || exit 1; done",
+    "db:seed:dev": "psql \"${DATABASE_URL:-onlinejourno_dev}\" -f infra/seeds/dev.sql",
     "ingest": "cd packages/ingest-py && python -m onlinejourno_ingest.cli",
     "ingest:install": "cd packages/ingest-py && uv pip install -e ."
   },

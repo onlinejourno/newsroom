@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
 const LIMIT = 20;
+const BODY_TRUNCATE_CHARS = 280;
 
 function formatDate(value: Date | null): string {
   if (!value) return "—";
@@ -12,6 +13,35 @@ function formatDate(value: Date | null): string {
     timeStyle: "short",
     timeZone: "Asia/Kolkata",
   }).format(new Date(value));
+}
+
+/**
+ * Strip HTML tags and decode the common entities that show up in RSS
+ * summaries, then collapse whitespace. RSS feeds frequently put marked-up
+ * HTML in `<description>` / `<summary>`; rendering it as plain text avoids
+ * raw `<p>` tags showing in the UI and prevents truncation from cutting
+ * mid-tag.
+ */
+function stripHtml(value: string): string {
+  return value
+    .replace(/<\/?[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncate(value: string, max: number): string {
+  if (value.length <= max) return value;
+  // Trim at the nearest word boundary before `max` so truncation does not
+  // cut a word in half.
+  const slice = value.slice(0, max);
+  const lastSpace = slice.lastIndexOf(" ");
+  return `${slice.slice(0, lastSpace > 0 ? lastSpace : max).trimEnd()}…`;
 }
 
 export default async function SignalsPage() {
@@ -109,9 +139,7 @@ export default async function SignalsPage() {
                     color: "var(--color-fg-secondary)",
                   }}
                 >
-                  {signal.body_text.length > 280
-                    ? `${signal.body_text.slice(0, 280)}…`
-                    : signal.body_text}
+                  {truncate(stripHtml(signal.body_text), BODY_TRUNCATE_CHARS)}
                 </p>
               ) : null}
               <p

@@ -3,15 +3,19 @@
 Ported from news-intel `src/collect_rss.py`. Differences from the
 original:
 
-* Multi-tenant: signals carry `tenant_id` and `source_id`.
+* Multi-tenant: signals carry `tenant_id` and `source_id` as UUIDs.
 * Domain types past the seam: returns `list[Signal]`, not raw feedparser entries.
 * `FetchError` on unrecoverable failure rather than silent `[]`.
 * Construction-time config (timeout, max items per source).
+* Timezone-aware published_at parsing — prefers RFC 2822 raw strings over
+  feedparser's struct_time (which assumes UTC and silently drifts when a
+  source emits naive local time).
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import urljoin
 
@@ -128,7 +132,31 @@ class RSSCollector:
 
 
 def _parse_published(entry: Any) -> datetime | None:
-    """Parse an entry's published / updated time into a UTC datetime."""
+    """Parse an entry's published / updated time into a timezone-aware UTC datetime.
+
+    Strategy:
+        1. Try the raw RFC 2822 string (`entry.published` or `entry.updated`)
+           through `email.utils.parsedate_to_datetime` — this preserves the
+           originating timezone offset and avoids the silent-UTC assumption
+           feedparser makes for naive datetimes.
+        2. Fall back to feedparser's `*_parsed` struct_time, which is in
+           UTC when the source had an explicit timezone and otherwise
+           reflects whatever feedparser's heuristics produced.
+
+    Returns a UTC-normalised `datetime` or `None`.
+    """
+    raw = entry.get("published") or entry.get("updated")
+    if raw:
+        try:
+            dt = parsedate_to_datetime(raw)
+        except (TypeError, ValueError):
+            dt = None
+        else:
+            if dt is not None:
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                return dt.astimezone(timezone.utc)
+
     parsed = entry.get("published_parsed") or entry.get("updated_parsed")
     if not parsed:
         return None

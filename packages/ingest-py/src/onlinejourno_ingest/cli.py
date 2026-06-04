@@ -4,12 +4,18 @@
 
 Runs the appropriate collector for each enabled source under the tenant,
 writes signals to Postgres, and updates portal-health timestamps.
+
+Run lifecycle is exception-safe: every started `collector_runs` row is
+finished with either 'success' or 'failed' status, even when the collector
+raises an unexpected exception. No orphan 'running' rows.
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+from typing import Any
+from uuid import UUID
 
 from onlinejourno_ingest.collectors.rss import RSSCollector
 from onlinejourno_ingest.db import (
@@ -24,10 +30,103 @@ from onlinejourno_ingest.db import (
 )
 from onlinejourno_ingest.protocols import FetchError
 
-
+# Map of source kind to a collector factory. Instances are created once per
+# CLI invocation (see `cmd_collect`) so HTTP sessions and any per-collector
+# state are reused across sources.
 COLLECTORS = {
     "rss": RSSCollector,
 }
+
+
+def _build_collectors(kinds: set[str]) -> dict[str, Any]:
+    """Instantiate one collector per kind that the run will use."""
+    instances: dict[str, Any] = {}
+    for kind in kinds:
+        if kind in COLLECTORS:
+            instances[kind] = COLLECTORS[kind]()
+    return instances
+
+
+def _run_one_source(
+    source: dict[str, Any],
+    collector: Any,
+) -> tuple[int, int, str | None]:
+    """Run a single source. Returns (new, parsed, error_note).
+
+    The run row is started, the collector fetches, signals are upserted, and
+    the run row is finished — all in well-scoped transactions. Any exception
+    is caught here so the caller's loop can keep going.
+
+    `error_note` is None on success, otherwise a short string describing the
+    failure.
+    """
+    source_id: UUID = source["id"]
+    tenant_id: UUID = source["tenant_id"]
+    kind: str = source["kind"]
+
+    with connect() as conn:
+        run_id = start_run(
+            conn,
+            tenant_id=tenant_id,
+            collector=kind,
+            source_id=source_id,
+        )
+
+    try:
+        signals = collector.fetch(source)
+    except FetchError as exc:
+        with connect() as conn:
+            mark_source_failed(conn, source_id)
+            finish_run(
+                conn,
+                run_id=run_id,
+                status="failed",
+                items_count=0,
+                notes=str(exc),
+            )
+        return 0, 0, str(exc)
+    except Exception as exc:
+        # Any unexpected exception still finishes the run row so it does
+        # not stay in 'running' state forever.
+        with connect() as conn:
+            mark_source_failed(conn, source_id)
+            finish_run(
+                conn,
+                run_id=run_id,
+                status="failed",
+                items_count=0,
+                notes=f"unexpected error: {exc!r}",
+            )
+        return 0, 0, f"unexpected: {exc!r}"
+
+    new_for_source = 0
+    try:
+        with connect() as conn:
+            for signal in signals:
+                if upsert_signal(conn, signal=signal, run_id=run_id):
+                    new_for_source += 1
+            mark_source_seen(conn, source_id)
+            finish_run(
+                conn,
+                run_id=run_id,
+                status="success",
+                items_count=len(signals),
+                notes=f"+{new_for_source} new of {len(signals)} parsed",
+            )
+    except Exception as exc:
+        # Upsert failed for some reason (e.g., Postgres outage mid-loop).
+        # Finish the run row as failed in a fresh connection.
+        with connect() as conn:
+            finish_run(
+                conn,
+                run_id=run_id,
+                status="failed",
+                items_count=new_for_source,
+                notes=f"upsert error: {exc!r}",
+            )
+        return new_for_source, len(signals), f"upsert: {exc!r}"
+
+    return new_for_source, len(signals), None
 
 
 def cmd_collect(args: argparse.Namespace) -> int:
@@ -52,75 +151,33 @@ def cmd_collect(args: argparse.Namespace) -> int:
         )
         return 1
 
+    # Instantiate one collector per kind, reused for the whole run.
+    collectors = _build_collectors({source["kind"] for source in sources})
+
     total_new = 0
-    total_seen = 0
+    total_parsed = 0
     failed_sources = 0
 
     for source in sources:
         kind = source["kind"]
-        if kind not in COLLECTORS:
+        collector = collectors.get(kind)
+        if collector is None:
             print(f"  {source['name']:<32} skipped: kind '{kind}' has no collector yet")
             continue
 
-        collector = COLLECTORS[kind]()
-
-        # Each source gets its own short transaction. Failure of one source
-        # does not roll back signals from another.
-        try:
-            with connect() as conn:
-                run_id = start_run(
-                    conn,
-                    tenant_id=source["tenant_id"],
-                    collector=kind,
-                    source_id=source["id"],
-                )
-                conn.commit()
-
-            try:
-                signals = collector.fetch(source)
-            except FetchError as exc:
-                with connect() as conn:
-                    mark_source_failed(conn, source["id"])
-                    finish_run(
-                        conn,
-                        run_id=run_id,
-                        status="failed",
-                        items_count=0,
-                        notes=str(exc),
-                    )
-                    conn.commit()
-                print(f"  {source['name']:<32} FAILED: {exc}")
-                failed_sources += 1
-                continue
-
-            new_for_source = 0
-            with connect() as conn:
-                for signal in signals:
-                    if upsert_signal(conn, signal=signal, run_id=run_id):
-                        new_for_source += 1
-                mark_source_seen(conn, source["id"])
-                finish_run(
-                    conn,
-                    run_id=run_id,
-                    status="success",
-                    items_count=len(signals),
-                    notes=f"+{new_for_source} new of {len(signals)} parsed",
-                )
-                conn.commit()
-
-            total_new += new_for_source
-            total_seen += len(signals)
-            print(
-                f"  {source['name']:<32} +{new_for_source:<4} "
-                f"({len(signals)} parsed)"
-            )
-        except Exception as exc:
-            print(f"  {source['name']:<32} ERROR: {exc}")
+        new, parsed, error = _run_one_source(source, collector)
+        total_new += new
+        total_parsed += parsed
+        if error is not None:
             failed_sources += 1
+            print(f"  {source['name']:<32} FAILED: {error}")
+        else:
+            print(f"  {source['name']:<32} +{new:<4} ({parsed} parsed)")
 
+    successful = len(sources) - failed_sources
     print(
-        f"\nDone. {total_new} new signals from {len(sources) - failed_sources}"
-        f" of {len(sources)} sources ({total_seen} parsed total)."
+        f"\nDone. {total_new} new signals from {successful} of {len(sources)}"
+        f" sources ({total_parsed} parsed total)."
     )
     return 0 if failed_sources == 0 else 2
 

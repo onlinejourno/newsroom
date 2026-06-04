@@ -1,13 +1,15 @@
 # Migrations
 
 Numbered SQL files run sequentially against the OnlineJourno Postgres database.
+**Schema only.** Data fixtures live in `infra/seeds/`.
 
 ## Convention
 
 - `0001_init.sql` — initial schema (full DDL).
-- `NNNN_<name>.sql` — incremental migrations (ALTER, CREATE, etc.).
+- `NNNN_<name>.sql` — incremental migrations (ALTER, CREATE, etc.). Schema only — no INSERTs of fixtures.
 - Files are append-only after they are merged to `main`. Never edit a committed migration; write a new one.
 - `infra/schema.sql` at repo root mirrors the current consolidated state for documentation and IDE auto-completion. Source of truth is the migration files; schema.sql is regenerated.
+- Dev / test / prod data fixtures live under `infra/seeds/` and run via separate scripts (`pnpm db:seed:dev`, etc.). Migrations never insert fixtures.
 
 ## Applying locally
 

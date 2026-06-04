@@ -10,8 +10,13 @@ const globalForPool = globalThis as unknown as { __ojPool?: Pool };
 
 function getPool(): Pool {
   if (!globalForPool.__ojPool) {
-    const connectionString =
-      process.env.DATABASE_URL ?? "postgres://localhost:5432/onlinejourno_dev";
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error(
+        "DATABASE_URL is not set. Copy .env.local.example to .env and fill it in " +
+          "(see infra/migrations/README.md for the local Postgres setup).",
+      );
+    }
     globalForPool.__ojPool = new Pool({
       connectionString,
       max: 5,
