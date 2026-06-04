@@ -297,6 +297,55 @@ create table eval_gates (
 );
 
 -- ============================================================
+-- Trust primitives — AI-use disclosure on briefs (ADR 0029)
+-- ============================================================
+-- Every brief carries a structured AI-use disclosure: which models composed it,
+-- which agents were invoked, whether a human editor reviewed before delivery,
+-- and an optional human-readable disclosure string surfaced to readers when
+-- the brief is shared. Disclosure is part of trust-ladder, not optional metadata.
+
+alter table briefs
+  add column if not exists ai_disclosure jsonb not null default jsonb_build_object(
+    'models_used', '[]'::jsonb,
+    'agents_invoked', '[]'::jsonb,
+    'human_edited', false,
+    'human_editor_id', null,
+    'human_reviewed_at', null,
+    'disclosure_text', null,
+    'schema_version', 1
+  );
+
+-- ============================================================
+-- Trust primitives — off-record signal flag (ADR 0029)
+-- ============================================================
+-- A journalist can mark a signal off-record. Off-record signals:
+--   * are excluded from shortlist composition (ingest-score skips).
+--   * are excluded from brief composition (brief-compose skips).
+--   * are visible only to the marker and to the beat's editor.
+--   * remain stored in the signals table for audit; the flag is reversible.
+--   * never leave the tenant boundary (per ADR 0005 + ADR 0025).
+-- The reversal trail lives in signal_off_record_log for accountability.
+
+alter table signals
+  add column if not exists off_record boolean not null default false;
+
+create index if not exists signals_off_record_idx
+  on signals (tenant_id, off_record) where off_record = true;
+
+create table if not exists signal_off_record_log (
+  id              uuid primary key default gen_random_uuid(),
+  tenant_id       uuid not null references tenants(id) on delete cascade,
+  signal_id       uuid not null references signals(id) on delete cascade,
+  action          text not null check (action in ('marked','unmarked')),
+  actor_user_id   uuid references users(id),
+  occurred_at     timestamptz not null default now(),
+  reason          text                                  -- optional free text from the journalist
+);
+
+create index if not exists signal_off_record_log_tenant_signal_idx
+  on signal_off_record_log (tenant_id, signal_id, occurred_at desc);
+
+-- ============================================================
 -- Notes
 -- ============================================================
 -- 1. Row-level security policies are NOT in this draft. Wk 1 adds them per ADR 0005.
@@ -307,3 +356,6 @@ create table eval_gates (
 --    on sources; language detection on signals — together cover ADRs 0018-0020.
 -- 5. Portal-health alerts surface scraper-rot as editorial signal, not silent engineering
 --    alert (premortem #6, ADR 0014).
+-- 6. AI-use disclosure on briefs + off-record signal flag are first-class trust
+--    primitives (ADR 0029); brief composer must populate disclosure; ingest-score
+--    and brief-compose must filter out off-record signals.
