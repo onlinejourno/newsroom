@@ -19,6 +19,12 @@ from onlinejourno_agents.client import (
     provider_config_from_env,
 )
 from onlinejourno_agents.ingest_score import _coerce_beat_tag, _coerce_score
+from onlinejourno_agents.keywords import (
+    KeywordVolume,
+    best_for,
+    fetch_volumes,
+    parse_response,
+)
 from onlinejourno_agents.prompts import (
     BEAT_TAGS,
     build_brief_prompt,
@@ -178,3 +184,54 @@ def test_provider_config_unknown_provider_raises(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "groqzilla")
     with pytest.raises(ValueError):
         provider_config_from_env()
+
+
+# --- keywords everywhere (Search-fit) -----------------------------------
+
+def _kv(name, vol, trend_vals):
+    return KeywordVolume(
+        keyword=name, volume=vol, competition=0.0,
+        trend=[{"value": v} for v in trend_vals],
+    )
+
+
+def test_trend_direction():
+    assert _kv("a", 100, [10, 10, 10, 30, 30, 30]).trend_direction == "rising"
+    assert _kv("a", 100, [30, 30, 30, 10, 10, 10]).trend_direction == "falling"
+    assert _kv("a", 100, [20, 20, 20, 21, 20, 19]).trend_direction == "flat"
+    assert _kv("a", 100, [10, 20]).trend_direction == "flat"  # too few points
+
+
+def test_parse_response():
+    payload = {"data": [
+        {"keyword": "Repo Rate", "vol": 135000, "competition": 0.1,
+         "trend": [{"month": "May", "year": 2026, "value": 74000}]},
+        {"keyword": "", "vol": 5},  # skipped (no keyword)
+    ]}
+    out = parse_response(payload)
+    assert "repo rate" in out and out["repo rate"].volume == 135000
+    assert len(out) == 1
+
+
+def test_best_for_picks_highest_volume():
+    vols = {"repo rate": _kv("repo rate", 135000, []), "rbi mpc": _kv("rbi mpc", 18100, [])}
+    assert best_for(["RBI MPC", "Repo Rate"], vols).keyword == "repo rate"
+    assert best_for(["nonexistent"], vols) is None
+
+
+def test_fetch_volumes_no_key_returns_empty(monkeypatch):
+    monkeypatch.delenv("KEYWORDS_EVERYWHERE_API_KEY", raising=False)
+    assert fetch_volumes(["repo rate"]) == {}
+    assert fetch_volumes([], key="x") == {}  # no keywords
+
+
+def test_render_search_fit_strong_and_weak():
+    content = {"meta": {}, "sections": [
+        {"heading": "RBI", "body": "x", "signals": [],
+         "search_fit": {"keyword": "repo rate", "volume": 135000, "trend": "rising"}},
+        {"heading": "SEBI scoop", "body": "y", "signals": [],
+         "search_fit": {"keyword": "rajesh exports sebi", "volume": 0, "trend": "flat"}},
+    ]}
+    md = brief_to_markdown(content)
+    assert "Search fit:** strong" in md and "repo rate" in md and "135,000" in md
+    assert "Search fit:** weak" in md and "not a Search play" in md

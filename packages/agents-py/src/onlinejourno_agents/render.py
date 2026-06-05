@@ -48,6 +48,21 @@ def brief_to_markdown(
         if body:
             lines.append(body)
             lines.append("")
+        fit = sec.get("search_fit")
+        if fit and fit.get("keyword"):
+            vol = fit.get("volume") or 0
+            if vol >= 1000:
+                arrow = {"rising": "↑", "falling": "↓"}.get(fit.get("trend"), "→")
+                lines.append(
+                    f"**Search fit:** strong — \"{fit['keyword']}\" "
+                    f"{vol:,}/mo {arrow}"
+                )
+            else:
+                lines.append(
+                    f"**Search fit:** weak — \"{fit['keyword']}\" {vol:,}/mo; "
+                    f"this is a Direct/loyalty story, not a Search play"
+                )
+            lines.append("")
         sids = sec.get("signals") or []
         if sids:
             lines.append("Sources:")

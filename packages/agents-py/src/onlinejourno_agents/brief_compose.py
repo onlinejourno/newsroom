@@ -14,7 +14,7 @@ from datetime import date
 from typing import Any
 from uuid import UUID
 
-from onlinejourno_agents import db
+from onlinejourno_agents import db, keywords
 from onlinejourno_agents.client import Completion
 from onlinejourno_agents.prompts import build_brief_prompt, default_editorial_dna
 
@@ -93,14 +93,33 @@ def run_brief(
         for sec in raw_sections:
             if not isinstance(sec, dict):
                 continue
+            kws = sec.get("search_keywords")
+            kws = [str(k).strip() for k in kws if str(k).strip()] if isinstance(kws, list) else []
             sections.append(
                 {
                     "heading": str(sec.get("heading") or "").strip(),
                     "lede_one_liner": str(sec.get("lede_one_liner") or "").strip(),
                     "body": str(sec.get("body") or "").strip(),
                     "signals": _map_cites(sec.get("cites"), signal_ids),
+                    "search_keywords": kws,
                 }
             )
+
+    # Distribution-fit (Search): real search volume per section, best-effort.
+    # No KE key -> skipped, brief still composes. (Keywords Everywhere REST.)
+    all_kws = [k for sec in sections for k in sec["search_keywords"]]
+    volumes = keywords.fetch_volumes(all_kws)
+    for sec in sections:
+        kv = keywords.best_for(sec["search_keywords"], volumes)
+        sec["search_fit"] = (
+            {
+                "keyword": kv.keyword,
+                "volume": kv.volume,
+                "trend": kv.trend_direction,
+            }
+            if kv
+            else None
+        )
 
     content = {
         "sections": sections,
