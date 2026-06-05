@@ -55,6 +55,25 @@ where t.slug = 'self'
 on conflict (tenant_id, slug) do nothing;
 
 -- ============================================================
+-- Desk editor (dev) — brief-compose attributes the desk brief to a user
+-- (briefs.for_user is NOT NULL). One editor is enough for the MVP desk brief.
+-- ============================================================
+insert into users (tenant_id, email, display_name, role, beat_focus, locale, mode)
+select t.id, 'editor@onlinejournalism.in', 'Desk Editor (dev)', 'editor',
+       '{markets-regulatory}', 'en-IN', 'senior'
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, email) do nothing;
+
+insert into beat_assignments (tenant_id, beat_id, user_id)
+select t.id, b.id, u.id
+from tenants t
+join beats b on b.tenant_id = t.id and b.slug = 'markets-regulatory'
+join users u on u.tenant_id = t.id and u.email = 'editor@onlinejournalism.in'
+where t.slug = 'self'
+on conflict (tenant_id, beat_id, user_id) do nothing;
+
+-- ============================================================
 -- Markets / Regulatory sources — Indian business journalism RSS
 --
 -- Reality note: most Indian regulators (RBI, SEBI, NSE, BSE, MCA, IBBI,

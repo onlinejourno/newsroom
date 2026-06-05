@@ -12,6 +12,7 @@ members = [
   "apps/worker",
   "packages/scoring-py",
   "packages/ingest-py",
+  "packages/agents-py",
 ]
 
 [tool.ruff]
