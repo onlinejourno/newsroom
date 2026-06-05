@@ -14,3 +14,19 @@ Editorial frameworks referenced in this product:
 These frameworks are public methodologies; their use in this product is
 non-exclusive and citation-only. No endorsement by the original authors
 or institutions is implied or claimed.
+
+OnlineJourno Xtnd capability tier (planned Y2+ release) extends the
+above with additional editorial reference points:
+
+- Reuters Institute, Digital News Report (annual) — distribution-surface
+  baselines.
+- News Product Alliance — converged-newsroom workflow patterns.
+- Membership Puzzle Project — reader-engagement framing for
+  subscription-fit modelling.
+- Google News Initiative — Discover-readiness rubric (image aspect,
+  structured data, freshness).
+
+OnlineJourno Xtnd was briefly maintained as a separate repository
+(github.com/onlinejourno/xtnd) from 2026-06-03 through 2026-06-05;
+content was merged into onlinejourno/platform on 2026-06-05 per
+ADR 0030. The xtnd repository is archived with this history preserved.
