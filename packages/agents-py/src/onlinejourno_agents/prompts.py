@@ -121,10 +121,13 @@ def build_brief_prompt(
         "what happened, why it matters, what to watch. Do not invent facts; use "
         "only what the items state. Every section must cite the item indices it "
         "draws from.\n\n"
-        "For each section also propose 1–3 `search_keywords`: the exact phrases a "
-        'reader would type into Google to find this story (e.g. "repo rate", '
-        '"sebi rajesh exports"). These are checked against real search volume to '
-        "tell the reporter whether the story is a Search play.\n\n"
+        "For each section also propose 2–3 `search_keywords`: BROAD, EVERGREEN head "
+        "terms a reader would actually type into Google — the general topic, not "
+        'dated or hyper-specific phrases. Good: "repo rate", "rupee dollar", '
+        '"sensex today", "gold price". Bad: "rbi mpc june 2026", "sebi rajesh '
+        'exports interim order". These are checked against real monthly search '
+        "volume to tell the reporter whether the story is a Search play, so favour "
+        "terms with genuine, recurring search demand.\n\n"
         "Respond with ONLY a JSON object, no prose, no markdown fences, in exactly "
         "this shape:\n"
         '{"sections": [{"heading": "<short section heading>", '
