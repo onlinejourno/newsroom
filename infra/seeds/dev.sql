@@ -69,18 +69,14 @@ on conflict (tenant_id, slug) do nothing;
 -- portal's collector lands in Wk 2+.
 -- ============================================================
 
--- The Hindu — Business
-insert into sources (
-  tenant_id, kind, name, url, rss_url, deuze_type,
-  beat_tags, expected_languages, enabled
-)
-select t.id, 'rss', 'The Hindu — Business',
-       'https://www.thehindu.com/business/',
-       'https://www.thehindu.com/business/feeder/default.rss',
-       'mainstream', '{markets-regulatory}', '{en}', true
-from tenants t
-where t.slug = 'self'
-on conflict (tenant_id, name) do nothing;
+-- Reachability classes — see docs/SOURCE-ROADMAP.md
+-- A: open RSS, ships now (enabled=true)
+-- B: Cloudflare-protected RSS, Wk 2+ (enabled=false until scrape lands)
+-- C: ASP.NET / JS-rendered portal, Wk 3+ (enabled=false until scrape lands)
+
+-- ============================================================
+-- Class A — Verified open RSS (working as of 2026-06-04)
+-- ============================================================
 
 -- Mint — Markets
 insert into sources (
@@ -90,32 +86,6 @@ insert into sources (
 select t.id, 'rss', 'Mint — Markets',
        'https://www.livemint.com/market',
        'https://www.livemint.com/rss/markets',
-       'mainstream', '{markets-regulatory}', '{en}', true
-from tenants t
-where t.slug = 'self'
-on conflict (tenant_id, name) do nothing;
-
--- Moneycontrol — Business
-insert into sources (
-  tenant_id, kind, name, url, rss_url, deuze_type,
-  beat_tags, expected_languages, enabled
-)
-select t.id, 'rss', 'Moneycontrol — Business',
-       'https://www.moneycontrol.com/news/business/',
-       'https://www.moneycontrol.com/rss/business.xml',
-       'mainstream', '{markets-regulatory}', '{en}', true
-from tenants t
-where t.slug = 'self'
-on conflict (tenant_id, name) do nothing;
-
--- Business Standard — Markets
-insert into sources (
-  tenant_id, kind, name, url, rss_url, deuze_type,
-  beat_tags, expected_languages, enabled
-)
-select t.id, 'rss', 'Business Standard — Markets',
-       'https://www.business-standard.com/markets',
-       'https://www.business-standard.com/rss/markets-106.rss',
        'mainstream', '{markets-regulatory}', '{en}', true
 from tenants t
 where t.slug = 'self'
@@ -134,10 +104,59 @@ from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
 
--- PIB — Finance Ministry releases
--- (Press Information Bureau is the government press service; this feed
--- covers Ministry of Finance announcements which often pre-empt RBI /
--- SEBI press releases.)
+-- ============================================================
+-- Class B — Cloudflare-protected RSS (disabled until Wk 2 scrape collector)
+-- These return 403 to plain curl, 200 in a real browser. Re-enable
+-- after the two-tier fetch lands (header tier + Playwright fallback).
+-- ============================================================
+
+-- The Hindu — Business (Class B)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'rss', 'The Hindu — Business',
+       'https://www.thehindu.com/business/',
+       'https://www.thehindu.com/business/feeder/default.rss',
+       'mainstream', '{markets-regulatory}', '{en}', false
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
+-- Moneycontrol — Business (Class B)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'rss', 'Moneycontrol — Business',
+       'https://www.moneycontrol.com/news/business/',
+       'https://www.moneycontrol.com/rss/business.xml',
+       'mainstream', '{markets-regulatory}', '{en}', false
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
+-- Business Standard — Markets (Class B)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'rss', 'Business Standard — Markets',
+       'https://www.business-standard.com/markets',
+       'https://www.business-standard.com/rss/markets-106.rss',
+       'mainstream', '{markets-regulatory}', '{en}', false
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
+-- ============================================================
+-- Class C — JS-rendered portals (disabled until Wk 3+ scrape collector)
+-- PIB has no working public RSS endpoint (`rss_feeds.aspx` returns 404,
+-- `RssMain.aspx` is an ASP.NET WebForm with Akamai). Real ingest path
+-- is the Playwright PRID-walker described in docs/SOURCE-ROADMAP.md.
+-- ============================================================
+
+-- PIB — Finance Ministry releases (Class C)
 insert into sources (
   tenant_id, kind, name, url, rss_url, deuze_type,
   beat_tags, expected_languages, enabled
@@ -145,7 +164,7 @@ insert into sources (
 select t.id, 'rss', 'PIB — Finance Ministry',
        'https://pib.gov.in/AllRelease.aspx',
        'https://pib.gov.in/RssMain.aspx?ModId=1&Lang=1&Regid=3',
-       'index_category', '{markets-regulatory}', '{en}', true
+       'index_category', '{markets-regulatory}', '{en}', false
 from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
