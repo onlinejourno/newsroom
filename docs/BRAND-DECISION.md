@@ -168,3 +168,96 @@ Even with no active pitching, basic hygiene avoids future debt.
 
 - This decision does not lock product feature set, pricing, or org structure beyond the founder-only baseline.
 - It does not commit to fundraising — it only avoids accumulating IP/legal debt that would slow a future raise.
+
+---
+
+# Xtnd capability tier — brand and infrastructure addendum
+
+**Status:** Locked 2026-06-05 via ADR 0030 (merge of `onlinejourno/xtnd` into this repo).
+
+OnlineJourno Xtnd is the **named capability tier** within OnlineJourno that ships the converged-newsroom orchestration modules from Y2 onward. It is not a separate product, not a separate repo, not a separate SKU. The brand label "OnlineJourno Xtnd" is preserved for marketing — similar to "Notion AI" or "GitHub Copilot Workspace" as named capability tiers within a parent product.
+
+## Xtnd-tier identity
+
+- **Tier name:** OnlineJourno Xtnd
+- **Tagline candidate (locked):** *Give every story a fair chance.*
+- **Positioning sentence:** OnlineJourno Xtnd is the converged-newsroom orchestration tier on top of OnlineJourno Platform — surfacing distribution intelligence to every role on a single canonical story object, from beat signal to post-publish diagnostic.
+- **Pricing Y2-Y3:** opt-in line items on platform invoicing; not a separate SKU.
+- **Visual identity:** inherits platform ADR 0013 verbatim. No second mark, no second palette, no second type stack. Optional Xtnd wordmark (designed Y2 H2 alongside the dedicated tier-landing surface) sits below the parent wordmark; never replaces it.
+
+## Xtnd-tier domain plan
+
+| Domain | Purpose | Status | Action |
+|--------|---------|--------|--------|
+| `xtnd.onlinejourno.com` | Xtnd-tier marketing landing + product navigation | **Reserved** Wk 0; goes live Wk 8+ when `app.onlinejourno.com` deploys to Fly.io. | Bluehost Zone Editor → CNAME, target same as `app.onlinejourno.com` (`<platform-fly-app>.fly.dev`). Same Fly.io app handles both via Host-header routing. `flyctl certs add xtnd.onlinejourno.com -a <platform-fly-app>`. |
+| `desk.onlinejourno.com` | Future: desk surface entry (Y2-3) | Reserved | Wait until Y2 build decides whether desk surface ships under `app.onlinejourno.com/desk` or under own subdomain. Decide end of Y2 H1. |
+| `m.onlinejourno.com` | Future: reporter mobile PWA shortcut (Y2-3) | Reserved | Same decision as `desk.` |
+
+## Xtnd-tier hosting
+
+| Surface | Where | Why |
+|---------|-------|-----|
+| `xtnd.onlinejourno.com` marketing | **Same Fly.io app as platform**; Host-header routing | One deploy, one cost, one Postgres |
+| Xtnd-tier module surfaces (desk, mobile PWA, diagnose, audit) Y2+ | **Same Fly.io app as platform** | ADR 0030 — capability tier is in the same codebase, deployed alongside |
+| Optional WP marketing landing for Xtnd-tier (Y2 H2) | WordPress on Bluehost at `/xtnd/`; decide based on marketing-team capacity vs developer-time | — |
+
+**Fly.io account:** same as platform's. No separate org; no separate billing line beyond what platform's `flyctl` operations record. Hard spend cap stays platform's (₹2,000/mo until first paying customer); Xtnd-tier Y2 deploys do not raise the cap until tier revenue justifies it.
+
+## Xtnd-tier business model
+
+Same posture as MVP-tier: indie OSS sustainable; no VC pursuit; grant funding once values fit verified; angel only if values-aligned. Xtnd-tier modules are opt-in line items on platform invoicing Y2-3. No separate ARR target Y2; revenue rolls into platform ARR. Y3+ Xtnd-tier may surface its own ARR line in `docs/CAP-TABLE.md` for clarity.
+
+## Xtnd-tier trademark
+
+"OnlineJourno Xtnd" is a sub-mark under the OnlineJourno trademark filed by platform (above). No separate trademark filing for "Xtnd" alone — too generic; would dilute "OnlineJourno." Sub-mark protection comes through use in commerce under the parent mark.
+
+## Marketing-site distinction
+
+`onlinejourno.com` (WordPress on Bluehost) must show the product family clearly: one product with two visible tiers. Full IA + nav + footer + per-tier page layouts + cross-promotion rules in `docs/MARKETING-SITE-SPEC.md`. Apply Wk 8 platform deploy week.
+
+## Voice and tone (Xtnd-tier)
+
+Inherits voice + tone above. Tier-specific phrases:
+
+- "Distribution-fit cue"
+- "Placement decision-support"
+- "Commission router"
+- "Post-publish diagnostic"
+- "Fair-chance audit"
+- "Canonical story object"
+- "Reporter-first surface"
+- "Companion mode"
+
+Refused vocabulary (would erode the journalist-built signal):
+
+- "AI-powered" (vague; everything is now)
+- "Workflow tool" (newsroom culture rejects; reads as bureaucracy)
+- "Smart" (lazy; specific over vague)
+- "Editorial AI" (overloaded; reads as drafting/replacement)
+- "Newsroom of the future" (boilerplate)
+- "Game-changing" (marketing fluff)
+
+## Differentiation map (Xtnd-tier vs incumbents)
+
+| Incumbent | Strength | Xtnd-tier contrast |
+|-----------|----------|---------------------|
+| Chartbeat | Real-time traffic dashboard | Pre-publish + post-publish + cross-role; not real-time-traffic-only |
+| Parse.ly | Audience analytics | Workflow-coupled; not measurement-only |
+| NewsWhip | Social monitoring | All surfaces (Discover, Search, Subscription, Direct, Social) on one object |
+| Trint / Descript | Transcription / audio production | Xtnd-tier commissions to these; doesn't replace them |
+| Naviga / Atex | Enterprise newsroom platforms | Open-source, indie cadence, narrower scope but converged |
+| WordPress + plugins | Ubiquitous; modular | Xtnd-tier as converged layer on top of WP (m-cms-read-adapter-wp adapter Y2 first adapter) |
+| NewsCred / Contently | Brand-content workflow | Wrong industry; both died from cross-category drift |
+
+No incumbent occupies the converged-newsroom-orchestration position with fair-chance ethos. This is the white space.
+
+## Identity guardrails
+
+If a feature request would push Xtnd-tier toward any of the following, decline with reference to this document + the relevant ADR:
+
+- "Auto-place stories on homepage" — violates ADR 0035.
+- "Suggest the story to write next" — drafting territory; MVP-SCOPE defers.
+- "Replace our Méthode / Cue / WordPress install" — head mode is Y4+ at earliest per ADR 0036.
+- "Push to AI answer cards on our behalf" — distribution-surface autopilot; refuse.
+- "Aggregate editorial choices across newsrooms" — violates ADR 0025 customer-confidentiality.
+- "White-label as a partner product" — identity coherence at stake; refuse Y1-3.

@@ -61,3 +61,53 @@ The reconciliation confirms — does not contradict — the decision to:
 The premortem was written for a large multi-newsroom, multi-language project with a 40-lakh budget and team of engineers. Several of its failure modes scale down trivially or vanish entirely at the indie-OSS-sustainable scale OnlineJourno is operating at. This reconciliation does not attempt to manufacture analogues for failure modes that do not have a meaningful indie-scale parallel.
 
 A separate reconciliation will be needed when (if) the project moves beyond solo operation or beyond a single design partner. The mechanism above (table format, per-mode mitigation citation) is reusable.
+
+---
+
+## Xtnd-tier failure-mode appendix (added 2026-06-05 via ADR 0030)
+
+The Xtnd capability tier (Y2+ build per ADR 0031) introduces its own failure-mode surface beyond the MVP-tier risks above. The table below applies the same per-mode mitigation pattern.
+
+| # | Failure mode (Xtnd-tier) | Status in current plan | Where addressed |
+|---|--------------------------|------------------------|------------------|
+| X1 | Xtnd-tier scope creep contaminates MVP-tier Y1 | **Yes** | Module-plugin architecture (ADR 0006) keeps Xtnd-tier modules disabled at MVP launch. ADR 0030 records that one-repo merge does not weaken this guard — module-tier metadata in README + ROADMAP.md keeps the tier distinction legible without contaminating MVP. |
+| X2 | Solo founder cannot ship Y2 capability-tier release | **Partial** | ADR 0039 names sustainability preconditions (Precondition A — ARR; B — co-founder; C — schedule stretch as default). v0.1 effort ~394 hr; calendar 22-26 wk; Y2 stretches to 18-22 mo unless A or B activates. |
+| X3 | Identity drift — Xtnd-tier becomes "workflow tool" not "intelligence layer" | **Yes** | `docs/BRAND-DECISION.md` Xtnd-tier identity guardrails; refusal pattern documented. Quarterly review against tagline anchor "Give every story a fair chance." |
+| X4 | First CMS read adapter (WordPress) takes longer than estimate | **Yes (by exclusion)** | Adapter contract per ADR 0007 wrapper rule. Supported topology explicitly: vanilla WP + Gutenberg + Yoast SEO + standard taxonomies. Refuse to onboard newsrooms with bespoke plugin stacks Y2. |
+| X5 | Distribution-fit predictions wrong; reporter trust collapses | **Yes** | Eval set Day 1; F1 threshold (≥0.65 to start, ≥0.75 by Wk 4); replay harness on every prompt change; reasoning trace on every cue; per-tenant per-surface gates. |
+| X6 | Desk surface adoption fails — editors reject decision-support framing | **Yes** | ADR 0035 lock — decision-support, never decision-making. Frame in onboarding: "we show signals, you decide." Placement support opt-in toggle Y2. |
+| X7 | Commission router floods teams; commissions ignored | **Yes** | Editor-confirmation required before commission posts. Per-team weekly budget configurable. Auto-throttle when team acceptance drops below 30%. |
+| X8 | Mobile PWA iOS install friction kills reporter adoption | **Partial** | PWA Y2 is "good enough" floor; native React Native / Capacitor Y3 if friction real. Test on iOS Safari before declaring acceptable. iOS PWA UX is hostile; native may be required earlier. |
+| X9 | CMS read adapter mis-maps draft semantics (e.g., scheduled-but-not-live confused with published) | **Yes** | Adapter test fixtures cover state edge cases. Design partner reviews mapping before turn-on. Adapter version pinning; explicit changelog when mapping changes. |
+| X10 | Fair-chance audit politicised internally; attacks editors | **Yes** | Audit shows patterns at desk-shift / week / month — not individual editor attribution. Onboarding doc frames audit as systemic, not individual. |
+| X11 | Y2 design partner uses a CMS the WP-adapter cannot serve | **Yes** | Y2 first-adapter decision (WordPress assumed) reviewed at end of MVP Y1 against actual customer base. If Y1 partner uses Ghost and Y2 prospects mostly WP, WP wins. If both differ, adapter decision delayed Y2 H2; Y2 effort goes to desk + PWA + mobile. |
+| X12 | Trust ladder regression — Xtnd-tier bugs erode MVP-tier trust | **Yes** | Xtnd-tier modules behind opt-in toggle per tenant. Eval thresholds before turn-on per module. Per-module rollback path (disable Xtnd-tier module without losing MVP brief). |
+| X13 | Apache 2.0 + Indian newsroom-tech competitor adopts + rebrands | **Yes (accepted)** | ADR 0024 already accepts this risk. Trademark + maintainer authenticity + community trust are the defence. Xtnd-tier inherits same posture. |
+| X14 | CMS write adapter (Y4+) becomes the demand; companion-mode rejected | **Yes** | Companion-mode locked Y1-3 by ADR 0036. Customer pressure documented; ≥3 design partners hard-block on head-mode triggers ADR revision (high bar). Plan-B revenue from MVP-tier customers. |
+| X15 | AI surface (MCP, AI answer cards) standardises before Y3; Xtnd-tier misses window | **Yes** | ADR 0038 watch-trigger. If ≥3 major Indian outlets ship MCP feeds OR Google/Anthropic ship MCP-feed indexing, accelerate Y3 → Y2 H2. Quarterly checklist. |
+| X16 | CMS vendor (Naviga, Atex, Méthode owner) restricts API access mid-Y3 | **Yes** | Adapter contract per ADR 0007 — every adapter wrapped; swap path days not months. Customer notified per CHANGELOG. |
+| X17 | Founder solo-burnout from one product, two tiers, plus MVP customer pilot | **Partial** | ADR 0039 sustainability preconditions before Y2 build start. Quarterly review of cumulative hours. ADR 0026 annual recharge week. Single-repo (post-merge) makes governance load lower than two-repo would have. |
+| X18 | Editorial DNA leakage via Xtnd-tier cross-role surfaces | **Yes** | Per-role visibility rules in `tenants.config -> 'modules'`. Default: rejection reasons private to reporter + editor (not whole desk). Opt-in to share. |
+
+## Summary by status (Xtnd-tier)
+
+| Status | Count | Failure modes |
+|--------|-------|---------------|
+| Yes — directly addressed | 13 | X1, X3, X4, X5, X6, X7, X9, X10, X11, X12, X14, X15, X16, X18 |
+| Partial — partly addressed, residual risk acknowledged | 4 | X2, X8, X17 |
+| Yes — accepted as live risk | 1 | X13 |
+
+## Plan changes triggered by Xtnd-tier reconciliation
+
+All Xtnd-tier mitigations reflected in:
+
+- New ADRs 0031-0039 (capability-tier release strategy, GFI contract, launch preconditions, roles + surfaces, decision-support, CMS adapter read-only, module naming, AI-surface watch-trigger, sustainability preconditions).
+- `docs/MARKETING-SITE-SPEC.md` (identity guardrails).
+- `docs/QUARTERLY-REVIEW-template.md` (preconditions + watch-trigger + premortem-follow-up review per quarter).
+- `docs/DEMO-TENANT-SPEC.md` (fictional newsroom; no real-publisher data risk).
+
+## Revisit
+
+- End of MVP Y1 (binding decision point for Y2 build per ADR 0039).
+- After every Xtnd-tier quarter once build begins.
+- After any Xtnd-tier-related incident that exposed an unlisted failure mode.

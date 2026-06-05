@@ -69,3 +69,47 @@ These are not alternatives. The editor pilot is the only source of editorial sig
 - Reader-facing personalization (Phase 4, after archive intelligence ships).
 - Multilingual UI (English-only Y1; content can be any language, UI is not).
 - Mobile native apps (web + email Y1).
+
+## Capability tiers (Y2+ — locked 2026-06-05 via ADR 0030)
+
+OnlineJourno is one product with two capability tiers:
+
+| Tier | What it ships | When |
+|------|---------------|------|
+| **MVP tier** | Daily AI-curated brief for working reporters; markets/regulatory beat; one design partner; trust primitives (AI-use disclosure + off-record signal flag per ADR 0029). | Y1, per `docs/MVP-SCOPE.md`. |
+| **Xtnd tier** | Converged-newsroom orchestration. Multi-role surfaces (reporter mobile, digital desk, section editor, dataviz/video/audio/social/photo teams, newsroom hierarchy). Distribution-fit cue pre-publish, post-publish diagnostic, placement decision-support, commission router, social scheduler, fair-chance audit. Companion to existing CMS (read-only Y1-3 per ADR 0036). All ships as `m-*` modules disabled by default at MVP; per-tenant opt-in. | Y2 v0.1 capability-tier release (~Wk 100); Y3 module set 2; Y4+ optional head mode; Y5 federated benchmarks. |
+
+The two tiers are one product. Marketing surface (`onlinejourno.com` + `xtnd.onlinejourno.com`) shows the tier distinction; codebase + ADR queue + release cadence stay unified.
+
+**Xtnd-tier extends the core principles (1-6 above) with four more (per ADR 0035 + ADR 0034):**
+
+7. **Decision-support, not decision-making.** Xtnd-tier modules surface signals for placement, commissioning, scheduling. The editor decides. No autopilot ever. (ADR 0035.)
+8. **No information asymmetry.** Same fair-chance audit visible to newsroom hierarchy is visible to every reporter on their own stories. No gatekeeping by digital desk. (ADR 0034.)
+9. **Companion to existing CMS, not replacement.** Xtnd-tier CMS adapters read draft state from existing CMS (Méthode, Cue, WordPress, Ghost, custom). Never publish back Y1-3. (ADR 0036.)
+10. **Reporter-first surface, even when the feature is for desk.** Every Xtnd-tier capability passes the test: does the individual reporter benefit, or only newsroom hierarchy? If only hierarchy, defer or reject. (ADR 0034.)
+
+## Domain glossary additions (capability-tier vocabulary)
+
+| Term | Meaning |
+|------|---------|
+| **Capability tier** | MVP tier or Xtnd tier (see table above). One product; tiers ship at different windows. |
+| **Role-surface** | A view of the canonical story object scoped to a specific role (reporter, desk, section editor, social, video, dataviz, audio, photo, newsroom hierarchy). Same data, different lens. |
+| **Story lifecycle** | The stages a story passes through: `idea → stub → draft → ready → placed → published → diagnosed`. Xtnd-tier extends MVP-tier shortlist decision states. |
+| **Distribution-fit cue** | Pre-publish signal of how well a story is structured for Discover / Search / Subscription / Direct. Reporter sees before filing; desk sees before placement. |
+| **Placement decision-support** | Decision-support for homepage and section-page slot allocation. Editor decides; system surfaces predicted CTR, fit score, social momentum, dwell-time. Never autopilot. |
+| **Commission trigger** | A signal from brief or draft that suggests cross-team work would lift the story (data viz, video, explainer, map, photo, audio). Auto-suggested; editor confirms; routed to team. |
+| **Commission router** | The component that takes a confirmed commission and delivers it to the target team's working channel (Slack webhook Y2; dedicated UI Y3). |
+| **Fair-chance audit** | Newsroom-wide view of which stories got their fair shot at each distribution surface, and which dropped. Identifies systemic bias, surface gaps, team bottlenecks. Aggregated to desk-shift / week / month — never individual editor attribution. |
+| **Post-publish diagnostic** | Per-story analysis of why a story performed or underperformed. Reads brief content + GSC + Discover + first-party analytics. Plain-English explanation, not raw metrics. |
+| **CMS read adapter** | Module that pulls draft state from a newsroom's existing CMS via REST/GraphQL/scrape. Read-only Y1-3. |
+| **Companion mode** | OnlineJourno reads and informs; the newsroom's CMS remains the publish surface. Default operating mode for Y1-3. |
+| **Head mode** | OnlineJourno publishes directly to distribution surfaces via CMS write adapter. Y4+ optional, gated on customer pull. |
+
+## Editorial reference points (added for Xtnd-tier credibility)
+
+Beyond the MVP-tier references above:
+
+- **Reuters Institute**, *Digital News Report* (annual) — distribution-surface baselines.
+- **News Product Alliance** — converged-newsroom workflow patterns.
+- **Membership Puzzle Project** — reader-engagement framing (for subscription-fit modelling).
+- **Google News Initiative** — Discover-readiness rubric (image aspect, structured data, freshness).
