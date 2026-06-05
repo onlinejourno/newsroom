@@ -3,26 +3,71 @@
 from __future__ import annotations
 
 import hashlib
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 USER_AGENT = "OnlineJourno-Ingest/0.0.1 (+https://onlinejourno.com)"
 DEFAULT_TIMEOUT_SECONDS = 20
 
+# Query-string keys that identify the same article across campaigns/referrers.
+# Dropped before hashing so the same piece behind different tracking params
+# dedups to one signal (otherwise scoring pays for near-duplicate copies).
+TRACKING_PARAMS = frozenset(
+    {
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+        "utm_id", "utm_reader", "utm_name", "utm_brand",
+        "fbclid", "gclid", "gclsrc", "dclid", "msclkid", "yclid",
+        "mc_cid", "mc_eid", "igshid", "igsh", "_hsenc", "_hsmi",
+        "ref", "ref_src", "referrer", "spm", "cmpid", "ncid", "src",
+    }
+)
+
 
 def http_session() -> requests.Session:
-    """Return a `requests.Session` with the OnlineJourno user agent set."""
+    """Return a `requests.Session` with the OnlineJourno UA and retry/backoff.
+
+    Government and exchange portals rate-limit and flake; without retries a
+    single 429/5xx silently fails the source for the day. Retries idempotent
+    GET/HEAD only, with exponential backoff.
+    """
     session = requests.Session()
     session.headers["User-Agent"] = USER_AGENT
+    retry = Retry(
+        total=3,
+        backoff_factor=0.5,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset({"GET", "HEAD"}),
+        respect_retry_after_header=True,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
     return session
 
 
-def url_hash(url: str) -> str:
-    """Stable hash of a URL for dedup uniqueness on (tenant_id, url_hash).
+def canonical_url(url: str) -> str:
+    """Canonicalise a URL for dedup: drop tracking params + fragment.
 
-    SHA-256 hex digest. URL is whitespace-stripped but otherwise verbatim;
-    canonicalisation (sorting query parameters, dropping tracking params)
-    happens in a separate step before storage when we decide which signal
-    canonical fields are.
+    Preserves scheme, host, path, and the order of non-tracking query params,
+    so a URL with no tracking params is unchanged (no churn against existing
+    hashes). Only the fragment and known tracking keys are stripped.
     """
-    return hashlib.sha256(url.strip().encode("utf-8")).hexdigest()
+    parts = urlsplit(url.strip())
+    kept = [
+        (k, v)
+        for k, v in parse_qsl(parts.query, keep_blank_values=True)
+        if k.lower() not in TRACKING_PARAMS
+    ]
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(kept), ""))
+
+
+def url_hash(url: str) -> str:
+    """Stable SHA-256 hex digest of the canonicalised URL.
+
+    Dedup uniqueness is on (tenant_id, url_hash); canonicalisation here makes
+    the same article behind different tracking params hash to one value.
+    """
+    return hashlib.sha256(canonical_url(url).encode("utf-8")).hexdigest()

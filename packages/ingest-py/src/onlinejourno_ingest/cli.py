@@ -1,6 +1,7 @@
 """Command-line entry point for the ingest library.
 
-    onlinejourno-ingest collect --tenant self [--beat markets-regulatory] [--source-name "The Hindu — Business"]
+    onlinejourno-ingest collect --tenant self [--beat markets-regulatory]
+                                [--source-name "The Hindu — Business"]
 
 Runs the appropriate collector for each enabled source under the tenant,
 writes signals to Postgres, and updates portal-health timestamps.
@@ -76,10 +77,11 @@ def _run_one_source(
         signals = collector.fetch(source)
     except FetchError as exc:
         with connect() as conn:
-            mark_source_failed(conn, source_id)
+            mark_source_failed(conn, source_id=source_id, tenant_id=tenant_id)
             finish_run(
                 conn,
                 run_id=run_id,
+                tenant_id=tenant_id,
                 status="failed",
                 items_count=0,
                 notes=str(exc),
@@ -89,10 +91,11 @@ def _run_one_source(
         # Any unexpected exception still finishes the run row so it does
         # not stay in 'running' state forever.
         with connect() as conn:
-            mark_source_failed(conn, source_id)
+            mark_source_failed(conn, source_id=source_id, tenant_id=tenant_id)
             finish_run(
                 conn,
                 run_id=run_id,
+                tenant_id=tenant_id,
                 status="failed",
                 items_count=0,
                 notes=f"unexpected error: {exc!r}",
@@ -105,10 +108,11 @@ def _run_one_source(
             for signal in signals:
                 if upsert_signal(conn, signal=signal, run_id=run_id):
                     new_for_source += 1
-            mark_source_seen(conn, source_id)
+            mark_source_seen(conn, source_id=source_id, tenant_id=tenant_id)
             finish_run(
                 conn,
                 run_id=run_id,
+                tenant_id=tenant_id,
                 status="success",
                 items_count=len(signals),
                 notes=f"+{new_for_source} new of {len(signals)} parsed",
@@ -120,6 +124,7 @@ def _run_one_source(
             finish_run(
                 conn,
                 run_id=run_id,
+                tenant_id=tenant_id,
                 status="failed",
                 items_count=new_for_source,
                 notes=f"upsert error: {exc!r}",
