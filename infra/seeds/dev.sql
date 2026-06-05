@@ -188,4 +188,25 @@ from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
 
+-- ============================================================
+-- GDELT DOC 2.0 — reaches Cloudflare/JS-blocked outlets without scrapers
+-- (GDELTCollector, migration 0004). kind='gdelt', rss_url holds the GDELT
+-- query expression. Metadata only (headline + URL + date), enough for
+-- headline-level shortlisting. This is the working path for The Hindu et al.
+-- while the Class-B/C scrapers remain deferred (docs/SOURCE-ROADMAP.md).
+-- ============================================================
+
+-- The Hindu — Business (via GDELT)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'gdelt', 'The Hindu — Business (GDELT)',
+       'https://api.gdeltproject.org/api/v2/doc/doc',
+       'domainis:thehindu.com (sebi OR rbi OR nifty OR sensex OR rupee OR markets OR IPO OR economy) sourcelang:english',
+       'mainstream', '{markets-regulatory}', '{en}', true
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
 commit;
