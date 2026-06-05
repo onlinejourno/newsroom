@@ -1,0 +1,176 @@
+{
+  "deuze_typology": {
+    "Scroll.in": "Mainstream News Site",
+    "The Wire": "Mainstream News Site",
+    "The Print": "Mainstream News Site",
+    "Newslaundry": "Meta & Comment Site",
+    "FirstPost": "Mainstream News Site",
+    "NDTV": "Mainstream News Site",
+    "India Today": "Mainstream News Site",
+    "Hindustan Times": "Mainstream News Site",
+    "Indian Express": "Mainstream News Site",
+    "Times of India": "Index & Category Site",
+    "News18": "Mainstream News Site",
+    "The Hindu": "Mainstream News Site"
+  },
+  "rosen_index": {
+    "Scroll.in": {
+      "score": 7,
+      "voice": "Disclosed Standpoint",
+      "funding": "Private (Scroll Media)",
+      "corrections": "Yes",
+      "audience_model": "Reader-supported + ads"
+    },
+    "The Wire": {
+      "score": 9,
+      "voice": "Disclosed Standpoint",
+      "funding": "Reader donations + foundation grants (disclosed)",
+      "corrections": "Yes, public log",
+      "audience_model": "Reader-funded"
+    },
+    "The Print": {
+      "score": 6,
+      "voice": "Moderate Transparency",
+      "funding": "Private (Printline Media)",
+      "corrections": "Yes",
+      "audience_model": "Subscription + ads"
+    },
+    "Newslaundry": {
+      "score": 10,
+      "voice": "Full Transparency",
+      "funding": "100% reader-funded (disclosed)",
+      "corrections": "Yes, public log",
+      "audience_model": "Subscriber-only"
+    },
+    "FirstPost": {
+      "score": 4,
+      "voice": "View from Nowhere",
+      "funding": "Corporate (Network18/Reliance)",
+      "corrections": "Minimal",
+      "audience_model": "Ad-driven"
+    },
+    "NDTV": {
+      "score": 5,
+      "voice": "View from Nowhere",
+      "funding": "Corporate (Adani Group)",
+      "corrections": "Sporadic",
+      "audience_model": "Ad-driven"
+    },
+    "India Today": {
+      "score": 4,
+      "voice": "View from Nowhere",
+      "funding": "Corporate (Living Media)",
+      "corrections": "Minimal",
+      "audience_model": "Ad-driven"
+    },
+    "Hindustan Times": {
+      "score": 5,
+      "voice": "View from Nowhere",
+      "funding": "Corporate (HT Media/Birla)",
+      "corrections": "Sporadic",
+      "audience_model": "Ad + subscription"
+    },
+    "Indian Express": {
+      "score": 7,
+      "voice": "Moderate Transparency",
+      "funding": "Private (Indian Express Group)",
+      "corrections": "Yes",
+      "audience_model": "Subscription + ads"
+    },
+    "Times of India": {
+      "score": 3,
+      "voice": "View from Nowhere",
+      "funding": "Corporate (Bennett Coleman)",
+      "corrections": "Rare",
+      "audience_model": "Ad-driven, scale-first"
+    },
+    "News18": {
+      "score": 3,
+      "voice": "View from Nowhere",
+      "funding": "Corporate (Network18/Reliance)",
+      "corrections": "Minimal",
+      "audience_model": "Ad-driven"
+    },
+    "The Hindu": {
+      "score": 6,
+      "voice": "Moderate Transparency",
+      "funding": "Private (THG Publishing Pvt Ltd)",
+      "corrections": "Yes",
+      "audience_model": "Subscription + ads"
+    }
+  },
+  "ce_ratios": {
+    "Scroll.in": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "The Wire": {
+      "commentary_pct": 13.3,
+      "evidence_pct": 86.7,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.15
+    },
+    "The Print": {
+      "commentary_pct": 33.3,
+      "evidence_pct": 60.0,
+      "syndicated_pct": 6.7,
+      "ce_ratio": 0.56
+    },
+    "Newslaundry": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "FirstPost": {
+      "commentary_pct": 10.0,
+      "evidence_pct": 90.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.11
+    },
+    "NDTV": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "India Today": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "Hindustan Times": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "Indian Express": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "Times of India": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "News18": {
+      "commentary_pct": 0.0,
+      "evidence_pct": 100.0,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.0
+    },
+    "The Hindu": {
+      "commentary_pct": 6.7,
+      "evidence_pct": 93.3,
+      "syndicated_pct": 0.0,
+      "ce_ratio": 0.07
+    }
+  }
+}
