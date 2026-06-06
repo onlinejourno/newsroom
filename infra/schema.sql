@@ -143,6 +143,9 @@ create table shortlist_items (
 
 create index on shortlist_items (tenant_id, shortlisted_at desc);
 create index on shortlist_items (tenant_id, decision);
+-- Backs the FK to signals + the scorer's anti-join (candidate_signals); the FK
+-- itself does not index the referencing column.
+create index on shortlist_items (signal_id);
 
 -- ============================================================
 -- Briefs (composed daily output)

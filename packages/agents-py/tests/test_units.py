@@ -18,7 +18,11 @@ from onlinejourno_agents.client import (
     parse_json_object,
     provider_config_from_env,
 )
-from onlinejourno_agents.ingest_score import _coerce_beat_tag, _coerce_score
+from onlinejourno_agents.ingest_score import (
+    _coerce_beat_tag,
+    _coerce_score,
+    _parse_batch_scores,
+)
 from onlinejourno_agents.keywords import (
     KeywordVolume,
     best_for,
@@ -27,6 +31,7 @@ from onlinejourno_agents.keywords import (
 )
 from onlinejourno_agents.prompts import (
     BEAT_TAGS,
+    build_batch_score_prompt,
     build_brief_prompt,
     build_score_prompt,
     default_editorial_dna,
@@ -101,6 +106,17 @@ def test_build_score_prompt_shape():
     assert "JSON" in parts.system
 
 
+def test_build_batch_score_prompt_numbers_items():
+    signals = [
+        {"headline": "SEBI fines XYZ", "body_text": "b", "source_name": "SEBI"},
+        {"headline": "RBI holds rate", "body_text": "b", "source_name": "RBI"},
+    ]
+    parts = build_batch_score_prompt(signals, editorial_dna="DNA")
+    assert "[1] SEBI fines XYZ" in parts.user and "[2] RBI holds rate" in parts.user
+    assert '"scores"' in parts.system and '"index"' in parts.system
+    assert "JSON" in parts.system
+
+
 def test_build_brief_prompt_numbers_items_and_asks_cites():
     items = [
         {"headline": "A", "source_name": "RBI", "rationale": "rate move", "body_text": "b"},
@@ -109,6 +125,30 @@ def test_build_brief_prompt_numbers_items_and_asks_cites():
     parts = build_brief_prompt(items, editorial_dna="DNA", beat_name="markets")
     assert "[1] A" in parts.user and "[2] B" in parts.user
     assert '"cites"' in parts.system and '"sections"' in parts.system
+
+
+# --- batch score parsing ------------------------------------------------
+
+def test_parse_batch_scores_maps_and_filters():
+    batch = [{"id": "aaa"}, {"id": "bbb"}, {"id": "ccc"}]
+    data = {"scores": [
+        {"index": 1, "score": 0.9, "reasons": "x", "beat_tag": "regulatory"},
+        {"index": 3, "score": 1.5, "reasons": "y", "beat_tag": "nonsense"},
+        {"index": 9, "score": 0.5},   # out of range -> dropped
+        {"index": 1, "score": 0.1},   # duplicate index -> dropped
+        "garbage",                    # non-dict -> dropped
+    ]}
+    out = _parse_batch_scores(data, batch, default_beat="markets")
+    assert out == [
+        ("aaa", 0.9, "x", "regulatory"),
+        ("ccc", 1.0, "y", "markets"),  # score clamped, bad beat -> fallback
+    ]
+
+
+def test_parse_batch_scores_bad_payload():
+    batch = [{"id": "a"}]
+    assert _parse_batch_scores({}, batch, default_beat="markets") == []
+    assert _parse_batch_scores({"scores": "nope"}, batch, default_beat="markets") == []
 
 
 # --- cite mapping -------------------------------------------------------
