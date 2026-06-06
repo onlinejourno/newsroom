@@ -390,3 +390,85 @@ def signal_urls_for(conn: psycopg.Connection, signal_ids: list[str]) -> dict[str
             ([UUID(s) if not isinstance(s, UUID) else s for s in signal_ids],),
         )
         return {str(r["id"]): r["url"] for r in cur.fetchall()}
+
+
+# ----------------------------------------------------------------------
+# Off-record flag (ADR 0029) — mark/unmark + audit log
+# ----------------------------------------------------------------------
+
+
+def find_signals_by_headline(
+    conn: psycopg.Connection, tenant_id: UUID, text: str, *, limit: int = 25
+) -> list[dict[str, Any]]:
+    """Signals whose headline contains `text` (case-insensitive), newest first."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, url, coalesce(off_record, false) as off_record
+              from signals
+             where tenant_id = %s and headline ilike %s
+             order by fetched_at desc
+             limit %s
+            """,
+            (tenant_id, f"%{text}%", limit),
+        )
+        return list(cur.fetchall())
+
+
+def resolve_user_id(
+    conn: psycopg.Connection, tenant_id: UUID, email: str | None
+) -> UUID | None:
+    if not email:
+        return None
+    with conn.cursor() as cur:
+        cur.execute(
+            "select id from users where tenant_id = %s and email = %s",
+            (tenant_id, email),
+        )
+        row = cur.fetchone()
+        return row["id"] if row else None
+
+
+def set_off_record(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    signal_id: UUID,
+    on: bool,
+    actor_user_id: UUID | None = None,
+    reason: str | None = None,
+) -> None:
+    """Set/clear a signal's off-record flag and append to the audit log (ADR 0029).
+
+    Off-record signals are excluded from shortlist + brief composition
+    (candidate_signals filters them). The flag is reversible; every change is
+    logged for accountability.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            "update signals set off_record = %s where id = %s and tenant_id = %s",
+            (on, signal_id, tenant_id),
+        )
+        cur.execute(
+            """
+            insert into signal_off_record_log
+                (tenant_id, signal_id, action, actor_user_id, reason)
+            values (%s, %s, %s, %s, %s)
+            """,
+            (tenant_id, signal_id, "marked" if on else "unmarked", actor_user_id, reason),
+        )
+
+
+def list_off_record(
+    conn: psycopg.Connection, tenant_id: UUID, *, limit: int = 50
+) -> list[dict[str, Any]]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, url from signals
+             where tenant_id = %s and off_record = true
+             order by fetched_at desc limit %s
+            """,
+            (tenant_id, limit),
+        )
+        return list(cur.fetchall())
