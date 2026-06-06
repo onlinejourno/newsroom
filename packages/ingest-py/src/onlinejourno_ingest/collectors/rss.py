@@ -14,7 +14,7 @@ original:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import urljoin
@@ -66,6 +66,14 @@ class RSSCollector:
             raise FetchError(f"fetch failed: {exc}") from exc
 
         parsed = feedparser.parse(response.content)
+        # A malformed feed yields no entries. Without this check the run logs
+        # "0 new, success" and source rot hides as health (premortem #6 /
+        # m-portal-health). Bozo + no entries = treat as a fetch failure so
+        # the failure counter rises and the editorial alert can fire.
+        if not parsed.entries and parsed.bozo:
+            cause = parsed.get("bozo_exception", "unknown parse error")
+            raise FetchError(f"malformed feed at {feed_url}: {cause}")
+
         signals: list[Signal] = []
         for entry in parsed.entries[: self.max_items]:
             signal = self._entry_to_signal(source, entry)
@@ -154,10 +162,10 @@ def _parse_published(entry: Any) -> datetime | None:
         else:
             if dt is not None:
                 if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
-                return dt.astimezone(timezone.utc)
+                    dt = dt.replace(tzinfo=UTC)
+                return dt.astimezone(UTC)
 
     parsed = entry.get("published_parsed") or entry.get("updated_parsed")
     if not parsed:
         return None
-    return datetime(*parsed[:6], tzinfo=timezone.utc)
+    return datetime(*parsed[:6], tzinfo=UTC)

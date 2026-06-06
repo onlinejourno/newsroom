@@ -18,11 +18,12 @@ connect()` blocks if you need each to be its own transaction.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 from uuid import UUID
 
 import psycopg
@@ -71,7 +72,7 @@ def connect() -> Iterator[psycopg.Connection]:
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # ----------------------------------------------------------------------
@@ -142,6 +143,7 @@ def finish_run(
     conn: psycopg.Connection,
     *,
     run_id: UUID,
+    tenant_id: UUID,
     status: str,
     items_count: int,
     notes: str | None = None,
@@ -155,9 +157,9 @@ def finish_run(
                    status      = %s,
                    items_count = %s,
                    notes       = %s
-             where id = %s
+             where id = %s and tenant_id = %s
             """,
-            (now_utc(), status, items_count, notes, run_id),
+            (now_utc(), status, items_count, notes, run_id, tenant_id),
         )
 
 
@@ -203,7 +205,9 @@ def upsert_signal(
         return cur.fetchone() is not None
 
 
-def mark_source_seen(conn: psycopg.Connection, source_id: UUID) -> None:
+def mark_source_seen(
+    conn: psycopg.Connection, *, source_id: UUID, tenant_id: UUID
+) -> None:
     """Record a successful ingest for portal-health tracking (ADR 0014)."""
     with conn.cursor() as cur:
         cur.execute(
@@ -211,20 +215,22 @@ def mark_source_seen(conn: psycopg.Connection, source_id: UUID) -> None:
             update sources
                set last_seen_at = %s,
                    consecutive_failures = 0
-             where id = %s
+             where id = %s and tenant_id = %s
             """,
-            (now_utc(), source_id),
+            (now_utc(), source_id, tenant_id),
         )
 
 
-def mark_source_failed(conn: psycopg.Connection, source_id: UUID) -> None:
+def mark_source_failed(
+    conn: psycopg.Connection, *, source_id: UUID, tenant_id: UUID
+) -> None:
     """Increment the failure counter for portal-health alerting."""
     with conn.cursor() as cur:
         cur.execute(
             """
             update sources
                set consecutive_failures = consecutive_failures + 1
-             where id = %s
+             where id = %s and tenant_id = %s
             """,
-            (source_id,),
+            (source_id, tenant_id),
         )

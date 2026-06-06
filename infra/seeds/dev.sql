@@ -55,6 +55,25 @@ where t.slug = 'self'
 on conflict (tenant_id, slug) do nothing;
 
 -- ============================================================
+-- Desk editor (dev) — brief-compose attributes the desk brief to a user
+-- (briefs.for_user is NOT NULL). One editor is enough for the MVP desk brief.
+-- ============================================================
+insert into users (tenant_id, email, display_name, role, beat_focus, locale, mode)
+select t.id, 'editor@onlinejournalism.in', 'Desk Editor (dev)', 'editor',
+       '{markets-regulatory}', 'en-IN', 'senior'
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, email) do nothing;
+
+insert into beat_assignments (tenant_id, beat_id, user_id)
+select t.id, b.id, u.id
+from tenants t
+join beats b on b.tenant_id = t.id and b.slug = 'markets-regulatory'
+join users u on u.tenant_id = t.id and u.email = 'editor@onlinejournalism.in'
+where t.slug = 'self'
+on conflict (tenant_id, beat_id, user_id) do nothing;
+
+-- ============================================================
 -- Markets / Regulatory sources — Indian business journalism RSS
 --
 -- Reality note: most Indian regulators (RBI, SEBI, NSE, BSE, MCA, IBBI,
@@ -165,6 +184,27 @@ select t.id, 'rss', 'PIB — Finance Ministry',
        'https://pib.gov.in/AllRelease.aspx',
        'https://pib.gov.in/RssMain.aspx?ModId=1&Lang=1&Regid=3',
        'index_category', '{markets-regulatory}', '{en}', false
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
+-- ============================================================
+-- GDELT DOC 2.0 — reaches Cloudflare/JS-blocked outlets without scrapers
+-- (GDELTCollector, migration 0004). kind='gdelt', rss_url holds the GDELT
+-- query expression. Metadata only (headline + URL + date), enough for
+-- headline-level shortlisting. This is the working path for The Hindu et al.
+-- while the Class-B/C scrapers remain deferred (docs/SOURCE-ROADMAP.md).
+-- ============================================================
+
+-- The Hindu — Business (via GDELT)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'gdelt', 'The Hindu — Business (GDELT)',
+       'https://api.gdeltproject.org/api/v2/doc/doc',
+       'domainis:thehindu.com (sebi OR rbi OR nifty OR sensex OR rupee OR markets OR IPO OR economy) sourcelang:english',
+       'mainstream', '{markets-regulatory}', '{en}', true
 from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;

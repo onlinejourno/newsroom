@@ -70,6 +70,55 @@ export async function fetchLatestSignals(
   return rows;
 }
 
+export type BriefSection = {
+  heading: string;
+  lede_one_liner?: string;
+  body?: string;
+  signals?: string[];
+  search_fit?: { keyword: string; volume: number; trend: string } | null;
+};
+
+export type BriefRow = {
+  id: string;
+  beat_id: string | null;
+  edition_date: string;
+  composed_at: Date;
+  content: {
+    sections?: BriefSection[];
+    meta?: Record<string, unknown>;
+  };
+};
+
+export async function fetchLatestBrief(
+  tenantId: string,
+): Promise<BriefRow | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<BriefRow>(
+    `
+    select id, beat_id, edition_date, composed_at, content
+      from briefs
+     where tenant_id = $1
+     order by composed_at desc
+     limit 1
+    `,
+    [tenantId],
+  );
+  return rows[0] ?? null;
+}
+
+export async function fetchSignalUrls(
+  tenantId: string,
+  signalIds: string[],
+): Promise<Map<string, string>> {
+  if (signalIds.length === 0) return new Map();
+  const pool = getPool();
+  const { rows } = await pool.query<{ id: string; url: string }>(
+    "select id, url from signals where tenant_id = $1 and id = any($2::uuid[])",
+    [tenantId, signalIds],
+  );
+  return new Map(rows.map((r) => [r.id, r.url]));
+}
+
 export async function withClient<T>(
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {

@@ -49,7 +49,7 @@ create table users (
 create table sources (
   id                 uuid primary key default gen_random_uuid(),
   tenant_id          uuid not null references tenants(id) on delete cascade,
-  kind               text not null check (kind in ('rss','sitemap','homepage','article','robots','social','api','manual')),
+  kind               text not null check (kind in ('rss','gdelt','sitemap','homepage','article','robots','social','api','manual')),
   name               text not null,
   url                text not null,
   rss_url            text,
