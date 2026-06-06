@@ -80,6 +80,7 @@ def cmd_brief(args: argparse.Namespace) -> int:
         beat_slug=args.beat,
         completer=completer,
         top_n=args.top,
+        since_hours=args.since_hours,
     )
     if result.status == "empty":
         print("No shortlist items — run `shortlist` first.", file=sys.stderr)
@@ -187,6 +188,10 @@ def main(argv: list[str] | None = None) -> int:
     p_brief.add_argument("--tenant", required=True)
     p_brief.add_argument("--beat", default=None)
     p_brief.add_argument("--top", type=int, default=20)
+    p_brief.add_argument(
+        "--since-hours", type=int, default=None,
+        help="only compose from items shortlisted in the last N hours (daily freshness)",
+    )
     p_brief.set_defaults(func=cmd_brief)
 
     p_show = sub.add_parser("show-brief", help="render the latest brief as Markdown")

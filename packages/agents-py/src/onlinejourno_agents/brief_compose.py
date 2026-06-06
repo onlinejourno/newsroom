@@ -55,6 +55,7 @@ def run_brief(
     completer: Completer,
     top_n: int = 20,
     edition: date | None = None,
+    since_hours: int | None = None,
 ) -> BriefResult:
     """Compose and persist the daily brief for a beat from its shortlist."""
     edition = edition or date.today()
@@ -63,7 +64,9 @@ def run_brief(
         tenant_id = db.tenant_id_for_slug(conn, tenant_slug)
         beat_id = db.beat_id_for_slug(conn, tenant_id, beat_slug) if beat_slug else None
         for_user = db.default_brief_user(conn, tenant_id)
-        items = db.top_shortlist(conn, tenant_id, beat_id=beat_id, limit=top_n)
+        items = db.top_shortlist(
+            conn, tenant_id, beat_id=beat_id, limit=top_n, since_hours=since_hours
+        )
 
     if not items:
         return BriefResult(brief_id=None, sections=0, items_used=0, spent_usd=0.0, status="empty")
