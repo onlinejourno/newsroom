@@ -111,6 +111,32 @@ def cmd_show_brief(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_why(args: argparse.Namespace) -> int:
+    """Reasoning trace: why each story made the shortlist (MVP success criterion).
+
+    Surfaces the per-signal score + the model's one-line rationale, in editorial
+    English, ranked — the 'why did the AI pick this' view an editor checks.
+    """
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        beat_id = db.beat_id_for_slug(conn, tenant_id, args.beat) if args.beat else None
+        items = db.top_shortlist(conn, tenant_id, beat_id=beat_id, limit=args.top)
+    if not items:
+        print("No shortlist yet. Run `shortlist` first.", file=sys.stderr)
+        return 1
+    print(f"Why these {len(items)} made the shortlist — reasoning trace\n")
+    for it in items:
+        rank = it.get("rank")
+        score = it.get("score") or 0.0
+        head = it.get("headline") or it.get("url")
+        print(f"#{rank if rank is not None else '-':<3} score {score:.2f}  {head}")
+        rationale = (it.get("rationale") or "").strip()
+        if rationale:
+            print(f"        why: {rationale}")
+        print(f"        [{it.get('source_name') or '?'}]  {it.get('url')}\n")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="onlinejourno-agents")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -133,6 +159,12 @@ def main(argv: list[str] | None = None) -> int:
     p_show.add_argument("--tenant", required=True)
     p_show.add_argument("--beat", default=None)
     p_show.set_defaults(func=cmd_show_brief)
+
+    p_why = sub.add_parser("why", help="reasoning trace — why each story made the shortlist")
+    p_why.add_argument("--tenant", required=True)
+    p_why.add_argument("--beat", default=None)
+    p_why.add_argument("--top", type=int, default=15)
+    p_why.set_defaults(func=cmd_why)
 
     args = parser.parse_args(argv)
     return args.func(args)
