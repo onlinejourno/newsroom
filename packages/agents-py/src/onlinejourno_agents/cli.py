@@ -137,6 +137,40 @@ def cmd_why(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_off_record(args: argparse.Namespace) -> int:
+    """Mark/unmark signals off-record (ADR 0029) — excluded from briefs, reversible."""
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        if args.list:
+            rows = db.list_off_record(conn, tenant_id)
+            if not rows:
+                print("No off-record signals.")
+                return 0
+            print(f"{len(rows)} off-record signal(s):")
+            for r in rows:
+                print(f"  {r['headline'] or r['url']}")
+            return 0
+        if not args.match:
+            print("Provide --match <headline text> (or --list).", file=sys.stderr)
+            return 2
+        actor = db.resolve_user_id(conn, tenant_id, args.by)
+        matches = db.find_signals_by_headline(conn, tenant_id, args.match)
+        if not matches:
+            print(f"No signals matching {args.match!r}.", file=sys.stderr)
+            return 1
+        on = not args.unmark
+        for m in matches:
+            db.set_off_record(
+                conn, tenant_id=tenant_id, signal_id=m["id"],
+                on=on, actor_user_id=actor, reason=args.reason,
+            )
+    verb = "Marked off-record" if on else "Un-marked"
+    print(f"{verb} {len(matches)} signal(s):")
+    for m in matches:
+        print(f"  {m['headline'] or m['url']}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="onlinejourno-agents")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -165,6 +199,15 @@ def main(argv: list[str] | None = None) -> int:
     p_why.add_argument("--beat", default=None)
     p_why.add_argument("--top", type=int, default=15)
     p_why.set_defaults(func=cmd_why)
+
+    p_off = sub.add_parser("off-record", help="mark/unmark a signal off-record")
+    p_off.add_argument("--tenant", required=True)
+    p_off.add_argument("--match", default=None, help="headline substring to match")
+    p_off.add_argument("--reason", default=None, help="why (private to marker + editor)")
+    p_off.add_argument("--by", default=None, help="actor email")
+    p_off.add_argument("--unmark", action="store_true", help="clear the flag instead")
+    p_off.add_argument("--list", action="store_true", help="list current off-record signals")
+    p_off.set_defaults(func=cmd_off_record)
 
     args = parser.parse_args(argv)
     return args.func(args)
