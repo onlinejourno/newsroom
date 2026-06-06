@@ -157,8 +157,9 @@ export default async function RootLayout({
       dir={dirOf(locale)}
       style={fontVars}
       className={`${playfair.variable} ${sourceSans.variable} ${notoSerif.variable}`}
+      suppressHydrationWarning
     >
-      <body>{children}</body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }
