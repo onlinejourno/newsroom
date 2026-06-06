@@ -25,6 +25,6 @@ uv run --package onlinejourno-agents onlinejourno-agents shortlist \
   --tenant "$TENANT" --beat "$BEAT" --top "$TOP" --since-hours 36
 
 uv run --package onlinejourno-agents onlinejourno-agents brief \
-  --tenant "$TENANT" --beat "$BEAT" --top "$TOP" --since-hours 36
+  --tenant "$TENANT" --beat "$BEAT" --top "$TOP" --since-hours 24
 
 echo "[$(date)] daily-brief done"

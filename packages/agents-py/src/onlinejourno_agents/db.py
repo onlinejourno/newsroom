@@ -229,7 +229,10 @@ def top_shortlist(
         where.append("si.beat_id = %s")
         params.append(beat_id)
     if since_hours is not None:
-        where.append("si.shortlisted_at >= now() - make_interval(hours => %s)")
+        # Scope by the *news* recency (when the story happened), not when it was
+        # shortlisted — so yesterday's high-scoring items drop out of today's
+        # brief even though they linger near the top of the accumulating shortlist.
+        where.append("coalesce(s.published_at, s.fetched_at) >= now() - make_interval(hours => %s)")
         params.append(since_hours)
     sql = f"""
         select si.id as shortlist_id, si.signal_id, si.score, si.rank, si.rationale,
