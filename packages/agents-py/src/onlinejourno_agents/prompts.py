@@ -100,6 +100,50 @@ def build_score_prompt(
     return ScorePromptParts(system=system, user=user)
 
 
+def build_batch_score_prompt(
+    signals: list[dict[str, Any]],
+    *,
+    editorial_dna: str,
+    body_char_limit: int = 1500,
+) -> ScorePromptParts:
+    """Build one prompt that scores a batch of signals in a single call. Pure.
+
+    Each signal is presented with a 1-based index; the model returns one entry
+    per item keyed by that index. Batching amortises the editorial-DNA system
+    prompt across N items instead of resending it per signal.
+    """
+    system = (
+        editorial_dna + "\n\n"
+        "Score EVERY item below independently on the same one question: would a "
+        "working markets reporter act on it TODAY? Be decisive — most raw signals "
+        "are not worth a reporter's time, so it is correct for most scores to be "
+        "low. Reserve high scores for genuine must-not-miss items.\n\n"
+        "Respond with ONLY a JSON object, no prose, no markdown fences, in exactly "
+        "this shape:\n"
+        '{"scores": [{"index": <the item number>, '
+        '"score": <float 0.0-1.0>, '
+        '"reasons": "<one or two sentences: why this score>", '
+        f'"beat_tag": <one of {list(BEAT_TAGS)}>}}, ...]}}\n'
+        "Include exactly one object per item, using the item's number as `index`."
+    )
+
+    lines = [f"ITEMS ({len(signals)}) to score, each numbered:", ""]
+    for idx, signal in enumerate(signals, start=1):
+        source_name = signal.get("source_name") or signal.get("source") or "unknown source"
+        published = signal.get("published_at")
+        if hasattr(published, "isoformat"):
+            published_str = published.isoformat()
+        else:
+            published_str = str(published or "unknown")
+        headline = signal.get("headline") or "(no headline)"
+        body = _truncate(signal.get("body_text"), body_char_limit)
+        lines.append(f"[{idx}] {headline}")
+        lines.append(f"     source: {source_name}  published: {published_str}")
+        lines.append(f"     body: {body or '(no body text)'}")
+        lines.append("")
+    return ScorePromptParts(system=system, user="\n".join(lines))
+
+
 def build_brief_prompt(
     items: list[dict[str, Any]],
     *,
