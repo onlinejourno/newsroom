@@ -16,6 +16,7 @@ Source-row convention (config-as-data, no schema change):
 
 from __future__ import annotations
 
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -29,6 +30,10 @@ from onlinejourno_ingest.collectors.base import (
 from onlinejourno_ingest.protocols import FetchError, Signal
 
 GDELT_DOC_ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
+
+# GDELT throttles rapid queries (HTTP 429). One collector instance handles all
+# gdelt sources in a run, so it self-throttles to ~1 request per interval.
+GDELT_MIN_REQUEST_INTERVAL = 5.0  # seconds between GDELT requests
 
 # GDELT language names -> ISO 639-1 (extend as needed).
 _LANG = {"English": "en", "Hindi": "hi", "Tamil": "ta", "Bengali": "bn"}
@@ -51,6 +56,14 @@ class GDELTCollector:
         self.max_records = max_records
         self.timespan = timespan
         self.session = session or http_session()
+        self._last_request = 0.0
+
+    def _throttle(self) -> None:
+        """Sleep so successive GDELT requests stay >= GDELT_MIN_REQUEST_INTERVAL apart."""
+        wait = GDELT_MIN_REQUEST_INTERVAL - (time.monotonic() - self._last_request)
+        if wait > 0:
+            time.sleep(wait)
+        self._last_request = time.monotonic()
 
     def fetch(self, source: dict[str, Any]) -> list[Signal]:
         """Pull article metadata for one GDELT source row."""
@@ -61,6 +74,7 @@ class GDELTCollector:
             )
         endpoint = source.get("url") or GDELT_DOC_ENDPOINT
 
+        self._throttle()
         try:
             resp = self.session.get(
                 endpoint,
