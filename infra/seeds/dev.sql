@@ -209,4 +209,43 @@ from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
 
+-- Moneycontrol — Business (via GDELT)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'gdelt', 'Moneycontrol — Business (GDELT)',
+       'https://api.gdeltproject.org/api/v2/doc/doc',
+       'domainis:moneycontrol.com (sebi OR rbi OR nifty OR sensex OR rupee OR markets OR IPO OR earnings OR stock) sourcelang:english',
+       'mainstream', '{markets-regulatory}', '{en}', true
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
+-- Business Standard — Markets (via GDELT)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'gdelt', 'Business Standard — Markets (GDELT)',
+       'https://api.gdeltproject.org/api/v2/doc/doc',
+       'domainis:business-standard.com (sebi OR rbi OR nifty OR sensex OR rupee OR markets OR IPO OR economy) sourcelang:english',
+       'mainstream', '{markets-regulatory}', '{en}', true
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
+-- PIB — Finance/Economy (via GDELT)
+insert into sources (
+  tenant_id, kind, name, url, rss_url, deuze_type,
+  beat_tags, expected_languages, enabled
+)
+select t.id, 'gdelt', 'PIB — Finance/Economy (GDELT)',
+       'https://api.gdeltproject.org/api/v2/doc/doc',
+       'domainis:pib.gov.in (finance OR ministry OR economy OR tax OR gst OR rbi OR sebi OR budget) sourcelang:english',
+       'index_category', '{markets-regulatory}', '{en}', true
+from tenants t
+where t.slug = 'self'
+on conflict (tenant_id, name) do nothing;
+
 commit;
