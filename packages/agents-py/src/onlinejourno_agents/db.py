@@ -216,13 +216,21 @@ def top_shortlist(
     *,
     beat_id: UUID | None,
     limit: int,
+    since_hours: int | None = None,
 ) -> list[dict[str, Any]]:
-    """Top shortlist items (highest score) with their signal text, for composing."""
+    """Top shortlist items (highest score) with their signal text, for composing.
+
+    `since_hours` scopes to recently-shortlisted items so a daily brief reads
+    today's shortlist rather than the all-time top (kept null for manual runs).
+    """
     where = ["si.tenant_id = %s", "si.decision is null or si.decision <> 'rejected'"]
     params: list[Any] = [tenant_id]
     if beat_id is not None:
         where.append("si.beat_id = %s")
         params.append(beat_id)
+    if since_hours is not None:
+        where.append("si.shortlisted_at >= now() - make_interval(hours => %s)")
+        params.append(since_hours)
     sql = f"""
         select si.id as shortlist_id, si.signal_id, si.score, si.rank, si.rationale,
                s.headline, s.body_text, s.url, s.published_at, src.name as source_name
