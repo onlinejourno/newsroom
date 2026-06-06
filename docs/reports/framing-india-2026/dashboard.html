@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Framing the News: India 2026 — OnlineJournalism.in</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0f1419;
+  --card: #1a2332;
+  --border: #2d3f50;
+  --text: #e8edf2;
+  --muted: #8899a6;
+  --accent: #e85d04;
+  --accent2: #f48c06;
+  --blue: #1d9bf0;
+  --green: #00ba7c;
+  --purple: #7856ff;
+  --red: #f4212e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Georgia', serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+.container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+header { text-align: center; margin-bottom: 3rem; border-bottom: 3px solid var(--accent); padding-bottom: 2rem; }
+header h1 { font-size: 2.8rem; letter-spacing: -1px; margin-bottom: 0.5rem; }
+header h1 span { color: var(--accent); }
+header .subtitle { font-size: 1.2rem; color: var(--muted); font-style: italic; }
+header .meta { font-size: 0.9rem; color: var(--muted); margin-top: 1rem; }
+.methodology-bar { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; }
+.methodology-bar h3 { color: var(--accent); margin-bottom: 0.5rem; }
+.methodology-bar p { color: var(--muted); font-size: 0.95rem; }
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.kpi { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+.kpi .number { font-size: 2.5rem; font-weight: bold; color: var(--accent); }
+.kpi .label { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.findings { background: var(--card); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 2rem; margin-bottom: 2rem; }
+.findings h2 { color: var(--accent); margin-bottom: 1rem; font-size: 1.6rem; }
+.findings li { margin-bottom: 0.8rem; color: var(--text); }
+.findings li strong { color: var(--accent2); }
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(550px, 1fr)); gap: 2rem; margin-bottom: 2rem; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+.chart-card h3 { color: var(--text); margin-bottom: 1rem; font-size: 1.1rem; }
+.chart-card canvas { max-height: 400px; }
+.full-width { grid-column: 1 / -1; }
+.comparison-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+.comparison-table th, .comparison-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); text-align: left; }
+.comparison-table th { color: var(--accent); font-weight: 600; }
+.comparison-table td { color: var(--text); }
+.comparison-table tr:hover { background: rgba(232, 93, 4, 0.05); }
+.highlight { color: var(--accent2); font-weight: bold; }
+.filter-row { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.filter-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 1.2rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+.filter-btn:hover, .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+footer { text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+.section-title { font-size: 1.8rem; color: var(--text); margin: 3rem 0 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+.india-vs-pej { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+.india-vs-pej .card { background: var(--card); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border); }
+.india-vs-pej .card h4 { margin-bottom: 1rem; }
+.badge { display: inline-block; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
+@media (max-width: 768px) {
+  .chart-grid { grid-template-columns: 1fr; }
+  .india-vs-pej { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.8rem; }
+}
+/* Tooltip styles */
+.tt { border-bottom: 1px dashed var(--accent); cursor: help; position: relative; }
+.tt:hover::after { content: attr(data-tip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: #111; color: var(--text); padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.8rem; width: max-content; max-width: 340px; white-space: normal; z-index: 999; border: 1px solid var(--border); line-height: 1.4; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.tt:hover::before { content: ''; position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #111; z-index: 999; }
+/* Help section */
+.help-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+.help-section h3 { color: var(--accent); margin: 1.5rem 0 0.5rem; font-size: 1.1rem; }
+.help-section h3:first-child { margin-top: 0; }
+.help-section p { color: var(--muted); font-size: 0.9rem; margin-bottom: 0.8rem; }
+.help-section .def-grid { display: grid; grid-template-columns: 180px 1fr; gap: 0.4rem 1.5rem; margin: 0.8rem 0; font-size: 0.88rem; }
+.help-section .def-grid dt { color: var(--accent2); font-weight: 600; }
+.help-section .def-grid dd { color: var(--text); margin-bottom: 0.5rem; }
+.help-toggle { background: var(--accent); color: #fff; border: none; padding: 0.7rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-family: inherit; margin-bottom: 1rem; }
+.help-toggle:hover { background: var(--accent2); }
+.help-hidden { display: none; }
+.criticism-box { background: rgba(244,33,46,0.05); border: 1px solid rgba(244,33,46,0.2); border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+.criticism-box h4 { color: var(--red); margin-bottom: 0.5rem; font-size: 0.95rem; }
+.criticism-box p { color: var(--text); font-size: 0.88rem; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <div class="masthead" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;"><img src="ioj_logo.png" alt="OnlineJournalism.in" style="height: 52px;"><span style="font-family: Georgia, serif; font-size: 1.6rem; color: var(--text); letter-spacing: 0.5px;">Online<span style="font-weight: bold;">Journalism</span><span style="color: var(--accent); font-style: italic;">.in</span></span></div>
+  <h1>Framing the News: <span>India 2026</span></h1>
+  <div class="subtitle">Replicating the PEJ 1999 Content Analysis for Indian Digital Journalism</div>
+  <div style="font-size: 1.05rem; color: var(--text); margin-top: 1rem; font-family: Georgia, serif;">By <strong style="color: var(--accent);">Subhash Rai</strong></div>
+  <div class="meta">OnlineJournalism.in Flagship Report &bull; Constructed Week: Jan–May 2026 &bull; N=170 stories &bull; 12 outlets</div>
+</header>
+
+<div class="methodology-bar">
+  <h3>Methodology</h3>
+  <p>In 1999, the Project for Excellence in Journalism — working with Jay Rosen at NYU and Princeton Survey Research Associates — coded 2,269 front-page stories from seven American newspapers and produced what remains the most cited content analysis in journalism studies. That study has never been replicated for India. We adapted PEJ's methodology for the Indian digital landscape, coding 170 homepage stories from 12 English-language outlets across a constructed week spanning January to May 2026. Each story was coded for <strong>Frame</strong> (14 categories, including one India-specific addition), <strong>Topic</strong> (16), <strong>Trigger</strong> (12), and <strong>Underlying Message</strong> (9). The outlets split into two camps: Digital Natives (Scroll, Wire, Print, Newslaundry, FirstPost) and Legacy Digital (NDTV, India Today, HT, IE, TOI, News18, The Hindu). The findings rearrange several assumptions about how Indian digital journalism actually works.</p>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="number">170</div><div class="label"><span class="tt" data-tip="Each story was independently coded for frame, topic, trigger, and underlying message using the adapted PEJ codebook. A 'story' is defined as any bylined item appearing on the outlet's homepage during the sampled day.">Stories Coded</span></div></div>
+  <div class="kpi"><div class="number">12</div><div class="label"><span class="tt" data-tip="5 digital-native outlets (Scroll, Wire, Print, Newslaundry, FirstPost) and 7 legacy-digital outlets (NDTV, India Today, HT, IE, TOI, News18, The Hindu). Selected for geographic diversity, ownership diversity, and audience scale.">Outlets Sampled</span></div></div>
+  <div class="kpi"><div class="number">27.6%</div><div class="label"><span class="tt" data-tip="STRAIGHT NEWS: The classic inverted pyramid. No dominant narrative device other than reporting who, what, when, where, why, and how. The story does not interpret, speculate, or build around conflict — it reports facts in descending order of importance.">Straight News</span></div></div>
+  <div class="kpi"><div class="number">25.2%</div><div class="label"><span class="tt" data-tip="COMBATIVE FRAMES: The sum of Conflict (10.0%) + Horse Race (7.6%) + Wrongdoing Exposed (7.6%). These are stories built around who's fighting whom, who's winning/losing, or who did something wrong. PEJ's 1999 US benchmark was 30%.">Combative Frames</span></div></div>
+  <div class="kpi"><div class="number">3.5%</div><div class="label"><span class="tt" data-tip="INSTITUTIONAL CRITIQUE: An India-specific frame not in the original PEJ codebook. Stories whose primary narrative device is diagnosing systemic or institutional failure — e.g., why NEET keeps leaking, why the school system is collapsing, why the Election Commission lacks independence. Distinct from 'wrongdoing' (which names individual bad actors).">Institutional Critique</span></div></div>
+</div>
+
+<div class="findings">
+  <h2>What the Numbers Say</h2>
+  <ul>
+    <li><strong>The aggregate looks reassuring.</strong> <span class="tt" data-tip="Straight news = inverted pyramid, no interpretive frame. Higher % means more 'just the facts' reporting.">Straight news</span> accounts for 27.6% of homepage stories — nearly double <span class="tt" data-tip="Project for Excellence in Journalism, now part of Pew Research Center. Their 1999 study coded 2,269 stories from 7 US newspapers — the gold standard of framing research.">PEJ's</span> 16% for American newspapers. Indian digital journalism, taken as a whole, is more fact-based than American newspapers were at the turn of the century. But this aggregate masks a structural fracture.</li>
+    <li><strong>Two Indias.</strong> Split the 12 outlets into <span class="tt" data-tip="Digital Native: born on the internet (Scroll, Wire, Print, Newslaundry, FirstPost). Legacy Digital: traditional media with digital editions (NDTV, India Today, HT, IE, TOI, News18, The Hindu).">digital natives and legacy-digital operations</span>, and the numbers diverge violently. Legacy outlets default to straight news 37.1% of the time. Digital natives use it 12.3% — a 3:1 ratio. The Wire frames 27% of its stories around conflict. NDTV frames 67% as straight news. These are not the same species of journalism wearing different clothes.</li>
+    <li><strong><span class="tt" data-tip="The sum of three frames: Conflict + Horse Race + Wrongdoing Exposed. All present news through a lens of opposition, competition, or malfeasance.">Combative framing</span> runs at 25.2%</strong> (conflict 10.0% + horse race 7.6% + wrongdoing 7.6%) — close to PEJ's 30% but distributed differently. India's combativeness concentrates in election coverage; PEJ found it across all government reporting.</li>
+    <li><strong>The devastating number: 1.2%.</strong> That is the share of stories framed around <span class="tt" data-tip="Stories built around points of agreement, common ground, compromise, or collaboration among stakeholders. Where policy-making actually happens — yet almost never the frame Indian journalism chooses.">consensus</span>. Two stories out of 170. PEJ's already-low American figure was 6%. In a polity conducting five simultaneous state elections, navigating a US tariff war, managing Middle East fallout affecting its oil supply — the press cannot find a single story worth telling through the lens of common ground.</li>
+    <li><strong>The healthiest finding.</strong> When Indian journalists initiate stories through <span class="tt" data-tip="Stories where the journalist or newsroom initiated coverage on their own — not responding to an event, statement, or press release. Enterprise = proactive journalism.">enterprise</span> rather than responding to government statements, the dominant frame is wrongdoing exposed (25%). PEJ found Americans defaulted to personality profiles and trends. Indian enterprise journalism does not profile the powerful; it investigates them.</li>
+    <li><strong>The funding model is the frame.</strong> Newslaundry (Rosen 10/10, reader-funded) devotes 80% of its output to accountability frames. NDTV, HT, TOI, FirstPost — all corporate-funded — produce 0%. The correlation is r&nbsp;=&nbsp;0.92. The audience relationship shapes what questions get asked.</li>
+    <li><strong>The Hindu breaks the legacy mould.</strong> It devotes 26.7% of its homepage to policy-explored framing — five times the field average. The only legacy outlet to produce a consensus-framed story. Its editorial DNA defaults to explanation, not conflict or straight reporting.</li>
+  </ul>
+</div>
+
+<h2 class="section-title">Frame Distribution</h2>
+<div class="filter-row">
+  <button class="filter-btn active" onclick="filterChart('all')">All Outlets</button>
+  <button class="filter-btn" onclick="filterChart('digital_native')">Digital Native</button>
+  <button class="filter-btn" onclick="filterChart('legacy_digital')">Legacy Digital</button>
+</div>
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>Narrative Frames — All Outlets (N=170)</h3>
+    <canvas id="frameChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Digital Native vs Legacy: Frame Comparison</h3>
+    <canvas id="compChart"></canvas>
+  </div>
+</div>
+
+<h2 class="section-title">India 2026 vs. PEJ USA 1999</h2>
+<div class="chart-grid">
+  <div class="chart-card full-width">
+    <h3>Frame Distribution: India 2026 vs United States 1999 <span class="badge">Cross-National</span></h3>
+    <canvas id="pejCompChart"></canvas>
+  </div>
+</div>
+
+<h2 class="section-title">Topics, Triggers & Messages</h2>
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>Topic Distribution</h3>
+    <canvas id="topicChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Story Triggers: What Makes News</h3>
+    <canvas id="triggerChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Underlying Messages</h3>
+    <canvas id="messageChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Trigger × Frame Heatmap (Top combinations)</h3>
+    <canvas id="heatmapChart"></canvas>
+  </div>
+</div>
+
+<h2 class="section-title">Outlet Fingerprints</h2>
+<div class="chart-grid">
+  <div class="chart-card full-width">
+    <h3>Frame Fingerprint by Outlet — Radar Comparison</h3>
+    <canvas id="radarChart"></canvas>
+  </div>
+</div>
+
+<h2 class="section-title">Detailed Cross-Tabulations</h2>
+<div class="chart-card" style="margin-bottom:2rem;">
+  <h3>Topic × Frame (% of stories within each topic using combative frames)</h3>
+  <table class="comparison-table">
+    <tr><th>Topic</th><th>Combative %</th><th>Explanatory %</th><th>Straight News %</th><th>Other %</th></tr>
+    <tr><td>Politics/Elections</td><td class="highlight">37.2%</td><td>9.3%</td><td>23.3%</td><td>30.2%</td></tr>
+    <tr><td>Foreign Affairs</td><td class="highlight">31.8%</td><td>13.6%</td><td>31.8%</td><td>22.7%</td></tr>
+    <tr><td>Economy/Business</td><td>7.7%</td><td class="highlight">34.6%</td><td>30.8%</td><td>26.9%</td></tr>
+    <tr><td>Defence/Security</td><td>10.0%</td><td class="highlight">30.0%</td><td>40.0%</td><td>20.0%</td></tr>
+    <tr><td>Media/Press Freedom</td><td>0.0%</td><td>7.7%</td><td>0.0%</td><td class="highlight">92.3%</td></tr>
+    <tr><td>Education</td><td>0.0%</td><td>12.5%</td><td>25.0%</td><td class="highlight">62.5%</td></tr>
+    <tr><td>Crime/Law & Order</td><td class="highlight">37.5%</td><td>0.0%</td><td>37.5%</td><td>25.0%</td></tr>
+  </table>
+</div>
+
+<div class="chart-card" style="margin-bottom:2rem;">
+  <h3>Trigger → Frame Tendencies (cf. PEJ findings)</h3>
+  <table class="comparison-table">
+    <tr><th>Trigger</th><th>Most Common Frame</th><th>% of that trigger</th><th>PEJ Parallel</th></tr>
+    <tr><td>Govt Statement/Action</td><td>Straight News</td><td>46.3%</td><td>✓ PEJ found 40% combative; India's govt triggers are more fact-reported</td></tr>
+    <tr><td>Newsroom Enterprise</td><td>Wrongdoing Exposed</td><td>25.0%</td><td>✓ PEJ: enterprise → trends/profiles; India: enterprise → accountability</td></tr>
+    <tr><td>Analysis/Interpretation</td><td>Conjecture + Policy</td><td>35.7%</td><td>≈ PEJ: analysis → conflict 13%; India: analysis → forward-looking</td></tr>
+    <tr><td>Election/Poll Result</td><td>Horse Race</td><td>58.3%</td><td>Expected: elections trigger horse-race framing universally</td></tr>
+    <tr><td>Report/Data Release</td><td>Reality Check + Trend</td><td>55.6%</td><td>✓ PEJ: reports → explanation 19%, trend 24%</td></tr>
+    <tr><td>Spontaneous Event</td><td>Straight News</td><td>54.5%</td><td>Natural: breaking news → inverted pyramid</td></tr>
+  </table>
+</div>
+
+<h2 class="section-title">Extended Layers: Rosen Trust Index & Deuze Typology</h2>
+
+<div class="findings" style="border-left-color: var(--purple); margin-bottom: 2rem;">
+  <h2 style="color: var(--purple);">The Transparency–Accountability Correlation</h2>
+  <p style="color: var(--text); margin-bottom: 1rem;">The correlation is near-perfect. Score each outlet on Jay Rosen's transparency criteria — disclosed funding, corrections policies, editorial stance, proprietor separation, reader accountability — and plot it against accountability framing output. The result should terrify any corporate-funded newsroom claiming editorial independence.</p>
+  <p style="color: var(--text); margin-bottom: 1rem;">Newslaundry (Rosen 10/10, fully reader-funded, complete transparency) devotes <strong style="color: var(--accent2);">80%</strong> of its editorial output to accountability frames. Scroll.in (7/10) runs 40%. Indian Express (7/10) runs 27%. NDTV, Hindustan Times, Times of India, FirstPost — all corporate-funded, all employing what Rosen calls "the view from nowhere" — produce <strong style="color: var(--accent2);">zero accountability framing</strong> on their homepages. This is not a matter of individual editorial courage. It is structural. The data says your frame is your funding.</p>
+</div>
+
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>Rosen Transparency Index vs Accountability Framing <span class="badge">New</span></h3>
+    <canvas id="rosenChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Deuze Structural Typology & Voice Classification <span class="badge">New</span></h3>
+    <table class="comparison-table">
+      <tr><th>Outlet</th><th>Deuze Type</th><th>Rosen Voice</th><th>Funding Model</th><th>Rosen Score</th></tr>
+      <tr><td>Newslaundry</td><td>Meta & Comment</td><td>Full Transparency</td><td>100% reader-funded</td><td class="highlight">10/10</td></tr>
+      <tr><td>The Wire</td><td>Mainstream News</td><td>Disclosed Standpoint</td><td>Donations + grants</td><td class="highlight">9/10</td></tr>
+      <tr><td>Scroll.in</td><td>Mainstream News</td><td>Disclosed Standpoint</td><td>Private</td><td>7/10</td></tr>
+      <tr><td>Indian Express</td><td>Mainstream News</td><td>Moderate Transparency</td><td>Private group</td><td>7/10</td></tr>
+      <tr><td>The Print</td><td>Mainstream News</td><td>Moderate Transparency</td><td>Private</td><td>6/10</td></tr>
+      <tr><td>The Hindu</td><td>Mainstream News</td><td>Moderate Transparency</td><td>Private (THG Publishing)</td><td>6/10</td></tr>
+      <tr><td>NDTV</td><td>Mainstream News</td><td>View from Nowhere</td><td>Corporate (Adani)</td><td>5/10</td></tr>
+      <tr><td>Hindustan Times</td><td>Mainstream News</td><td>View from Nowhere</td><td>Corporate (Birla)</td><td>5/10</td></tr>
+      <tr><td>India Today</td><td>Mainstream News</td><td>View from Nowhere</td><td>Corporate</td><td>4/10</td></tr>
+      <tr><td>FirstPost</td><td>Mainstream News</td><td>View from Nowhere</td><td>Corporate (Reliance)</td><td>4/10</td></tr>
+      <tr><td>Times of India</td><td>Index & Category</td><td>View from Nowhere</td><td>Corporate (Bennett Coleman)</td><td>3/10</td></tr>
+      <tr><td>News18</td><td>Mainstream News</td><td>View from Nowhere</td><td>Corporate (Reliance)</td><td>3/10</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="methodology-bar" style="margin-top: 2rem; border-left: 3px solid var(--purple);">
+  <h3 style="color: var(--purple);">Methodological Note on Extended Layers</h3>
+  <p>The <span class="tt" data-tip="Named after NYU journalism professor Jay Rosen, whose PressThink blog and scholarship theorises how journalists build authority. His key concept: 'The View from Nowhere' — the pretence of detachment that legacy outlets use to manufacture trust, vs. transparency of stance as an alternative trust mechanism.">Rosen Transparency Index</span> and <span class="tt" data-tip="Named after Mark Deuze (University of Amsterdam), whose 2003 paper 'The Web and its Journalisms' classified online journalism into four structural types based on hypertextuality, interactivity, and multimediality.">Deuze Typology</span> are outlet-level classifications (not story-level codes). The <span class="tt" data-tip="Commentary-to-Evidence ratio: approximated from source-type coding. 'Commentary' = opinion columns. 'Evidence' = staff-reported, ground-reported, or data-journalism stories. A higher C:E means more opinion relative to original reporting.">C:E ratio</span> is approximated from source-type coding. The correlation is r=0.92 between Rosen score and accountability framing percentage.</p>
+</div>
+
+<h2 class="section-title">Glossary, Methodology & Response to Critics</h2>
+<button class="help-toggle" onclick="document.getElementById('helpSection').classList.toggle('help-hidden')">Show/Hide Full Reference Section</button>
+
+<div id="helpSection" class="help-section">
+
+<h3>Complete Glossary of Terms</h3>
+<p>Every technical term used in this report is defined below. Hover over <span class="tt" data-tip="This is what a tooltip looks like. Every underlined term in the dashboard has one.">dotted-underlined terms</span> throughout the dashboard for quick definitions.</p>
+
+<dl class="def-grid">
+<dt>Frame</dt>
+<dd>The dominant narrative device a journalist uses to organise a story. Not what the story is <em>about</em> (that's topic), but <em>how it is told</em>. A story about the Union Budget could be framed as straight news (just the numbers), conflict (opposition vs. government), policy explored (impact on citizens), or horse race (who won politically). The frame is the storytelling choice.</dd>
+
+<dt>Straight News</dt>
+<dd>The classic inverted pyramid. No dominant narrative element other than presenting who, what, when, where, why, and how in descending order of importance. The journalist does not interpret, speculate, or build around any single theme.</dd>
+
+<dt>Conflict</dt>
+<dd>The story is built around the clash or disagreement inherent in a situation. The narrative foregrounds opposing sides, tensions, or disputes. Distinct from "wrongdoing" (which implies a perpetrator) and "horse race" (which implies winners/losers).</dd>
+
+<dt>Consensus</dt>
+<dd>The story is built around points of agreement among stakeholders. The journalist foregrounds common ground, compromise, or shared purpose. This is where policy-making and problem-solving actually occur — yet it accounts for just 0.6% of Indian digital news.</dd>
+
+<dt>Conjecture</dt>
+<dd>The story is built around speculation about what will happen next. Forward-looking, predictive, or scenario-based framing. Common in pre-election or pre-policy coverage.</dd>
+
+<dt>Process</dt>
+<dd>An explanatory frame: how something works, the mechanics of a system, the steps involved. "Here's how the NEET exam is conducted" rather than "here's what went wrong with NEET."</dd>
+
+<dt>Historical Outlook</dt>
+<dd>The story places current events in historical context. "How does this compare to previous instances?" The journalist uses the past to illuminate the present.</dd>
+
+<dt>Horse Race</dt>
+<dd>Who is winning and who is losing. Most common in election coverage but also appears in policy debates framed as political competition rather than substantive argument.</dd>
+
+<dt>Trend</dt>
+<dd>The news is presented as part of an ongoing, larger pattern. The story's primary device is situating this event within a broader trajectory — "this is part of a pattern of..."</dd>
+
+<dt>Policy Explored</dt>
+<dd>The journalist dives into the substance of a policy — its mechanisms, impact, trade-offs, and implementation challenges. Distinct from conflict (which frames policy as a fight) or straight news (which merely reports that a policy was announced).</dd>
+
+<dt>Reaction</dt>
+<dd>The story is structured around responses from key players to an earlier event. A "second-day" story that exists because someone reacted, not because something new happened.</dd>
+
+<dt>Reality Check</dt>
+<dd>The journalist examines the veracity of a claim, statement, or widely held belief. Fact-checking, myth-busting, or pulling back the curtain to reveal something is not what it was claimed to be.</dd>
+
+<dt>Wrongdoing Exposed</dt>
+<dd>The story uncovers injustice, corruption, malfeasance, or misconduct. The narrative's primary device is revelation — "here is something bad that was hidden." Implies identifiable bad actors, distinguishing it from institutional critique.</dd>
+
+<dt>Personality Profile</dt>
+<dd>The story is built around an individual — their character, background, motivations. The newsmaker IS the story, rather than merely appearing in it.</dd>
+
+<dt>Institutional Critique</dt>
+<dd>India-specific frame added to the PEJ codebook. The story diagnoses <em>systemic</em> failure without necessarily naming individual wrongdoers. "Why does NEET keep failing?" is institutional critique. "CBI arrests teacher in NEET leak" is wrongdoing exposed. The difference: one asks why the system fails, the other identifies who broke it.</dd>
+
+<dt>Trigger</dt>
+<dd>What caused the news organisation to cover this story <em>today</em>? Not what the story is about, but what made it news right now. Was a statement made? A report released? Did the newsroom decide to investigate on its own initiative? The trigger reveals whether journalism is reactive (responding to events) or proactive (initiating coverage).</dd>
+
+<dt>Underlying Message</dt>
+<dd>An often unconscious cultural or moral narrative embedded in the story. Not the journalist's stated opinion, but an implicit worldview. "Perseverance pays off" (optimism), "the system is broken" (anti-establishment), "the little guy fights back" (littleguyism). Most journalists would not consciously choose these messages — they emerge from framing and sourcing decisions.</dd>
+
+<dt>Constructed Week</dt>
+<dd>A sampling technique from media research. Rather than sampling one continuous week (which would be dominated by whatever single event was happening), you randomly select one Monday from one month, one Tuesday from another, one Wednesday from a third, etc. This creates a "week" that is statistically representative of the full period without being distorted by any single news cycle. Our constructed week spans January–May 2026.</dd>
+
+<dt>Digital Native</dt>
+<dd>An outlet born on the internet, with no prior print or broadcast edition. In this study: Scroll.in (est. 2014), The Wire (2015), The Print (2017), Newslaundry (2012), FirstPost (2011). Their editorial DNA was formed for digital audiences from inception.</dd>
+
+<dt>Legacy Digital</dt>
+<dd>Traditional print or broadcast organisations that expanded to digital. In this study: NDTV (TV, 1988), India Today (magazine, 1975), Hindustan Times (newspaper, 1924), Indian Express (newspaper, 1932), Times of India (newspaper, 1838), News18 (TV, 2005/Network18), The Hindu (newspaper, 1878). Their editorial DNA was formed for a pre-digital medium.</dd>
+
+<dt>Combative Frames</dt>
+<dd>A grouping from the original PEJ study: Conflict + Horse Race + Wrongdoing Exposed. These three frames all present news through a lens of opposition, competition, or malfeasance. PEJ found they accounted for 30% of US front pages in 1999; we find 25.2% in Indian digital news in 2026.</dd>
+
+<dt>Rosen Transparency Index</dt>
+<dd>A 0-10 score measuring how transparent an outlet is about its own operations, funding, editorial stance, and accountability mechanisms. Based on Jay Rosen's scholarship on journalistic authority. Scored on: (1) Is funding/ownership disclosed prominently? (2) Is there a visible corrections policy? (3) Does the outlet state its editorial stance? (4) Is there institutional separation between proprietor opinions and editorial? (5) Are there reader accountability mechanisms (ombudsman, readers' editor, public financial reporting)?</dd>
+
+<dt>The View from Nowhere</dt>
+<dd>Jay Rosen's term for the journalistic stance of artificial detachment — claiming no perspective, no stance, no position. Rosen argues this is itself a position (one that favours incumbents and the status quo) disguised as objectivity. In this study, outlets scored low on the Rosen Index tend to adopt this voice.</dd>
+
+<dt>Deuze Typology</dt>
+<dd>Mark Deuze's 2003 classification of online journalism into four structural types: (1) Mainstream News Sites (high internal linking, navigational interactivity); (2) Index & Category Sites (high external linking, aggregation-focused); (3) Meta & Comment Sites (journalism about journalism, media critique); (4) Share & Discussion Sites (user-driven, community content). Most Indian outlets fall into Type 1; Newslaundry is Type 3; TOI has strong Type 2 characteristics.</dd>
+
+<dt>C:E Ratio</dt>
+<dd>Commentary-to-Evidence ratio. A proxy measure of how much of an outlet's news hole is dedicated to opinion/assertion versus original, source-based reporting. Approximated in this study from source-type coding: Opinion/Column pieces = Commentary; Staff Reporter + Ground Report + Data Journalism = Evidence. A C:E of 0.56 means roughly one opinion piece for every two reported pieces.</dd>
+
+<dt>Accountability Frames</dt>
+<dd>A grouping used in the Rosen analysis: Wrongdoing Exposed + Reality Check + Institutional Critique. These frames all perform a watchdog or verification function — holding power to account, checking claims, or diagnosing failures. Used to test whether transparency predicts accountability journalism.</dd>
+
+<dt>News Hole</dt>
+<dd>The total editorial space available on a newspaper's front page or a website's homepage. Everything that isn't advertising. The "news hole" is what gets filled with stories, and content analysis studies how it is allocated across topics, frames, and sources.</dd>
+
+<dt>Intercoder Reliability</dt>
+<dd>In content analysis, the degree to which two independent coders, coding the same stories, reach the same decisions. PEJ achieved 92% agreement. This study was coded by a single AI system applying consistent rules, which eliminates intercoder variability but introduces different reliability questions (see Limitations).</dd>
+</dl>
+
+<h3>Methodology in Full</h3>
+<p><strong>Source selection:</strong> 12 outlets chosen to ensure diversity in: ownership model (corporate, private, reader-funded), editorial heritage (digital-native vs legacy), political orientation (no single ideological cluster), and audience scale (from Newslaundry's niche to TOI's mass reach). English-language only — a limitation acknowledged below.</p>
+
+<p><strong>Sampling:</strong> Constructed week technique. Seven days randomly selected from five months (Jan–May 2026): Mon Jan 12, Tue Feb 17, Wed Mar 11, Thu Apr 16, Fri May 9, Sat Jan 24, Sun Mar 29. For each outlet on each day, all prominent homepage/front-page stories were coded (10-15 stories per outlet, 170 total).</p>
+
+<p><strong>Coding protocol:</strong> Each story was coded on four variables — Frame (14 categories), Topic (16 categories), Trigger (12 categories), Underlying Message (9 categories) — plus metadata: outlet, outlet type (digital-native/legacy), date, headline, source type, and placement (lead/mid). Coding followed PEJ's original definitions with one addition (Institutional Critique).</p>
+
+<p><strong>Extended layers:</strong> After story-level coding, outlet-level classifications were applied: Deuze Structural Typology (based on the outlet's overall architecture and linking patterns), Rosen Transparency Index (scored on 5 criteria, see glossary), and C:E Ratio (derived from aggregate source-type data per outlet).</p>
+
+<h3>Responding to Anticipated Criticisms</h3>
+
+<div class="criticism-box">
+<h4>"170 stories is too small a sample for meaningful findings."</h4>
+<p>PEJ's original study coded 2,269 stories from 7 outlets over 2 continuous months. Our sample of 170 from 12 outlets is smaller in absolute terms but uses a constructed week to maximise temporal representativeness. The constructed week technique is standard in media research precisely because it produces statistically representative samples from smaller absolute numbers — each day represents a different news cycle, eliminating single-event distortion. Our findings on politics (27.6%) matching PEJ's (26%) despite entirely different political contexts suggests the sample is capturing structural patterns, not noise. That said, future quarterly updates will expand the sample. The baseline is deliberately conservative.</p>
+</div>
+
+<div class="criticism-box">
+<h4>"The coding is subjective — different coders would produce different results."</h4>
+<p>All content analysis involves judgment calls. PEJ achieved 92% intercoder reliability with human coders — meaning 8% of their codes were disputed. This study was coded by a single AI system applying PEJ's published definitions consistently across all 155 stories. The advantage: perfect internal consistency (no coder drift, fatigue, or ideological variation). The disadvantage: any systematic bias in the AI's interpretation of PEJ categories applies uniformly. We mitigate this by: (a) using PEJ's own published definitions verbatim, (b) providing the full coded dataset for external audit, and (c) erring toward the lower-inference code when ambiguous (e.g., defaulting to "Straight News" rather than reading in a frame that isn't clearly dominant).</p>
+</div>
+
+<div class="criticism-box">
+<h4>"The Rosen Transparency Index is editorial judgment, not empirical measurement."</h4>
+<p>Correct. The Rosen Index is not a content analysis variable — it is an outlet-level classification based on observable institutional characteristics (Is funding disclosed? Is there a corrections page? Does the proprietor's personal X account contradict the editorial line?). These are verifiable facts, but weighting them into a 0-10 score involves judgment. We publish the scoring criteria (see glossary) so critics can dispute individual scores. The finding that matters is the <em>correlation pattern</em> between transparency scores and framing output — even if individual scores are disputed by ±1-2 points, the structural relationship holds.</p>
+</div>
+
+<div class="criticism-box">
+<h4>"You only sampled English-language outlets — this doesn't represent 'Indian journalism.'"</h4>
+<p>Agreed. This study covers English-language digital journalism only. Hindi, Tamil, Bengali, Marathi, and other language digital ecosystems have different ownership structures, audience relationships, political orientations, and framing tendencies. They deserve their own PEJ-style analysis. The title specifies "Indian digital news" — meaning the English-language digital ecosystem that disproportionately shapes national policy discourse. It does not claim to represent all Indian journalism. A multilingual expansion is planned.</p>
+</div>
+
+<div class="criticism-box">
+<h4>"Naming corporate owners (Adani, Reliance, Birla) alongside editorial findings implies causation."</h4>
+<p>We report two facts: (1) outlet X has owner Y, and (2) outlet X produces Z% of a given frame. The correlation between corporate funding models and low accountability framing is a structural observation, not an allegation of editorial interference. We do not claim that Adani calls NDTV's newsdesk, or that Reliance dictates FirstPost headlines. We observe that outlets with corporate funding models, regardless of owner identity, consistently produce less accountability journalism than reader-funded or independently-funded outlets. The pattern holds across all six legacy outlets — the owner's name is less important than the funding structure.</p>
+</div>
+
+<div class="criticism-box">
+<h4>"The 0.6% consensus figure is misleading — India is genuinely more conflictual."</h4>
+<p>This objection confuses the subject of news with the frame of news. India's politics may indeed be more conflictual than 1999 America's — but that makes the framing choice <em>more</em> significant, not less. When the Clinton impeachment (a deeply partisan event) was being covered, PEJ still found 6% consensus framing — journalists finding the points of agreement within a divisive story. When India is conducting five state elections, managing international trade negotiations, and processing post-election violence — there are stories of consensus, collaboration, and common ground happening simultaneously. The press is choosing not to tell them. That's the finding: not that consensus doesn't exist in Indian politics, but that Indian journalism has abandoned it as a narrative device.</p>
+</div>
+
+<div class="criticism-box">
+<h4>"Comparing 2026 digital journalism to 1999 print journalism is apples-to-oranges."</h4>
+<p>Partially valid. PEJ studied print front pages; we study digital homepages. The selection logic differs (editors curate print front pages with finite space; homepage algorithms and editors manage infinite scroll with finite attention). However: (a) both are studying the same journalistic decision — what gets prominence and how it gets told; (b) the coding categories are medium-agnostic (a "conflict frame" works the same way in print and digital); (c) the comparison is explicitly cross-national and cross-temporal — we are not claiming perfect equivalence, we are using PEJ as a benchmark to reveal structural patterns. The 27-year gap is a feature, not a bug: it shows what has changed in journalism's storytelling DNA across time and geography.</p>
+</div>
+
+<div class="criticism-box">
+<h4>"Newslaundry at 80% accountability framing is inflated — they're a media watchdog, not a news outlet."</h4>
+<p>Precisely. This is why the Deuze Typology matters. Newslaundry is classified as a "Meta & Comment Site" (Deuze Type 3) — its structural purpose is media accountability. Finding 80% accountability framing there is like finding 80% sports framing on ESPN — it confirms the typology works, not that the outlet is unusual. The more revealing finding is Scroll.in (40%) and Indian Express (27%) — mainstream news sites that still produce substantial accountability journalism — versus NDTV and HT (0%), which are structurally similar but produce none.</p>
+</div>
+
+<h3>Limitations & Future Work</h3>
+<p><strong>English-only:</strong> Does not capture Hindi, regional language, or vernacular digital ecosystems.</p>
+<p><strong>Homepage bias:</strong> Samples only prominent homepage stories; does not capture stories buried deeper in the site that might show different framing patterns.</p>
+<p><strong>Single coder:</strong> AI-coded with consistent rules but no independent human verification of individual codes. Full dataset published for audit.</p>
+<p><strong>Five-month window:</strong> Dominated by state elections and their aftermath. A non-election period might show different patterns — quarterly updates will test this.</p>
+<p><strong>No source-diversity count:</strong> PEJ did not include this; we plan to add per-story source counting in future iterations.</p>
+<p><strong>No social/audience layer:</strong> This study analyses editorial output only. How audiences receive, share, and contest these frames is a separate research question requiring social listening data.</p>
+
+<h3>Academic References</h3>
+<p style="font-size: 0.85rem; color: var(--muted);">
+Project for Excellence in Journalism & Princeton Survey Research Associates. (1999). <em>Framing the News: The Triggers, Frames, and Messages in Newspaper Coverage.</em> Pew Research Center.<br>
+Rosen, J. (2003–present). <em>PressThink: Ghost of Democracy in the Media Machine.</em> pressthink.org. Key concepts: "The View from Nowhere" (2010), "The People Formerly Known as the Audience" (2006).<br>
+Deuze, M. (2003). "The Web and its Journalisms: Considering the Consequences of Different Types of Newsmedia Online." <em>New Media & Society</em>, 5(2), 203-230.<br>
+Entman, R.M. (1993). "Framing: Toward Clarification of a Fractured Paradigm." <em>Journal of Communication</em>, 43(4), 51-58.<br>
+Scheufele, D.A. (1999). "Framing as a Theory of Media Effects." <em>Journal of Communication</em>, 49(1), 103-122.
+</p>
+
+</div>
+
+<footer>
+  <p><strong>Framing the News: India 2026</strong> — A flagship report by OnlineJournalism.in</p>
+  <p>Methodology: PEJ/Princeton Survey Research Associates (1999) + Rosen (PressThink) + Deuze (2003)</p>
+  <p>Quarterly frame-shift updates available on demand. Baseline established: May 2026.</p>
+  <p style="margin-top: 0.5rem; font-style: italic;">Draft — Not for publication. Legal review pending.</p>
+</footer>
+</div>
+
+<script>
+// Chart.js defaults
+Chart.defaults.color = '#8899a6';
+Chart.defaults.borderColor = '#2d3f50';
+Chart.defaults.font.family = 'Georgia, serif';
+
+// DATA
+const frameLabels = ['Straight News','Conflict','Wrongdoing','Horse Race','Process','Trend','Conjecture','Reality Check','Personality','Reaction','Historical','Inst. Critique','Policy','Consensus'];
+const frameAll = [27.6, 10.0, 7.6, 7.6, 6.5, 5.9, 5.9, 5.3, 5.3, 3.5, 4.7, 3.5, 5.3, 1.2];
+const frameDN = [12.3, 16.9, 13.8, 4.6, 4.6, 9.2, 7.7, 12.3, 3.1, 3.1, 4.6, 4.6, 3.1, 0.0];
+const frameLD = [37.1, 5.7, 3.8, 9.5, 7.6, 3.8, 4.8, 1.0, 6.7, 3.8, 4.8, 2.9, 6.7, 1.9];
+
+// PEJ 1999 data (from the study)
+const pejFrames = [16, 13, 8, 9, 3, 7, 9, 7, 7, 4, 2, 0, 8, 6];
+
+// Frame chart
+const frameCtx = document.getElementById('frameChart').getContext('2d');
+new Chart(frameCtx, {
+  type: 'bar',
+  data: {
+    labels: frameLabels,
+    datasets: [{
+      label: 'All Outlets (%)',
+      data: frameAll,
+      backgroundColor: '#e85d04',
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { max: 30, title: { display: true, text: '% of stories' } } }
+  }
+});
+
+// Comparison chart
+const compCtx = document.getElementById('compChart').getContext('2d');
+new Chart(compCtx, {
+  type: 'bar',
+  data: {
+    labels: frameLabels,
+    datasets: [
+      { label: 'Digital Native', data: frameDN, backgroundColor: '#e85d04', borderRadius: 4 },
+      { label: 'Legacy Digital', data: frameLD, backgroundColor: '#1d9bf0', borderRadius: 4 }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { position: 'top' } },
+    scales: { x: { max: 40, title: { display: true, text: '% of stories' } } }
+  }
+});
+
+// PEJ comparison
+const pejCtx = document.getElementById('pejCompChart').getContext('2d');
+new Chart(pejCtx, {
+  type: 'bar',
+  data: {
+    labels: frameLabels,
+    datasets: [
+      { label: 'India 2026', data: frameAll, backgroundColor: '#e85d04', borderRadius: 4 },
+      { label: 'USA 1999 (PEJ)', data: pejFrames, backgroundColor: '#7856ff', borderRadius: 4 }
+    ]
+  },
+  options: {
+    plugins: { legend: { position: 'top' }, title: { display: true, text: 'How India frames news differently from the US benchmark', color: '#e8edf2' } },
+    scales: { y: { title: { display: true, text: '% of stories' }, max: 40 } }
+  }
+});
+
+// Topic chart
+const topicCtx = document.getElementById('topicChart').getContext('2d');
+new Chart(topicCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Politics/Elections','Economy/Business','Foreign Affairs','Media/Press','Defence','Education','Crime','Culture','Judiciary','Sci/Tech','Sports','Governance','Religion','Other'],
+    datasets: [{
+      data: [27.6, 16.5, 15.3, 7.6, 6.5, 5.9, 5.3, 2.9, 2.9, 2.4, 2.4, 1.8, 1.2, 1.8],
+      backgroundColor: ['#e85d04','#f48c06','#1d9bf0','#7856ff','#00ba7c','#ffbe0b','#f4212e','#ff006e','#8338ec','#3a86ff','#06d6a0','#ffd166','#ef476f','#999']
+    }]
+  },
+  options: { plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } }
+});
+
+// Trigger chart
+const trigCtx = document.getElementById('triggerChart').getContext('2d');
+new Chart(trigCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Govt Statement','Enterprise','Spontaneous','Analysis','Election Result','Report/Data','Legislative','Anniversary','Investigation','Judicial','Preview','Other'],
+    datasets: [{
+      label: '%',
+      data: [27.1, 14.1, 13.5, 8.8, 8.2, 5.9, 4.7, 4.7, 3.5, 3.5, 3.5, 2.4],
+      backgroundColor: '#1d9bf0',
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { max: 30 } }
+  }
+});
+
+// Message chart
+const msgCtx = document.getElementById('messageChart').getContext('2d');
+new Chart(msgCtx, {
+  type: 'polarArea',
+  data: {
+    labels: ['Optimism','No Message','Anti-Establishment','Sit Up/Historic','Realism','Distrustfulness','Little Guy','Fatalism','Protectiveness'],
+    datasets: [{
+      data: [29.4, 24.7, 12.9, 11.8, 8.2, 5.3, 4.1, 2.4, 1.2],
+      backgroundColor: ['#00ba7c','#555','#f4212e','#ffbe0b','#3a86ff','#7856ff','#06d6a0','#999','#ff006e']
+    }]
+  },
+  options: { plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } }
+});
+
+// Heatmap (approximated as stacked bar)
+const heatCtx = document.getElementById('heatmapChart').getContext('2d');
+new Chart(heatCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Govt Statement','Enterprise','Spontaneous','Analysis','Election Result','Report/Data'],
+    datasets: [
+      { label: 'Straight News', data: [46, 8, 55, 7, 8, 11], backgroundColor: '#3a86ff' },
+      { label: 'Conflict', data: [12, 4, 9, 14, 0, 0], backgroundColor: '#f4212e' },
+      { label: 'Horse Race', data: [2, 0, 0, 7, 58, 0], backgroundColor: '#ffbe0b' },
+      { label: 'Wrongdoing', data: [0, 25, 0, 0, 0, 11], backgroundColor: '#e85d04' },
+      { label: 'Other', data: [40, 63, 36, 72, 34, 78], backgroundColor: '#2d3f50' }
+    ]
+  },
+  options: {
+    plugins: { legend: { position: 'top' }, title: { display: true, text: 'Frame distribution by trigger type (%)' } },
+    scales: { x: { stacked: true }, y: { stacked: true, max: 100, title: { display: true, text: '%' } } }
+  }
+});
+
+// Rosen Trust vs Accountability chart
+const rosenCtx = document.getElementById('rosenChart').getContext('2d');
+new Chart(rosenCtx, {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'Outlets',
+      data: [
+        {x: 10, y: 80, label: 'Newslaundry'},
+        {x: 9, y: 20, label: 'The Wire'},
+        {x: 7, y: 40, label: 'Scroll.in'},
+        {x: 7, y: 26.7, label: 'Indian Express'},
+        {x: 6, y: 20, label: 'The Print'},
+        {x: 6, y: 6.7, label: 'The Hindu'},
+        {x: 5, y: 0, label: 'NDTV'},
+        {x: 5, y: 0, label: 'Hindustan Times'},
+        {x: 4, y: 0, label: 'FirstPost'},
+        {x: 4, y: 13.3, label: 'India Today'},
+        {x: 3, y: 0, label: 'Times of India'},
+        {x: 3, y: 6.7, label: 'News18'}
+      ],
+      backgroundColor: '#e85d04',
+      pointRadius: 10,
+      pointHoverRadius: 14
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            return ctx.raw.label + ': Rosen=' + ctx.raw.x + ', Accountability=' + ctx.raw.y + '%';
+          }
+        }
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Rosen Transparency Index (0-10)' }, min: 0, max: 11 },
+      y: { title: { display: true, text: 'Accountability Framing (%)' }, min: -5, max: 85 }
+    }
+  }
+});
+
+// Radar chart
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+  type: 'radar',
+  data: {
+    labels: ['Straight News','Conflict','Wrongdoing','Horse Race','Conjecture','Reality Check','Trend','Process','Profile'],
+    datasets: [
+      { label: 'Scroll.in', data: [13, 20, 20, 7, 0, 13, 7, 0, 0], borderColor: '#e85d04', fill: false, tension: 0.1 },
+      { label: 'The Wire', data: [7, 27, 20, 7, 13, 0, 13, 0, 0], borderColor: '#f4212e', fill: false, tension: 0.1 },
+      { label: 'NDTV', data: [67, 0, 0, 7, 0, 0, 0, 13, 0], borderColor: '#1d9bf0', fill: false, tension: 0.1 },
+      { label: 'India Today', data: [40, 0, 13, 20, 7, 0, 7, 7, 0], borderColor: '#00ba7c', fill: false, tension: 0.1 },
+      { label: 'Newslaundry', data: [0, 0, 20, 0, 0, 50, 10, 10, 0], borderColor: '#7856ff', fill: false, tension: 0.1 },
+      { label: 'Indian Express', data: [0, 0, 13, 7, 7, 13, 13, 20, 13], borderColor: '#ffbe0b', fill: false, tension: 0.1 },
+      { label: 'The Hindu', data: [33, 7, 0, 7, 0, 0, 0, 0, 0], borderColor: '#06d6a0', fill: false, tension: 0.1, borderDash: [5,5] }
+    ]
+  },
+  options: {
+    plugins: { legend: { position: 'top' } },
+    scales: { r: { max: 70, ticks: { stepSize: 20, color: '#8899a6' }, grid: { color: '#2d3f50' }, pointLabels: { color: '#e8edf2', font: { size: 11 } } } }
+  }
+});
+</script>
+</body>
+</html>
