@@ -109,6 +109,15 @@ The MVP runs two agents, plus a pipeline pre-filter. No more.
 - Sonnet, max 5 tool calls.
 - Cost target: <₹5 per brief.
 
+### Trust primitives shipped in MVP (ADR 0029)
+
+Two cheap, identity-aligned trust primitives ship as first-class brief features:
+
+- **AI-use disclosure on every brief.** Each `briefs` row carries a structured `ai_disclosure` JSONB recording which models composed it, which agents ran, whether a human editor reviewed before delivery, and a human-readable disclosure string. Disclosure is surfaced in the brief viewer; readers see the same disclosure when a brief is shared.
+- **Off-record signal flag.** A journalist can mark a signal off-record from the brief viewer or signal-detail view. Off-record signals are excluded from shortlist composition and brief composition, visible only to the marker and the beat's editor, and never leave the tenant boundary. The flag is reversible; the action history lives in `signal_off_record_log` for accountability.
+
+These primitives are MVP-essential because they materially shape the editorial trust ladder. They are cheap (≈4 hours of schema + brief-composer filter + UI toggle) and they precede every other product conversation about responsible journalism.
+
 ### What is NOT in the MVP
 
 - Story-thread tracking agent.
