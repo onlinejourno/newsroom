@@ -22,6 +22,7 @@ from onlinejourno_agents.client import (
     make_completer,
     provider_config_from_env,
 )
+from onlinejourno_agents.cluster_threads import run_cluster
 from onlinejourno_agents.ingest_score import run_shortlist
 from onlinejourno_agents.render import brief_to_markdown
 
@@ -110,6 +111,25 @@ def cmd_show_brief(args: argparse.Namespace) -> int:
     disclosure = (brief.get("ai_disclosure") or {}).get("disclosure_text")
     title = f"Morning Brief — {args.beat}" if args.beat else "Morning Brief"
     print(brief_to_markdown(content, title=title, disclosure_text=disclosure, signal_urls=urls))
+    return 0
+
+
+def cmd_cluster(args: argparse.Namespace) -> int:
+    completer = make_completer(_resolve_provider())
+    result = run_cluster(
+        tenant_slug=args.tenant, beat_slug=args.beat,
+        completer=completer, since_hours=args.since_hours,
+    )
+    if result.status == "empty":
+        print("No recent signals to cluster.", file=sys.stderr)
+        return 1
+    if result.status != "success":
+        print(f"cluster failed (status={result.status})", file=sys.stderr)
+        return 1
+    print(
+        f"{result.threads} threads · {result.linked} links · "
+        f"spent ${result.spent_usd:.4f}"
+    )
     return 0
 
 
@@ -203,6 +223,12 @@ def main(argv: list[str] | None = None) -> int:
     p_show.add_argument("--tenant", required=True)
     p_show.add_argument("--beat", default=None)
     p_show.set_defaults(func=cmd_show_brief)
+
+    p_cluster = sub.add_parser("cluster", help="group recent signals into story threads (velocity)")
+    p_cluster.add_argument("--tenant", required=True)
+    p_cluster.add_argument("--beat", default=None)
+    p_cluster.add_argument("--since-hours", type=int, default=24)
+    p_cluster.set_defaults(func=cmd_cluster)
 
     p_why = sub.add_parser("why", help="reasoning trace — why each story made the shortlist")
     p_why.add_argument("--tenant", required=True)

@@ -196,3 +196,33 @@ def build_brief_prompt(
         lines.append("")
     user = "\n".join(lines)
     return ScorePromptParts(system=system, user=user)
+
+
+def build_cluster_prompt(
+    signals: list[dict[str, Any]], *, editorial_dna: str
+) -> ScorePromptParts:
+    """Build the prompt that groups signals into story threads. Pure.
+
+    Each signal is numbered; the model returns threads of item indices, which
+    the caller maps back to signal ids. A 'thread' is a set of items about the
+    same developing story (same event / company / regulatory action). Velocity
+    = thread size.
+    """
+    system = (
+        editorial_dna + "\n\n"
+        "Group the numbered news items below into STORY THREADS — a thread is a "
+        "set of items covering the same developing story (same event, company, "
+        "deal, or regulatory action), even across outlets. An item that stands "
+        "alone is its own single-item thread. Give each thread a concise title "
+        "and a short url-safe slug (lowercase, hyphens).\n\n"
+        "Respond with ONLY a JSON object, no prose, no markdown fences:\n"
+        '{"threads": [{"title": "<concise thread title>", '
+        '"slug": "<lowercase-hyphen-slug>", '
+        '"items": [<item numbers in this thread>]}]}'
+    )
+    lines = [f"ITEMS ({len(signals)}) to group:", ""]
+    for idx, sig in enumerate(signals, start=1):
+        headline = sig.get("headline") or "(no headline)"
+        source = sig.get("source_name") or "?"
+        lines.append(f"[{idx}] {headline}  ({source})")
+    return ScorePromptParts(system=system, user="\n".join(lines))
