@@ -151,12 +151,13 @@ export async function fetchShortlistRanked(
     `
     select si.signal_id, si.score, si.rank, si.rationale,
            s.headline, s.url, s.published_at, src.name as source_name,
-           count(*) over (
-               partition by lower(split_part(coalesce(s.headline, ''), ' ', 1))
-           )::int as velocity
+           count(*) over (partition by coalesce(tl.thread_id, si.id))::int as velocity
       from shortlist_items si
       join signals s on s.id = si.signal_id
       join sources src on src.id = s.source_id
+      left join lateral (
+          select thread_id from thread_links where signal_id = si.signal_id limit 1
+      ) tl on true
      where si.tenant_id = $1
        and (si.decision is null or si.decision <> 'rejected')
        and coalesce(s.published_at, s.fetched_at) >= now() - make_interval(hours => $2)

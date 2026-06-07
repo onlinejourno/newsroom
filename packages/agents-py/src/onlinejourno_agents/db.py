@@ -245,12 +245,13 @@ def top_shortlist(
     sql = f"""
         select si.id as shortlist_id, si.signal_id, si.score, si.rank, si.rationale,
                s.headline, s.body_text, s.url, s.published_at, src.name as source_name,
-               count(*) over (
-                   partition by lower(split_part(coalesce(s.headline, ''), ' ', 1))
-               ) as velocity
+               count(*) over (partition by coalesce(tl.thread_id, si.id)) as velocity
           from shortlist_items si
           join signals s on s.id = si.signal_id
           join sources src on src.id = s.source_id
+          left join lateral (
+              select thread_id from thread_links where signal_id = si.signal_id limit 1
+          ) tl on true
          where {' and '.join(where)}
          order by {order_by}
          limit %s
@@ -494,3 +495,89 @@ def list_off_record(
             (tenant_id, limit),
         )
         return list(cur.fetchall())
+
+
+# ----------------------------------------------------------------------
+# Story-thread clustering (precise velocity)
+# ----------------------------------------------------------------------
+
+
+def signals_for_clustering(
+    conn: psycopg.Connection,
+    tenant_id: UUID,
+    *,
+    since_hours: int = 24,
+    limit: int = 120,
+) -> list[dict[str, Any]]:
+    """Recent, non-off-record signals to group into threads (newest first)."""
+    where = ["s.tenant_id = %s"]
+    params: list[Any] = [tenant_id]
+    if _column_exists("signals", "off_record"):
+        where.append("coalesce(s.off_record, false) = false")
+    where.append("coalesce(s.published_at, s.fetched_at) >= now() - make_interval(hours => %s)")
+    params.append(since_hours)
+    params.append(limit)
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            select s.id, s.headline, src.name as source_name
+              from signals s join sources src on src.id = s.source_id
+             where {' and '.join(where)}
+             order by coalesce(s.published_at, s.fetched_at) desc
+             limit %s
+            """,
+            params,
+        )
+        return list(cur.fetchall())
+
+
+def upsert_thread(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    slug: str,
+    title: str,
+    beat_id: UUID | None,
+) -> UUID:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            insert into threads (tenant_id, slug, title, beat_id)
+            values (%s, %s, %s, %s)
+            on conflict (tenant_id, slug) do update set title = excluded.title
+            returning id
+            """,
+            (tenant_id, slug, title, beat_id),
+        )
+        row = cur.fetchone()
+        assert row is not None
+        return row["id"]
+
+
+def link_signal_to_thread(
+    conn: psycopg.Connection, *, thread_id: UUID, signal_id: UUID, reason: str | None = None
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            insert into thread_links (thread_id, signal_id, link_reason)
+            values (%s, %s, %s)
+            on conflict (thread_id, signal_id) do nothing
+            """,
+            (thread_id, signal_id, reason),
+        )
+
+
+def clear_recent_thread_links(
+    conn: psycopg.Connection, tenant_id: UUID, *, since_hours: int = 24
+) -> None:
+    """Drop thread links for signals in the window so a re-cluster is fresh."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            delete from thread_links tl using signals s
+             where tl.signal_id = s.id and s.tenant_id = %s
+               and coalesce(s.published_at, s.fetched_at) >= now() - make_interval(hours => %s)
+            """,
+            (tenant_id, since_hours),
+        )

@@ -24,6 +24,10 @@ uv run --package onlinejourno-ingest onlinejourno-ingest collect \
 uv run --package onlinejourno-agents onlinejourno-agents shortlist \
   --tenant "$TENANT" --beat "$BEAT" --top "$TOP" --since-hours 36
 
+# Group recent signals into story threads (precise velocity). Best-effort.
+uv run --package onlinejourno-agents onlinejourno-agents cluster \
+  --tenant "$TENANT" --beat "$BEAT" --since-hours 24 || echo "[$(date)] cluster failed (continuing)"
+
 uv run --package onlinejourno-agents onlinejourno-agents brief \
   --tenant "$TENANT" --beat "$BEAT" --top "$TOP" --since-hours 24
 
