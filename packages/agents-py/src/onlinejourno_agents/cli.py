@@ -81,6 +81,7 @@ def cmd_brief(args: argparse.Namespace) -> int:
         completer=completer,
         top_n=args.top,
         since_hours=args.since_hours,
+        rank_by=args.rank_by,
     )
     if result.status == "empty":
         print("No shortlist items — run `shortlist` first.", file=sys.stderr)
@@ -191,6 +192,10 @@ def main(argv: list[str] | None = None) -> int:
     p_brief.add_argument(
         "--since-hours", type=int, default=None,
         help="only compose from items shortlisted in the last N hours (daily freshness)",
+    )
+    p_brief.add_argument(
+        "--rank-by", choices=["score", "recency", "velocity"], default="score",
+        help="editor lens: importance (score), recency (newest), or velocity (most-covered)",
     )
     p_brief.set_defaults(func=cmd_brief)
 
