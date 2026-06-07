@@ -16,6 +16,20 @@ from typing import Any
 # for the MVP wedge.
 BEAT_TAGS = ("markets", "regulatory", "corp")
 
+# PEJ framing codebook (m-framing-pej) — see docs/reports/framing-india-2026.
+PEJ_FRAMES = (
+    "Straight News", "Conflict", "Wrongdoing Exposed", "Horse Race", "Process",
+    "Trend", "Conjecture", "Reality Check", "Policy Explored", "Personality Profile",
+    "Historical Outlook", "Reaction", "Institutional Critique", "Consensus",
+)
+PEJ_TOPICS = (
+    "Politics/Elections", "Economy/Business", "Foreign Affairs/Diplomacy",
+    "Media/Press Freedom", "Defence/National Security", "Education",
+    "Crime/Law & Order", "Judiciary/Legal", "Culture/Entertainment",
+    "Science/Technology", "Sports", "Governance/Bureaucracy",
+    "Religion/Communalism", "Health/Medicine", "Environment", "Social Issues/Welfare",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class ScorePromptParts:
@@ -226,3 +240,31 @@ def build_cluster_prompt(
         source = sig.get("source_name") or "?"
         lines.append(f"[{idx}] {headline}  ({source})")
     return ScorePromptParts(system=system, user="\n".join(lines))
+
+
+def build_frame_prompt(
+    signal: dict[str, Any], *, body_char_limit: int = 800
+) -> ScorePromptParts:
+    """Build the prompt to code one story's PEJ frame + topic (m-framing-pej). Pure."""
+    system = (
+        "You code a news story's FRAME and TOPIC using the Project for Excellence "
+        "in Journalism (PEJ) content-analysis method, adapted for Indian "
+        "journalism.\n\n"
+        "FRAME = the dominant interpretive lens; choose exactly one of: "
+        + ", ".join(PEJ_FRAMES) + ".\n"
+        "Guide: Straight News=just the facts; Conflict=built around opposing "
+        "sides; Wrongdoing Exposed=misconduct surfaced; Horse Race=who's "
+        "winning/losing; Process=how a system works; Trend=pattern over time; "
+        "Conjecture=speculation about what may happen; Reality Check=a claim "
+        "tested against evidence; Policy Explored=substance of a policy examined; "
+        "Personality Profile=focus on an individual; Historical Outlook=past-"
+        "context lens; Reaction=response to a prior event; Institutional "
+        "Critique=scrutiny of an institution; Consensus=agreement/common ground.\n\n"
+        "TOPIC = choose exactly one of: " + ", ".join(PEJ_TOPICS) + ".\n\n"
+        'Respond with ONLY a JSON object, no prose: {"frame": "<one frame>", '
+        '"topic": "<one topic>"}'
+    )
+    headline = signal.get("headline") or "(no headline)"
+    body = _truncate(signal.get("body_text"), body_char_limit)
+    user = f"HEADLINE: {headline}\nBODY: {body or '(headline only)'}\n"
+    return ScorePromptParts(system=system, user=user)
