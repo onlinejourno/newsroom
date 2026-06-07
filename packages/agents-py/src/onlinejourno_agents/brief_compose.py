@@ -56,6 +56,7 @@ def run_brief(
     top_n: int = 20,
     edition: date | None = None,
     since_hours: int | None = None,
+    rank_by: str = "score",
 ) -> BriefResult:
     """Compose and persist the daily brief for a beat from its shortlist."""
     edition = edition or date.today()
@@ -65,7 +66,8 @@ def run_brief(
         beat_id = db.beat_id_for_slug(conn, tenant_id, beat_slug) if beat_slug else None
         for_user = db.default_brief_user(conn, tenant_id)
         items = db.top_shortlist(
-            conn, tenant_id, beat_id=beat_id, limit=top_n, since_hours=since_hours
+            conn, tenant_id, beat_id=beat_id, limit=top_n,
+            since_hours=since_hours, rank_by=rank_by,
         )
 
     if not items:

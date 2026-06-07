@@ -217,11 +217,14 @@ def top_shortlist(
     beat_id: UUID | None,
     limit: int,
     since_hours: int | None = None,
+    rank_by: str = "score",
 ) -> list[dict[str, Any]]:
-    """Top shortlist items (highest score) with their signal text, for composing.
+    """Top shortlist items with their signal text, for composing.
 
-    `since_hours` scopes to recently-shortlisted items so a daily brief reads
-    today's shortlist rather than the all-time top (kept null for manual runs).
+    `since_hours` scopes to recent *news* (kept null for manual runs).
+    `rank_by` chooses the editor's lens: 'score' (importance), 'recency'
+    (newest first), or 'velocity' (most-covered topic first, approximated by
+    how many shortlisted items share the headline's lead word in the window).
     """
     where = ["si.tenant_id = %s", "si.decision is null or si.decision <> 'rejected'"]
     params: list[Any] = [tenant_id]
@@ -234,14 +237,22 @@ def top_shortlist(
         # brief even though they linger near the top of the accumulating shortlist.
         where.append("coalesce(s.published_at, s.fetched_at) >= now() - make_interval(hours => %s)")
         params.append(since_hours)
+    order_by = {
+        "recency": "coalesce(s.published_at, s.fetched_at) desc nulls last, si.score desc",
+        "velocity": "velocity desc, si.score desc",
+        "score": "si.score desc nulls last, si.rank asc nulls last",
+    }.get(rank_by, "si.score desc nulls last, si.rank asc nulls last")
     sql = f"""
         select si.id as shortlist_id, si.signal_id, si.score, si.rank, si.rationale,
-               s.headline, s.body_text, s.url, s.published_at, src.name as source_name
+               s.headline, s.body_text, s.url, s.published_at, src.name as source_name,
+               count(*) over (
+                   partition by lower(split_part(coalesce(s.headline, ''), ' ', 1))
+               ) as velocity
           from shortlist_items si
           join signals s on s.id = si.signal_id
           join sources src on src.id = s.source_id
          where {' and '.join(where)}
-         order by si.score desc nulls last, si.rank asc nulls last
+         order by {order_by}
          limit %s
     """
     params.append(limit)
