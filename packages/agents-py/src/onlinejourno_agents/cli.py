@@ -23,6 +23,7 @@ from onlinejourno_agents.client import (
     provider_config_from_env,
 )
 from onlinejourno_agents.cluster_threads import run_cluster
+from onlinejourno_agents.frame_eval import run_frame_eval
 from onlinejourno_agents.ingest_score import run_shortlist
 from onlinejourno_agents.render import brief_to_markdown
 
@@ -133,6 +134,24 @@ def cmd_cluster(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_frame_eval(args: argparse.Namespace) -> int:
+    """m-framing-pej eval — replay the PEJ frame scorer against the India-2026 goldset."""
+    completer = make_completer(_resolve_provider())
+    res = run_frame_eval(completer=completer, sample=args.sample)
+    if res.n == 0:
+        print("No goldset rows evaluated.", file=sys.stderr)
+        return 1
+    print(f"m-framing-pej eval — {res.n} stories (India-2026 goldset)")
+    print(f"  frame accuracy: {res.frame_accuracy:.0%}  ({res.frame_correct}/{res.n})")
+    print(f"  topic accuracy: {res.topic_accuracy:.0%}  ({res.topic_correct}/{res.n})")
+    print(f"  spent ${res.spent_usd:.4f}")
+    if res.confusions:
+        print("  top frame confusions (human -> AI):")
+        for (t, p), n in res.confusions.most_common(5):
+            print(f"    {n}x  {t} -> {p}")
+    return 0
+
+
 def cmd_why(args: argparse.Namespace) -> int:
     """Reasoning trace: why each story made the shortlist (MVP success criterion).
 
@@ -229,6 +248,10 @@ def main(argv: list[str] | None = None) -> int:
     p_cluster.add_argument("--beat", default=None)
     p_cluster.add_argument("--since-hours", type=int, default=24)
     p_cluster.set_defaults(func=cmd_cluster)
+
+    p_frame = sub.add_parser("frame-eval", help="eval PEJ frame scorer vs the goldset")
+    p_frame.add_argument("--sample", type=int, default=40, help="goldset stories (170 total)")
+    p_frame.set_defaults(func=cmd_frame_eval)
 
     p_why = sub.add_parser("why", help="reasoning trace — why each story made the shortlist")
     p_why.add_argument("--tenant", required=True)
