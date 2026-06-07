@@ -119,6 +119,55 @@ export async function fetchSignalUrls(
   return new Map(rows.map((r) => [r.id, r.url]));
 }
 
+export type ShortlistRow = {
+  signal_id: string;
+  score: number;
+  rank: number | null;
+  rationale: string | null;
+  headline: string | null;
+  url: string;
+  published_at: Date | null;
+  source_name: string | null;
+  velocity: number;
+};
+
+export type ShortlistSort = "importance" | "recency" | "velocity";
+
+const SHORTLIST_ORDER: Record<ShortlistSort, string> = {
+  recency: "coalesce(s.published_at, s.fetched_at) desc nulls last, si.score desc",
+  velocity: "velocity desc, si.score desc",
+  importance: "si.score desc nulls last, si.rank asc nulls last",
+};
+
+export async function fetchShortlistRanked(
+  tenantId: string,
+  { sort = "importance", sinceHours = 24, limit = 25 }:
+    { sort?: ShortlistSort; sinceHours?: number; limit?: number } = {},
+): Promise<ShortlistRow[]> {
+  const pool = getPool();
+  // `order` is from a fixed map, never raw user input — safe to interpolate.
+  const order = SHORTLIST_ORDER[sort] ?? SHORTLIST_ORDER.importance;
+  const { rows } = await pool.query<ShortlistRow>(
+    `
+    select si.signal_id, si.score, si.rank, si.rationale,
+           s.headline, s.url, s.published_at, src.name as source_name,
+           count(*) over (
+               partition by lower(split_part(coalesce(s.headline, ''), ' ', 1))
+           )::int as velocity
+      from shortlist_items si
+      join signals s on s.id = si.signal_id
+      join sources src on src.id = s.source_id
+     where si.tenant_id = $1
+       and (si.decision is null or si.decision <> 'rejected')
+       and coalesce(s.published_at, s.fetched_at) >= now() - make_interval(hours => $2)
+     order by ${order}
+     limit $3
+    `,
+    [tenantId, sinceHours, limit],
+  );
+  return rows;
+}
+
 export async function withClient<T>(
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
