@@ -167,7 +167,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
-        <Masthead />
+        <Masthead locale={locale} />
         {children}
       </body>
     </html>
