@@ -9,6 +9,7 @@ provider.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
@@ -65,19 +66,60 @@ CONTRACTS: dict[str, type] = {
 }
 
 
+# ── adapters ─────────────────────────────────────────────────────────────
+# C2: Keywords Everywhere (API). Wraps the existing reproducible KE client
+# (``keywords.fetch_volumes``) behind the KeywordsClient contract. The key is
+# read from the env name in ``secret_ref`` (never stored), defaulting to the
+# platform's KEYWORDS_EVERYWHERE_API_KEY.
+
+
+class KeApiClient:
+    """KeywordsClient over the Keywords Everywhere REST API."""
+
+    def __init__(self, cfg: ConnectorConfig) -> None:
+        self._country = str(cfg.config.get("country", "in"))
+        self._currency = str(cfg.config.get("currency", "inr"))
+        self._key_env = cfg.secret_ref or "KEYWORDS_EVERYWHERE_API_KEY"
+
+    def keyword_data(self, terms: list[str]) -> dict[str, Any]:
+        from onlinejourno_agents.keywords import fetch_volumes
+
+        key = os.environ.get(self._key_env)
+        volumes = fetch_volumes(
+            terms, country=self._country, currency=self._currency, key=key
+        )
+        return {
+            kw: {
+                "keyword": v.keyword,
+                "volume": v.volume,
+                "competition": v.competition,
+                "trend_direction": v.trend_direction,
+            }
+            for kw, v in volumes.items()
+        }
+
+
 def make_connector(cfg: ConnectorConfig) -> Any:
     """Build a capability client for a connector configuration.
 
-    C1 is the seam only: it validates the category + mode and raises until a
-    per-category adapter (API or MCP) is implemented. This keeps the rest of the
-    platform calling the contract while adapters arrive incrementally (ADR 0044).
+    Dispatches to a per-(category, provider, mode) adapter. Categories without
+    an adapter yet raise NotImplementedError — the seam is stable while adapters
+    arrive incrementally (ADR 0044).
     """
     if cfg.category not in CONTRACTS:
         raise ValueError(f"unknown connector category: {cfg.category!r}")
     if cfg.mode not in ("api", "mcp"):
         raise ValueError(f"connector mode must be 'api' or 'mcp', got {cfg.mode!r}")
+
+    if (
+        cfg.category == "keywords"
+        and cfg.provider == "keywords_everywhere"
+        and cfg.mode == "api"
+    ):
+        return KeApiClient(cfg)
+
     raise NotImplementedError(
         f"connector adapter not yet implemented: "
-        f"{cfg.category}/{cfg.provider} ({cfg.mode}). C1 defines the seam; "
-        f"per-category adapters land in follow-on slices (ADR 0044)."
+        f"{cfg.category}/{cfg.provider} ({cfg.mode}). The seam is defined; "
+        f"this adapter lands in a follow-on slice (ADR 0044)."
     )
