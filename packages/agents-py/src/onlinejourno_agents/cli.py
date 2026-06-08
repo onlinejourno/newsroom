@@ -152,6 +152,39 @@ def cmd_frame_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_keyword_data(args: argparse.Namespace) -> int:
+    """Test handle for the Keywords Everywhere connector (C2, ADR 0044).
+
+    Builds the connector via the seam and prints real search volumes — the
+    reproducible way to sanity-check the integration during product work.
+    """
+    from onlinejourno_agents.connectors import ConnectorConfig, make_connector
+
+    db._load_env_once()
+    client = make_connector(
+        ConnectorConfig(
+            category="keywords",
+            provider="keywords_everywhere",
+            mode="api",
+            config={"country": args.country, "currency": args.currency},
+            secret_ref="KEYWORDS_EVERYWHERE_API_KEY",
+        )
+    )
+    data = client.keyword_data(args.terms)
+    if not data:
+        print(
+            "No data. Check KEYWORDS_EVERYWHERE_API_KEY in .env (and your terms).",
+            file=sys.stderr,
+        )
+        return 1
+    for d in sorted(data.values(), key=lambda x: -x["volume"]):
+        print(
+            f"{d['volume']:>9,}  {d['trend_direction']:<8}  "
+            f"comp {d['competition']:.2f}  {d['keyword']}"
+        )
+    return 0
+
+
 def cmd_why(args: argparse.Namespace) -> int:
     """Reasoning trace: why each story made the shortlist (MVP success criterion).
 
@@ -267,6 +300,14 @@ def main(argv: list[str] | None = None) -> int:
     p_off.add_argument("--unmark", action="store_true", help="clear the flag instead")
     p_off.add_argument("--list", action="store_true", help="list current off-record signals")
     p_off.set_defaults(func=cmd_off_record)
+
+    p_kw = sub.add_parser(
+        "keyword-data", help="test the Keywords Everywhere connector (C2)"
+    )
+    p_kw.add_argument("terms", nargs="+", help="keywords to look up")
+    p_kw.add_argument("--country", default="in")
+    p_kw.add_argument("--currency", default="inr")
+    p_kw.set_defaults(func=cmd_keyword_data)
 
     args = parser.parse_args(argv)
     return args.func(args)
