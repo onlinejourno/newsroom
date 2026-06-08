@@ -4,9 +4,23 @@ This file applies to any AI agent working in this repository (Claude Code, Codex
 
 Read `CLAUDE.md` first for the full project ruleset. The summary below is the minimum any agent must observe.
 
+## Product — canonical (binding)
+
+**`docs/PRODUCT.md` is the binding product definition. All work aligns to it.** `MVP-SCOPE.md` is suspended; there is no platform-vs-Xtnd tier — **one product, OnlineJourno.**
+
+**OnlineJourno** is editorial intelligence **by a journalist, for journalists** — one vendor-neutral platform that finds the story for the reporter at the base of the newsroom, hands it to her with her newsroom's archive depth behind it, and gives every story she files a fair chance, pre-publish and after. It is a companion to the newsroom's existing CMS; it never replaces it.
+
+Non-negotiables (full set in PRODUCT.md):
+- **By a journalist, for journalists. Vendor-neutral** — never branded to a tenant or masthead.
+- **Invert the pyramid** — give the reporter at the base what only the top can see. Reporter-first; no information asymmetry.
+- **Companion to the CMS, never a replacement. Decision-support, not autopilot.**
+- **English-first, localizable** per newsroom. **Pluggable archive** — connect a digitised one, else look it up online.
+- **Privacy + probity** — first-party only, AI-use disclosure, handle sensitive stories with care.
+- **Give every story a fair chance.**
+
 ## Identity
 
-This is **onlinejourno/platform** — a multi-tenant editorial intelligence platform owned by Subhash Rai. Stage: Wk 0.
+This is **onlinejourno/platform** — the OnlineJourno product (multi-tenant), owned by Subhash Rai. It consolidates the founder's prior engines — front (`editorial-intelligence-demo`: collect → analyse → score → alert + archive + reporter PWA) and back (`discover-dashboard`: distribution-fit, GSC, gems, subscription, probity) — onto this spine, per `docs/PRODUCT.md`.
 
 ## Hard rules
 

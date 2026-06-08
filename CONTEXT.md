@@ -1,5 +1,7 @@
 # CONTEXT.md — Domain language and product intent
 
+> ⚠️ **The binding product definition is `docs/PRODUCT.md`** (north star, ADR 0041 + 0042). OnlineJourno is one vendor-neutral product — front engine (collect → alert + archive, reporter-at-base) + back engine (distribution-fit + post-publish) on this spine; *give every story a fair chance*. The "daily brief" framing below is an early, narrower description retained for domain vocabulary — it is **not** the current product scope. `MVP-SCOPE.md` is suspended.
+
 ## What this product is
 
 **OnlineJourno Platform** is a multi-tenant editorial intelligence system. Newsrooms install it, configure their sources and beats, and their journalists receive daily AI-curated briefs of what changed in their world, with story-thread continuity and (later) drafting and archive assistance.

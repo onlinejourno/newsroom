@@ -12,7 +12,7 @@ Two problems converged:
 
 The founder reframed: **OnlineJourno + Xtnd is one combined product — the platform, by a journalist for journalists — consolidating the founder's earlier projects into one integrated, smart, comprehensive whole that is a strategic and operational addition to the CMS newsrooms use.**
 
-Crucially, the founder's prior projects already *are* the product's modules: `discover-dashboard` (The Hindu Discover/News/Search intelligence) is the operational core; `news-intel`, `framing-india-2026`, `web-bloat-checker`, `subscriptions`, the Predictive Editorial Calendar, and `editorial-intelligence-demo` are the other capabilities; the `platform` is the multi-tenant spine that generalises them.
+Crucially, the founder's prior projects already *are* the product's modules: `discover-dashboard` (the newsroom Discover/News/Search intelligence) is the operational core; `news-intel`, `framing-india-2026`, `web-bloat-checker`, `subscriptions`, the Predictive Editorial Calendar, and `editorial-intelligence-demo` are the other capabilities; the `platform` is the multi-tenant spine that generalises them.
 
 ## Decision
 

@@ -1,6 +1,8 @@
-# OnlineJourno — Platform
+# OnlineJourno
 
-Editorial intelligence platform for newsrooms. Source monitoring, framing analysis, story-thread tracking, and AI-assisted editorial brief delivery — built journalist-first, configurable per newsroom.
+Editorial intelligence **by a journalist, for journalists** — one vendor-neutral platform that finds the story for the reporter at the base of the newsroom, hands it to her with her newsroom's archive depth behind it, and gives every story she files a fair chance, before publish and after. A companion to the newsroom's existing CMS; never a replacement.
+
+> **`docs/PRODUCT.md` is the binding product definition.** It consolidates the founder's prior engines — front (collect → analyse → score → alert + archive + reporter PWA) and back (distribution-fit, GSC, hidden gems, subscription, probity) — onto this multi-tenant spine. `MVP-SCOPE.md` is suspended.
 
 **Status:** Wk 0 (audit + decisions) complete Thu Jun 4. Wk 1 build starts Mon Jun 8.
 
