@@ -1,82 +1,106 @@
 # OnlineJourno — Product North Star
 
-**Status:** Adopted 2026-06-07. This is the binding product definition. It supersedes the tier framing (`MVP-SCOPE.md` is suspended) and folds the former "Xtnd" into one product.
+**Status:** Adopted 2026-06-07, expanded 2026-06-07 after the EIP + Drishti consolidation. This is the binding product definition. It supersedes `MVP-SCOPE.md` (suspended) and the earlier markets-brief framing, and folds the former "Xtnd" tier into one product. See ADR 0041 + ADR 0042.
 
-> **OnlineJourno** is editorial-intelligence **by a journalist, for journalists** — a single, integrated companion that plugs into the newsroom's existing CMS and gives **every story a fair chance**.
+> **OnlineJourno** is editorial-intelligence **by a journalist, for journalists** — one integrated, vendor-neutral platform that finds the story for the reporter at the base of the newsroom, hands it to her with her own archive's depth behind it, and then gives every story she files a fair chance — pre-publish and after. It plugs into the newsroom's existing CMS; it never replaces it.
 
-It is not a CMS, not a replacement, not another dashboard bolted on the side. It is the intelligence layer the CMS never had: it tells the reporter who wrote the story and the desk who places it *exactly what is happening to that story in cyberspace and what to do about it* — before publish and after.
+It is not a CMS, not a dashboard bolted on the side, not branded to any one newsroom. It is the intelligence layer the newsroom never had, built to **invert the pyramid** — to give the reporter at the bottom the intelligence that today pools only at the top.
 
-## The problem (in the founder's words)
+## The problem
 
-A reporter files into a fog. She is not — and should not have to be — an authority on SEO, Discover image ratios, schema, page speed, or paywall conversion. When her good story dies an unnatural death, she has no idea why: the site structure, the speed, the wrong keyword, the missing Discover image, the trend she missed. She depends on a digital desk, or no one. The newsroom learns from quarterly analytics decks, too late to change anything.
+A correspondent — in a district, a region, a beat that governance touches but scrutiny does not — files into a fog. Every day the public record (parliament, courts, gazettes, tenders, RTI, filings) publishes more than any newsroom monitors on her behalf. She has no systematic feed of what is happening on her patch, no thread to her own newsroom's archive, and after she files, no idea what happened to the story. She is not — and should not have to be — an authority on SEO, Discover, schema, or paywall conversion.
 
-**Why shouldn't the CMS empower every single journalist to know exactly what is going on with each story, and how to give it a fair chance?** That is the product.
+**Why shouldn't the platform give every reporter at the base what only the top can see today?** That is the product.
 
-## One product, two axes
+## The whole loop (what it does)
 
-The same spine serves two audiences off one canonical story object — no information asymmetry between them.
+1. **Watches the public record** — courts, gazettes, parliament, tenders, RTI, filings, ministries, newswires — for what is happening today, on her patch.
+2. **Connects each new signal to the newsroom's archive** — *plugged in* if the archive is digitised; otherwise **looked up from online sources** (the newsroom's own published web, the open record) — so she sees not just the gazette notification but the prior stories *her* newsroom ran on the same dispute, place, or person.
+3. **Delivers a short editorial brief in the working language.** English first; **localizable per newsroom** so the platform serves the non-Anglo-Saxon world, not only English-language newsrooms.
+4. **Sends a few ranked signals to her phone,** scoped to her beat and geography, with the archival context already attached — so she finds the story before anyone else.
+5. **As she writes, gives the story a fair-chance cue** — is it built for Discover / Search / Subscription / Direct, and what to fix.
+6. **After she files, closes the loop** — real performance (who read it, where it surfaced, what worked), surfaced to *her*, plain-English — the loop she has never had.
 
-| Axis | Who | What it does |
-|------|-----|--------------|
-| **Operational** | Reporter + desk, per story | Beat signals → file → **distribution-fit cue** (is this story built for Discover / Search / Subscription / Direct?) → placement & social decision-support → **post-publish diagnostic** ("why it under-performed, here's the fix") → cross-team commissioning |
-| **Strategic** | Newsroom leadership | Editorial calendar & planning, **framing balance** (PEJ), **fair-chance audit** (which stories/bylines were systematically under-served), site-health & **probity** (tracking, consent, bloat vs reader rights) |
+That is the system. The front (1–4) finds and contextualises; the back (5–6) gives it a fair chance and learns. Both halves already exist as working code (below).
 
-## Consolidation — the founder's projects are the modules
+## The inversion — irrigation by role
 
-OnlineJourno is the integration of work already done. Each prior project becomes a capability of the one product, generalised from one newsroom to any newsroom by the multi-tenant spine.
+The old pyramid: content and data flow *up*; intelligence pools at the top (digital desk, SEO team, leadership). OnlineJourno feeds **each level the intelligence it works with**, and finally waters the base — the reporter is both **a source** (she got the court order) **and** irrigated (the system hands her the surrounding data + the fair-chance cue) at the moment of reporting.
 
-| Prior project | Becomes | Axis | Status |
-|---------------|---------|------|--------|
-| **discover-dashboard** (The Hindu) — trending, story performance, Discover/News/Search signals | `m-distribution-fit` — the operational **core** | Operational | **Next build target** |
-| **news-intel** — collectors, framing coder, validation | `m-source-intel` (ingest) + feeds `m-framing-pej` | Operational | Built (spine) |
-| **framing-india-2026** — PEJ frames + 170-story goldset | `m-framing-pej` (frame/topic scoring, eval-gated) | Strategic | Built |
-| **web-bloat-checker** — tracking, consent, ad-tech, bloat, performance vs reader rights | `m-probity` + Discover-speed signal | Strategic | To integrate |
-| **subscriptions** — paywall / subscription | `m-subscription-fit` | Operational | To integrate |
-| **Predictive Editorial Calendar** — planning prototype + design system | `m-editorial-calendar` + the visual identity (ADR 0013) | Strategic | Design adopted; module to build |
-| **editorial-intelligence-demo** — Next.js UI | the `apps/web` surface | Both | Built (spine) |
-| **platform** — multi-tenant spine, agents, modules, web | **the spine** that hosts all of the above | — | Built |
+| Role | Fed (the inversion) | Still feeds |
+|------|---------------------|-------------|
+| **Reporter** (base) | ranked signals on her beat/patch + archival context + the fair-chance cue, on her phone, as she works | files the story (it enters the system) |
+| **Bureau chief** | the bureau's coverage + gaps | curates the bureau |
+| **Editor / desk** | news-space foresight — trending, what's coming into play today, hidden gems to promote, channel performance | decides placement / promotion |
+| **Leadership** | fair-chance audit, framing balance, subscription health, probity | sets direction |
 
-What the spine already ships (this session): ingest (RSS + GDELT), Sonnet shortlist + composed brief, provider-agnostic LLM, PEJ framing + goldset eval, trust primitives (AI-disclosure, off-record), story-thread clustering, recency/importance/velocity filters, reasoning trace, the `/en/signals`, `/en/brief`, `/en/shortlist` surfaces, the daily scheduler.
+The success test: *did the person at the bottom of the pyramid get what the top has?*
 
-**The morning brief is one feeder feature, not the headline.** It answers "what to write." The product's heart answers "now give that story a fair chance."
+## Two engines already built — the two halves
 
-## Core principles
+OnlineJourno is the **consolidation** of work already done, generalised from The Hindu to any newsroom.
 
-1. **By a journalist, for journalists.** The reporter is the expert on the beat; OnlineJourno is the tool. Newsroom-native voice, no patronising, no vendor gloss.
-2. **Companion to the CMS, never a replacement.** Reads draft + published state from the newsroom's CMS (Méthode, Cue, WordPress, Ghost, custom); the CMS stays the publish surface. (Read-only; head-mode is a far-future, customer-pulled option only.)
-3. **Reporter-first, even when the feature is for the desk.** Every capability passes the test: does the individual reporter benefit, or only the hierarchy? If only the hierarchy — defer or reject.
-4. **No information asymmetry.** The reporter sees the same distribution intelligence and fair-chance audit on her stories that the newsroom hierarchy sees. Distribution knowledge is democratised, not gate-kept by the digital desk.
-5. **Decision-support, not decision-making.** It surfaces signals; the editor decides. No autopilot for placement, scheduling, commissioning, or publishing.
-6. **Privacy + probity.** First-party analytics only, no third-party trackers by design, consent honesty, AI-use disclosure on output. The product measures newsrooms against reader rights (web-bloat-checker) and holds itself to the same bar.
-7. **Editorial judgement stays human. AI never invents a source. Source attribution always.**
-8. **Give every story a fair chance.** The watch-word and the success test.
+**Front engine — EIP** (`editorial-intelligence-demo`): the five pillars.
+| Pillar | What it does |
+|--------|--------------|
+| **Collect** | 189 source adapters across 8 families (courts, gazettes, RTI, tenders, RERA, ministries, embassies, newswires); Cloudflare-aware fetch; config- + catalogue-driven |
+| **Analyse** | Claude enrichment — entities, geo (district/region on every signal), IPTC taxonomy, editorial brief |
+| **Classify** | beat taxonomy + IPTC + geography on every signal |
+| **Score** | trend_score (convergence × recency × source-weight) |
+| **Alert** | ranked signals pushed to the reporter's phone (PWA), beat + geo scoped |
+| **Archive** | pluggable: digitised-archive connector, or online-source archival lookup |
 
-## Architecture
+**Back engine — Drishti** (`discover-dashboard`): distribution intelligence.
+- Channel audit (Discover / News / Search) with E-E-A-T, schema, image, freshness signals + fixes.
+- GSC channel performance (per-site → per-tenant), post-publish "how it landed."
+- Hidden Gems — under-promoted stories + desk action-chips.
+- Subscription conversion (per-desk SCI, funnel, cancellations).
+- **Probity** — "handle with care" on sensitive stories (accuracy over promotion); first-party, reader-rights stance.
 
-- **One repository, one product.** `onlinejourno/platform`. The separate `onlinejourno/xtnd` repo is retired; its intent lives here. No "MVP tier vs Xtnd tier" — one product, capabilities behind per-newsroom config (ADR 0006 modules).
-- **Spine** (built): multi-tenant Postgres, agent runtime (provider-agnostic), module plugin system, `apps/web`, the design system.
-- **Modules** = the consolidated projects (table above), each enable/disable + config per newsroom.
-- **CMS-companion** = read adapters pull draft + published state; OnlineJourno informs alongside.
-- **Canonical story object** carries a story from idea → published → diagnosed; every module and surface reads the same object.
+**Spine** — `platform`: multi-tenant Postgres, provider-agnostic agent runtime, module plugin system, `apps/web`, the design system, m-framing-pej (PEJ framing + goldset eval). The spine generalises both engines from one newsroom to any newsroom.
+
+## Sources — a first-class layer
+
+The product lives on two source layers, and the reporter sits inside both:
+- **Content sources** — the public record (the 8 EIP families) **and the reporters themselves** (the primary source — they create the content).
+- **Data sources** — Search (GSC), trends, keywords, analytics, subscription/conversion, social.
+
+The loop: take the **data sources** (distribution truth, trapped at the top) and feed them **down** to the **content sources** (the reporters), so the base is empowered and the content gets a fair chance.
+
+## Principles
+
+1. **By a journalist, for journalists.** Newsroom-native; the reporter is the expert, the platform is the tool.
+2. **Vendor-neutral.** The product is **OnlineJourno** — never branded to a tenant ("Drishti", a masthead). Any newsroom, any country.
+3. **English-first, localizable.** Built and operated in English; output language configurable per newsroom to serve the non-Anglo-Saxon world.
+4. **Pluggable archive.** Connect a digitised archive where it exists; otherwise derive archival value from online sources. No newsroom is excluded for lacking a digitised archive.
+5. **Companion to the CMS, never a replacement.** Reads draft + published state; the CMS stays the publish surface.
+6. **Invert the pyramid / reporter-first / information symmetry.** Every capability passes the test: does the reporter at the base benefit? The reporter sees the same intelligence as the desk.
+7. **Decision-support, not decision-making.** Surfaces signals; the human decides. No autopilot.
+8. **Privacy + probity.** First-party analytics, no third-party trackers by design, consent honesty, AI-use disclosure, "handle with care" on sensitive stories. The platform measures newsrooms against reader rights (web-bloat-checker) and holds itself to the same bar.
+9. **Editorial judgement stays human. AI never invents a source. Source attribution always.**
+10. **Give every story a fair chance.** The watch-word and the success test.
+
+## Consolidation map — the founder's codebases are the product
+
+| Codebase / project | Becomes | Role |
+|--------------------|---------|------|
+| **EIP** (editorial-intelligence-demo) | the **front engine** — Collect→Analyse→Classify→Score→Alert + archive + reporter PWA | trunk (proposed) |
+| **Drishti** (discover-dashboard) | the **back engine** — distribution-fit, GSC, gems, subscription, probity | folds in |
+| **platform** (this session) | the **spine** — multi-tenant, agent runtime, modules, web, m-framing-pej eval | folds in |
+| **news-intel** | collectors + framing coder | feeds Collect / m-framing-pej |
+| **framing-india-2026** | m-framing-pej + goldset | strategic framing (built) |
+| **web-bloat-checker** | m-probity + Discover-speed signal | the conscience layer |
+| **subscriptions** | subscription-fit + conversion | back engine |
+| **Predictive Editorial Calendar** | editorial calendar + design system | strategic planning + visual identity |
+| **Sarvajna (The Hindu archive)** | `m-archive` (connector) | one archive backend among many |
 
 ## Build sequence (redrawn)
 
-The wedge is no longer "markets morning brief." The wedge is **the fair-chance distribution intelligence** — the thing only this product does.
-
-1. **Generalise `discover-dashboard` → `m-distribution-fit`.** Per-story Discover / Search / Subscription / Direct readiness scoring, surfaced to the reporter pre-publish and to the desk at placement. This is the heart; build it next.
-2. **Post-publish diagnostic** — read the published URL's real performance (Search Console, Discover, first-party analytics) → plain-English "why it under-performed + the fix," surfaced to the reporter directly.
-3. **Probity + site-health** (`m-probity` from web-bloat-checker) — speed/Discover-readiness + the reader-rights conscience layer.
-4. **Strategic surfaces** — fair-chance audit, framing balance (m-framing-pej already built), editorial calendar.
-5. **CMS read adapters** — start where the design partner is (WordPress / Ghost / custom), read-only.
-
-Sourcing → brief (already built) remains as the operational feeder, not the centre.
-
-## Relationship to existing docs
-
-- **`MVP-SCOPE.md` is suspended** — useful detail retained for reference, but it is not the spec. This document is.
-- ADRs 0001–0040 stand (architecture decisions remain valid); the reframe is recorded in a new ADR.
-- `CONTEXT.md` domain language continues to apply; the tier/Xtnd glossary entries are now read as "one product, one set of capabilities."
+1. **Decide the trunk** — EIP proposed as the base (most complete; carries reporter-at-base + archive + the PWA + the 189-adapter Collect). Drishti folds in as the distribution half; the platform spine contributes multi-tenant + agent runtime + framing eval where stronger.
+2. **Generalise off The Hindu** — `m-archive` (connector | online lookup), localization (English-first + per-tenant locale), vendor-neutral branding, per-tenant source catalogues.
+3. **Wire the loop end to end for one design partner** — Collect→Alert (front) into the reporter's hands, then distribution-fit + post-publish (back) on what she files.
+4. **Validate with a real correspondent** — the success test: does the person at the base get, on her phone, a useful signal with archive context and a fair-chance cue?
 
 ## Success test
 
-A working reporter, on her own beat, looks at a story she just wrote inside her CMS and sees — without asking anyone — whether it has a fair shot at Discover, Search, Subscription, and Direct, what to fix, and after publish, why it did or didn't land. When that is true and she'd rather not work without it, OnlineJourno is real.
+A working correspondent, on her own patch, gets on her phone a signal from today's public record — with her newsroom's prior coverage attached (plugged or looked up), in her language — finds the story first, writes it seeing whether it's built for Discover / Search / Subscription / Direct, files early, and the next morning sees how it landed. When that is true and she'd rather not work without it, OnlineJourno is real.
