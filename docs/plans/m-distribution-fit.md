@@ -13,7 +13,7 @@ For any story (a draft in the newsroom's CMS, or a published URL), score and exp
 
 ## The gift: discover-dashboard already does most of this
 
-`/Users/subhashrai/Data Protection/discover-dashboard` (Python) is a near-complete distribution-intelligence engine built for The Hindu. We **port + generalise**, not rebuild.
+`/Users/subhashrai/Data Protection/discover-dashboard` (Python) is a near-complete distribution-intelligence engine built for the newsroom. We **port + generalise**, not rebuild.
 
 | discover-dashboard | What it gives | Maps to |
 |--------------------|---------------|---------|

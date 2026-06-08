@@ -1,6 +1,6 @@
 # OnlineJourno — Product North Star
 
-**Status:** Adopted 2026-06-07, expanded 2026-06-07 after the EIP + Drishti consolidation. This is the binding product definition. It supersedes `MVP-SCOPE.md` (suspended) and the earlier markets-brief framing, and folds the former "Xtnd" tier into one product. See ADR 0041 + ADR 0042.
+**Status:** Adopted 2026-06-07, expanded 2026-06-07 after the EIP + the distribution engine consolidation. This is the binding product definition. It supersedes `MVP-SCOPE.md` (suspended) and the earlier markets-brief framing, and folds the former "Xtnd" tier into one product. See ADR 0041 + ADR 0042.
 
 > **OnlineJourno** is editorial-intelligence **by a journalist, for journalists** — one integrated, vendor-neutral platform that finds the story for the reporter at the base of the newsroom, hands it to her with her own archive's depth behind it, and then gives every story she files a fair chance — pre-publish and after. It plugs into the newsroom's existing CMS; it never replaces it.
 
@@ -38,7 +38,7 @@ The success test: *did the person at the bottom of the pyramid get what the top 
 
 ## Two engines already built — the two halves
 
-OnlineJourno is the **consolidation** of work already done, generalised from The Hindu to any newsroom.
+OnlineJourno is the **consolidation** of work already done, generalised from the newsroom to any newsroom.
 
 **Front engine — EIP** (`editorial-intelligence-demo`): the five pillars.
 | Pillar | What it does |
@@ -50,7 +50,7 @@ OnlineJourno is the **consolidation** of work already done, generalised from The
 | **Alert** | ranked signals pushed to the reporter's phone (PWA), beat + geo scoped |
 | **Archive** | pluggable: digitised-archive connector, or online-source archival lookup |
 
-**Back engine — Drishti** (`discover-dashboard`): distribution intelligence.
+**Back engine — the distribution engine** (`discover-dashboard`): distribution intelligence.
 - Channel audit (Discover / News / Search) with E-E-A-T, schema, image, freshness signals + fixes.
 - GSC channel performance (per-site → per-tenant), post-publish "how it landed."
 - Hidden Gems — under-promoted stories + desk action-chips.
@@ -70,7 +70,7 @@ The loop: take the **data sources** (distribution truth, trapped at the top) and
 ## Principles
 
 1. **By a journalist, for journalists.** Newsroom-native; the reporter is the expert, the platform is the tool.
-2. **Vendor-neutral.** The product is **OnlineJourno** — never branded to a tenant ("Drishti", a masthead). Any newsroom, any country.
+2. **Vendor-neutral.** The product is **OnlineJourno** — never branded to a tenant ("the distribution engine", a masthead). Any newsroom, any country.
 3. **English-first, localizable.** Built and operated in English; output language configurable per newsroom to serve the non-Anglo-Saxon world.
 4. **Pluggable archive.** Connect a digitised archive where it exists; otherwise derive archival value from online sources. No newsroom is excluded for lacking a digitised archive.
 5. **Companion to the CMS, never a replacement.** Reads draft + published state; the CMS stays the publish surface.
@@ -85,19 +85,19 @@ The loop: take the **data sources** (distribution truth, trapped at the top) and
 | Codebase / project | Becomes | Role |
 |--------------------|---------|------|
 | **EIP** (editorial-intelligence-demo) | the **front engine** — Collect→Analyse→Classify→Score→Alert + archive + reporter PWA | trunk (proposed) |
-| **Drishti** (discover-dashboard) | the **back engine** — distribution-fit, GSC, gems, subscription, probity | folds in |
+| **the distribution engine** (discover-dashboard) | the **back engine** — distribution-fit, GSC, gems, subscription, probity | folds in |
 | **platform** (this session) | the **spine** — multi-tenant, agent runtime, modules, web, m-framing-pej eval | folds in |
 | **news-intel** | collectors + framing coder | feeds Collect / m-framing-pej |
 | **framing-india-2026** | m-framing-pej + goldset | strategic framing (built) |
 | **web-bloat-checker** | m-probity + Discover-speed signal | the conscience layer |
 | **subscriptions** | subscription-fit + conversion | back engine |
 | **Predictive Editorial Calendar** | editorial calendar + design system | strategic planning + visual identity |
-| **Sarvajna (The Hindu archive)** | `m-archive` (connector) | one archive backend among many |
+| **a digitised archive backend** | `m-archive` (connector) | one archive backend among many |
 
 ## Build sequence (redrawn)
 
-1. **Decide the trunk** — EIP proposed as the base (most complete; carries reporter-at-base + archive + the PWA + the 189-adapter Collect). Drishti folds in as the distribution half; the platform spine contributes multi-tenant + agent runtime + framing eval where stronger.
-2. **Generalise off The Hindu** — `m-archive` (connector | online lookup), localization (English-first + per-tenant locale), vendor-neutral branding, per-tenant source catalogues.
+1. **Decide the trunk** — EIP proposed as the base (most complete; carries reporter-at-base + archive + the PWA + the 189-adapter Collect). the distribution engine folds in as the distribution half; the platform spine contributes multi-tenant + agent runtime + framing eval where stronger.
+2. **Generalise off the newsroom** — `m-archive` (connector | online lookup), localization (English-first + per-tenant locale), vendor-neutral branding, per-tenant source catalogues.
 3. **Wire the loop end to end for one design partner** — Collect→Alert (front) into the reporter's hands, then distribution-fit + post-publish (back) on what she files.
 4. **Validate with a real correspondent** — the success test: does the person at the base get, on her phone, a useful signal with archive context and a fair-chance cue?
 
