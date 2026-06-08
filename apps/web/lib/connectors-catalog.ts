@@ -1,0 +1,103 @@
+// Built-in connector catalog (ADR 0044). Static config the admin form reads:
+// category -> providers -> integration modes + required config fields + OSS flag.
+// Every category ships at least one open-source (oss) provider so no newsroom
+// is excluded for lacking paid tools.
+
+export type ConnectorMode = "api" | "mcp";
+
+export type ProviderField = {
+  name: string;
+  label: string;
+  placeholder?: string;
+  secret?: boolean; // stored as an env reference, never the raw value
+};
+
+export type ProviderDef = {
+  key: string;
+  label: string;
+  modes: ConnectorMode[];
+  oss?: boolean;
+  fields: ProviderField[];
+};
+
+export type CategoryDef = {
+  key: string;
+  label: string;
+  contract: string; // the capability contract the platform calls
+  providers: ProviderDef[];
+};
+
+const SECRET_REF: ProviderField = {
+  name: "secret_ref",
+  label: "Secret env reference (not the key)",
+  placeholder: "MY_TOOL_API_KEY",
+  secret: true,
+};
+
+const MCP_FIELDS: ProviderField[] = [
+  { name: "server", label: "MCP server (URL or command)", placeholder: "https://… or npx …" },
+  { name: "tool", label: "Tool name", placeholder: "get_metrics" },
+];
+
+export const CONNECTOR_CATALOG: CategoryDef[] = [
+  {
+    key: "analytics",
+    label: "Analytics",
+    contract: "page_performance(url, range)",
+    providers: [
+      { key: "ga4", label: "Google Analytics 4", modes: ["api"], fields: [{ name: "property_id", label: "Property ID" }, SECRET_REF] },
+      { key: "chartbeat", label: "Chartbeat", modes: ["api"], fields: [{ name: "site", label: "Site domain" }, SECRET_REF] },
+      { key: "piano", label: "Piano", modes: ["api"], fields: [{ name: "aid", label: "App ID" }, SECRET_REF] },
+      { key: "matomo", label: "Matomo", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Matomo URL" }, { name: "site_id", label: "Site ID" }, SECRET_REF] },
+      { key: "custom", label: "Custom (MCP)", modes: ["mcp"], fields: MCP_FIELDS },
+    ],
+  },
+  {
+    key: "keywords",
+    label: "Keywords / SEO",
+    contract: "keyword_data(terms)",
+    providers: [
+      { key: "keywords_everywhere", label: "Keywords Everywhere", modes: ["api", "mcp"], fields: [SECRET_REF] },
+      { key: "newzdash", label: "NewzDash", modes: ["api"], fields: [SECRET_REF] },
+      { key: "seopanel", label: "SEO Panel", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "SEO Panel URL" }, SECRET_REF] },
+    ],
+  },
+  {
+    key: "search_console",
+    label: "Search Console",
+    contract: "performance(url, range)",
+    providers: [
+      { key: "gsc", label: "Google Search Console", modes: ["api"], fields: [{ name: "site_url", label: "Property URL" }, SECRET_REF] },
+    ],
+  },
+  {
+    key: "trends",
+    label: "Trends",
+    contract: "momentum(terms, geo)",
+    providers: [
+      { key: "google_trends", label: "Google Trends (pytrends)", modes: ["api"], oss: true, fields: [{ name: "geo", label: "Geo", placeholder: "IN" }] },
+      { key: "custom", label: "Custom (MCP)", modes: ["mcp"], fields: MCP_FIELDS },
+    ],
+  },
+  {
+    key: "subscription",
+    label: "Subscription",
+    contract: "conversion(range)",
+    providers: [
+      { key: "piano", label: "Piano", modes: ["api"], fields: [{ name: "aid", label: "App ID" }, SECRET_REF] },
+      { key: "custom", label: "Custom (API/MCP)", modes: ["api", "mcp"], fields: MCP_FIELDS },
+    ],
+  },
+  {
+    key: "social",
+    label: "Social",
+    contract: "reach(url)",
+    providers: [
+      { key: "custom", label: "Custom (API/MCP)", modes: ["api", "mcp"], fields: [{ name: "endpoint", label: "Endpoint / MCP server" }, SECRET_REF] },
+    ],
+  },
+];
+
+export function categoryDef(key: string): CategoryDef | undefined {
+  return CONNECTOR_CATALOG.find((c) => c.key === key);
+}

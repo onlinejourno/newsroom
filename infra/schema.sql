@@ -77,6 +77,22 @@ create index on sources (tenant_id, enabled);
 create index on sources using gin (beat_tags);
 create index on sources (tenant_id, tier);
 
+-- Connector registry (sub-project C, ADR 0044): pluggable newsroom data tools
+-- (analytics/keywords/search_console/trends/subscription/social) via API or MCP.
+create table connectors (
+  id          uuid primary key default gen_random_uuid(),
+  tenant_id   uuid not null references tenants(id) on delete cascade,
+  category    text not null,
+  provider    text not null,
+  mode        text not null check (mode in ('api','mcp')),
+  config      jsonb,
+  auth        jsonb,                               -- {method, secret_ref} — never the raw key
+  enabled     boolean not null default true,
+  created_at  timestamptz not null default now(),
+  unique (tenant_id, category, provider)
+);
+create index on connectors (tenant_id, category);
+
 create table beats (
   id              uuid primary key default gen_random_uuid(),
   tenant_id       uuid not null references tenants(id) on delete cascade,
