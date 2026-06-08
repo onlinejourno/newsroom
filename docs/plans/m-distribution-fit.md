@@ -6,10 +6,15 @@
 
 For any story (a draft in the newsroom's CMS, or a published URL), score and explain its fair-chance across the four surfaces, and surface that to the reporter (pre-publish) and the desk (at placement), plus the post-publish "why it landed / died."
 
-- **Discover** — Discover-card readiness (large image, freshness, structured data).
-- **Search** — query targeting, on-page SEO / E-E-A-T, schema.
+**Surfaces are a configurable, tenant-scoped registry (ADR 0043), not a fixed set.** Built-in + AI surfaces + custom; newsrooms add/delete/disable any. Each surface defines its own readiness signals; the scorer **iterates the enabled surfaces** (no hardcoded enum). Seeds:
+
+- **Google Discover** — large image, freshness, structured data.
+- **Google Search** — query targeting, on-page SEO / E-E-A-T, schema.
+- **Google News** — newsworthiness, schema, freshness.
+- **AI Overviews (AIO) + generative-AI search** — ChatGPT Search, Perplexity, Gemini, Copilot, and surfaces yet to emerge: answer-shaped passages, citation-worthiness, entity clarity, schema. *First-class, not an afterthought.*
 - **Subscription** — value-promise of the opening, depth signals.
 - **Direct** — byline pull / loyalty fit (later).
+- **+ custom** — regional aggregator, app feed, syndication partner; disable any unused (e.g. a newsroom that doesn't publish to Google News).
 
 ## The gift: discover-dashboard already does most of this
 
