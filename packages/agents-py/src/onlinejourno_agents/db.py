@@ -206,6 +206,66 @@ def insert_shortlist_item(
 
 
 # ----------------------------------------------------------------------
+# Distribution-fit (m-distribution-fit Phase 1)
+# ----------------------------------------------------------------------
+
+
+def enabled_surface_keys(conn: psycopg.Connection, tenant_id: UUID) -> list[str]:
+    """Enabled optimization-surface keys for the tenant (ADR 0043)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "select key from optimization_surfaces "
+            "where tenant_id = %s and enabled order by sort",
+            (tenant_id,),
+        )
+        return [r["key"] for r in cur.fetchall()]
+
+
+def recent_signals(
+    conn: psycopg.Connection, tenant_id: UUID, *, limit: int = 50
+) -> list[dict[str, Any]]:
+    """Recent signals with the fields the content scorer needs."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, body_text, url, published_at, trend_score
+              from signals
+             where tenant_id = %s
+             order by coalesce(published_at, fetched_at) desc
+             limit %s
+            """,
+            (tenant_id, limit),
+        )
+        return list(cur.fetchall())
+
+
+def upsert_distribution_fit(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    signal_id: UUID,
+    surface: str,
+    score: int,
+    grade: str,
+    top_fix: str | None,
+    signals: list[dict[str, Any]],
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            insert into distribution_fit_scores
+                (tenant_id, signal_id, surface, score, grade, top_fix, signals, scored_at)
+            values (%s, %s, %s, %s, %s, %s, %s, now())
+            on conflict (tenant_id, signal_id, surface) do update
+               set score = excluded.score, grade = excluded.grade,
+                   top_fix = excluded.top_fix, signals = excluded.signals,
+                   scored_at = now()
+            """,
+            (tenant_id, signal_id, surface, score, grade, top_fix, Json(signals)),
+        )
+
+
+# ----------------------------------------------------------------------
 # Brief reads + writes
 # ----------------------------------------------------------------------
 

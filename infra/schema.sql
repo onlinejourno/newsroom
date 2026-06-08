@@ -111,6 +111,21 @@ create table optimization_surfaces (
 );
 create index on optimization_surfaces (tenant_id, enabled);
 
+-- Distribution-fit scores (m-distribution-fit P1): per-signal, per-surface
+-- fair-chance score + top fix, surfaced on /shortlist + brief.
+create table distribution_fit_scores (
+  tenant_id  uuid not null references tenants(id) on delete cascade,
+  signal_id  uuid not null references signals(id) on delete cascade,
+  surface    text not null,
+  score      int  not null,
+  grade      text not null,
+  top_fix    text,
+  signals    jsonb,
+  scored_at  timestamptz not null default now(),
+  primary key (tenant_id, signal_id, surface)
+);
+create index on distribution_fit_scores (tenant_id, signal_id);
+
 create table beats (
   id              uuid primary key default gen_random_uuid(),
   tenant_id       uuid not null references tenants(id) on delete cascade,
