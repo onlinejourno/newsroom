@@ -18,7 +18,7 @@ A correspondent — in a district, a region, a beat that governance touches but 
 2. **Connects each new signal to the newsroom's archive** — *plugged in* if the archive is digitised; otherwise **looked up from online sources** (the newsroom's own published web, the open record) — so she sees not just the gazette notification but the prior stories *her* newsroom ran on the same dispute, place, or person.
 3. **Delivers a short editorial brief in the working language.** English first; **localizable per newsroom** so the platform serves the non-Anglo-Saxon world, not only English-language newsrooms.
 4. **Sends a few ranked signals to her phone,** scoped to her beat and geography, with the archival context already attached — so she finds the story before anyone else.
-5. **As she writes, gives the story a fair-chance cue** — is it built for Discover / Search / Subscription / Direct, and what to fix.
+5. **As she writes, gives the story a fair-chance cue** — is it built for each surface the newsroom optimizes for — Discover, Search, News, **AI Overviews + generative-AI search**, Subscription, Direct (a configurable, extensible registry, not a fixed set; ADR 0043) — and what to fix.
 6. **After she files, closes the loop** — real performance (who read it, where it surfaced, what worked), surfaced to *her*, plain-English — the loop she has never had.
 
 That is the system. The front (1–4) finds and contextualises; the back (5–6) gives it a fair chance and learns. Both halves already exist as working code (below).
@@ -51,7 +51,7 @@ OnlineJourno is the **consolidation** of work already done, generalised from the
 | **Archive** | pluggable: digitised-archive connector, or online-source archival lookup |
 
 **Back engine — the distribution engine** (`discover-dashboard`): distribution intelligence.
-- Channel audit (Discover / News / Search) with E-E-A-T, schema, image, freshness signals + fixes.
+- Channel audit across a **configurable surface registry** — Discover / News / Search, **AI Overviews + generative-AI search**, + custom (add/delete per newsroom; ADR 0043) — with E-E-A-T, schema, image, freshness, citation-worthiness signals + fixes.
 - GSC channel performance (per-site → per-tenant), post-publish "how it landed."
 - Hidden Gems — under-promoted stories + desk action-chips.
 - Subscription conversion (per-desk SCI, funnel, cancellations).
