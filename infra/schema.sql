@@ -49,13 +49,21 @@ create table users (
 create table sources (
   id                 uuid primary key default gen_random_uuid(),
   tenant_id          uuid not null references tenants(id) on delete cascade,
-  kind               text not null check (kind in ('rss','gdelt','sitemap','homepage','article','robots','social','api','manual')),
+  kind               text not null check (kind in ('rss','gdelt','sitemap','homepage','article','robots','social','api','manual','mcp','scrape')),
   name               text not null,
   url                text not null,
   rss_url            text,
   deuze_type         text check (deuze_type in ('mainstream','index_category','meta_comment','share_discussion')),
   beat_tags          text[] not null default '{}',
   expected_languages text[] not null default '{en}',   -- ISO 639-1 codes; agents check ingestion-language matches
+  -- data-source admin model (0008): the Part-3 source descriptor
+  family             text,                              -- government/political/international/institutional/wire/social/own
+  tier               int,                               -- 1..4 (editorial weight / effort)
+  sections_fed       text[] not null default '{}',      -- IA sections this feeds
+  auth               jsonb,                             -- {method, secret_ref} — never the raw key
+  params             jsonb,                             -- per-ingest_type config (api params, scrape selectors, mcp tool/args)
+  geo                text,                              -- country/region/district scope
+  frequency          text,                              -- poll cadence label
   enabled            boolean not null default true,
   quality_score      real,                              -- learned over time
   false_alarm_rate   real,                              -- learned over time
@@ -67,6 +75,7 @@ create table sources (
 
 create index on sources (tenant_id, enabled);
 create index on sources using gin (beat_tags);
+create index on sources (tenant_id, tier);
 
 create table beats (
   id              uuid primary key default gen_random_uuid(),

@@ -48,6 +48,102 @@ export async function tenantIdForSlug(slug: string): Promise<string | null> {
   return rows[0]?.id ?? null;
 }
 
+// ── Data-source admin (sub-project B) ──────────────────────────────────────
+
+export type SourceRow = {
+  id: string;
+  name: string;
+  kind: string;
+  family: string | null;
+  tier: number | null;
+  sections_fed: string[];
+  url: string;
+  rss_url: string | null;
+  geo: string | null;
+  frequency: string | null;
+  enabled: boolean;
+  auth: { method?: string; secret_ref?: string } | null;
+  params: Record<string, unknown> | null;
+  last_seen_at: Date | null;
+  consecutive_failures: number;
+};
+
+export type SourceInput = {
+  name: string;
+  kind: string;
+  family?: string | null;
+  tier?: number | null;
+  sections_fed?: string[];
+  url: string;
+  rss_url?: string | null;
+  geo?: string | null;
+  frequency?: string | null;
+  auth?: Record<string, unknown> | null;
+  params?: Record<string, unknown> | null;
+  enabled?: boolean;
+};
+
+export async function listSources(tenantId: string): Promise<SourceRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<SourceRow>(
+    `select id, name, kind, family, tier, sections_fed, url, rss_url, geo,
+            frequency, enabled, auth, params, last_seen_at, consecutive_failures
+       from sources
+      where tenant_id = $1
+      order by coalesce(tier, 9), family nulls last, name`,
+    [tenantId],
+  );
+  return rows;
+}
+
+export async function createSource(
+  tenantId: string,
+  input: SourceInput,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `insert into sources
+       (tenant_id, name, kind, family, tier, sections_fed, url, rss_url, geo,
+        frequency, auth, params, enabled)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,coalesce($13,true))`,
+    [
+      tenantId,
+      input.name,
+      input.kind,
+      input.family ?? null,
+      input.tier ?? null,
+      input.sections_fed ?? [],
+      input.url,
+      input.rss_url ?? null,
+      input.geo ?? null,
+      input.frequency ?? null,
+      input.auth ? JSON.stringify(input.auth) : null,
+      input.params ? JSON.stringify(input.params) : null,
+      input.enabled ?? true,
+    ],
+  );
+}
+
+export async function setSourceEnabled(
+  tenantId: string,
+  id: string,
+  enabled: boolean,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    "update sources set enabled = $3 where tenant_id = $1 and id = $2",
+    [tenantId, id, enabled],
+  );
+}
+
+export async function deleteSource(tenantId: string, id: string): Promise<void> {
+  const pool = getPool();
+  await pool.query("delete from sources where tenant_id = $1 and id = $2", [
+    tenantId,
+    id,
+  ]);
+}
+
 export async function fetchLatestSignals(
   tenantId: string,
   limit = 20,
