@@ -287,6 +287,30 @@ export async function deleteSurface(tenantId: string, id: string): Promise<void>
   );
 }
 
+// ── Journalist directory ───────────────────────────────────────────────────
+
+export type JournalistRow = {
+  id: string;
+  name: string;
+  bureau: string | null;
+  region: string | null;
+  beats: string[] | null;
+  role: string | null;
+  language: string | null;
+};
+
+export async function listJournalists(tenantId: string): Promise<JournalistRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<JournalistRow>(
+    `select id, name, bureau, region, beats, role, language
+       from journalist_profiles
+      where tenant_id = $1
+      order by name`,
+    [tenantId],
+  );
+  return rows;
+}
+
 export async function fetchLatestSignals(
   tenantId: string,
   limit = 20,
