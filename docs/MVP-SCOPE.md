@@ -1,5 +1,7 @@
 # MVP Scope
 
+> ⚠️ **SUSPENDED (2026-06-07).** This document narrowed the product to a "markets morning brief," and the build drifted from the founder's actual vision. The binding spec is now **`docs/PRODUCT.md`** (north star): OnlineJourno is one integrated, journalist-built editorial-intelligence companion to the CMS that gives every story a fair chance — consolidating the founder's prior projects (discover-dashboard, news-intel, framing, web-bloat-checker, subscriptions, predictive calendar) into one whole. See ADR 0041. The detail below is retained for reference only; it is **not** the current plan.
+
 Locked Wed Jun 3, 2026.
 
 This document defines the smallest deployable version of the OnlineJourno platform that delivers visible editorial value to a single newsroom desk. Anything outside this scope is deferred regardless of how attractive it sounds.
