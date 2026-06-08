@@ -7,7 +7,7 @@ export default function Masthead() {
     >
       <a href="/" className="flex items-center gap-2 no-underline">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/pyramid.svg" alt="" width={26} height={26} />
+        <img src="/brand/mark.png" alt="" width={30} height={26} />
         <span
           className="text-lg font-extrabold tracking-tight"
           style={{ fontFamily: "var(--font-display)", color: "var(--color-fg-1)" }}

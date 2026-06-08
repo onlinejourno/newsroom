@@ -125,7 +125,13 @@ export async function generateMetadata({
   return {
     title,
     description,
-    icons: { icon: "/brand/favicon.svg" },
+    icons: {
+      icon: [
+        { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/brand/favicon-64.png", sizes: "64x64", type: "image/png" },
+      ],
+      apple: "/brand/favicon-180.png",
+    },
   };
 }
 
