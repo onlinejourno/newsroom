@@ -49,6 +49,9 @@ export const CONNECTOR_CATALOG: CategoryDef[] = [
       { key: "chartbeat", label: "Chartbeat", modes: ["api"], fields: [{ name: "site", label: "Site domain" }, SECRET_REF] },
       { key: "piano", label: "Piano", modes: ["api"], fields: [{ name: "aid", label: "App ID" }, SECRET_REF] },
       { key: "matomo", label: "Matomo", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Matomo URL" }, { name: "site_id", label: "Site ID" }, SECRET_REF] },
+      { key: "umami", label: "Umami", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Umami URL" }, { name: "website_id", label: "Website ID" }, SECRET_REF] },
+      { key: "plausible", label: "Plausible", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Plausible URL", placeholder: "https://plausible.io" }, { name: "site_id", label: "Site ID (domain)" }, SECRET_REF] },
+      { key: "goaccess", label: "GoAccess (server logs)", modes: ["api"], oss: true, fields: [{ name: "report_url", label: "GoAccess JSON report URL", placeholder: "https://…/report.json" }] },
       { key: "custom", label: "Custom (MCP)", modes: ["mcp"], fields: MCP_FIELDS },
     ],
   },
@@ -65,9 +68,10 @@ export const CONNECTOR_CATALOG: CategoryDef[] = [
   {
     key: "search_console",
     label: "Search Console",
-    contract: "performance(url, range)",
+    contract: "entity_visibility(entities|beat) + performance(url)",
     providers: [
       { key: "gsc", label: "Google Search Console", modes: ["api"], fields: [{ name: "site_url", label: "Property URL" }, SECRET_REF] },
+      { key: "bing_webmaster", label: "Bing Webmaster Tools", modes: ["api"], fields: [{ name: "site_url", label: "Site URL" }, SECRET_REF] },
     ],
   },
   {
