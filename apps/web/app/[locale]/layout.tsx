@@ -15,6 +15,7 @@ import {
   Noto_Serif_Ethiopic,
 } from "next/font/google";
 import "../globals.css";
+import Masthead from "@/components/Masthead";
 import { locales, dirOf, isLocale, defaultLocale, meta } from "@/lib/locale";
 
 // Chrome fonts — always loaded (headings + UI, Latin).
@@ -159,7 +160,10 @@ export default async function RootLayout({
       className={`${playfair.variable} ${sourceSans.variable} ${notoSerif.variable}`}
       suppressHydrationWarning
     >
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <Masthead />
+        {children}
+      </body>
     </html>
   );
 }
