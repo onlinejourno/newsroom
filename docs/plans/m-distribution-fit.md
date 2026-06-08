@@ -49,6 +49,8 @@ For any story (a draft in the newsroom's CMS, or a published URL), score and exp
 ### Phase 2 — post-publish diagnostic (port `gsc_fetcher`)
 - Port `gsc_fetcher.py`; per-tenant Search Console credentials in `tenants.config` (secret ref).
 - For a published URL: real Discover impressions + Search queries/positions → plain-English "why it landed / died + the fix," surfaced **to the reporter directly** (no digital-desk gatekeeping).
+- **Entity visibility, not query performance (ADR 0045):** roll query rows up to the editorial entities + beat the reporter owns ("how is *RBI* / *land acquisition* doing across search"), with an `unmapped` bucket as a discovery signal. The headline view; per-URL/query is drill-down. Extends to AI surfaces (entity citation in AIO / generative answers).
+- Open alternatives to GSC (Bing Webmaster) + OSS analytics (Matomo/Umami/Plausible/GoAccess) are catalog providers, so no newsroom is excluded.
 - The thing reporters never get today.
 
 ### Phase 3 — strategic + the rest

@@ -38,6 +38,17 @@ class KeywordsClient(Protocol):
 
 @runtime_checkable
 class SearchConsoleClient(Protocol):
+    # Editorial-native primary view (ADR 0045): roll query rows up to the
+    # editorial entities / beat the reporter owns, not raw query strings.
+    def entity_visibility(
+        self,
+        *,
+        entities: list[str] | None = None,
+        beat: str | None = None,
+        range: str,
+    ) -> dict[str, Any]: ...
+
+    # Per-URL drill-down underneath (not the headline view).
     def performance(self, url: str, *, range: str) -> dict[str, Any]: ...
 
 
