@@ -432,6 +432,36 @@ export async function fetchShortlistRanked(
   return rows;
 }
 
+export type FitScore = {
+  surface: string;
+  grade: string;
+  score: number;
+  top_fix: string | null;
+};
+
+// Distribution-fit scores for a set of signals (m-distribution-fit P1, slice 2).
+export async function fetchDistributionFit(
+  tenantId: string,
+  signalIds: string[],
+): Promise<Map<string, FitScore[]>> {
+  const map = new Map<string, FitScore[]>();
+  if (signalIds.length === 0) return map;
+  const pool = getPool();
+  const { rows } = await pool.query<FitScore & { signal_id: string }>(
+    `select signal_id, surface, grade, score, top_fix
+       from distribution_fit_scores
+      where tenant_id = $1 and signal_id = any($2::uuid[])
+      order by surface`,
+    [tenantId, signalIds],
+  );
+  for (const r of rows) {
+    const arr = map.get(r.signal_id) ?? [];
+    arr.push({ surface: r.surface, grade: r.grade, score: r.score, top_fix: r.top_fix });
+    map.set(r.signal_id, arr);
+  }
+  return map;
+}
+
 export async function withClient<T>(
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
