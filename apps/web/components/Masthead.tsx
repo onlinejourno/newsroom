@@ -3,6 +3,7 @@ const EDITORIAL = [
   { path: "brief", label: "Brief" },
   { path: "shortlist", label: "Shortlist" },
   { path: "signals", label: "Signals" },
+  { path: "journalists", label: "Journalists" },
 ];
 const ADMIN = [
   { path: "admin/sources", label: "Sources" },
