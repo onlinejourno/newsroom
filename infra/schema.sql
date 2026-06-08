@@ -93,6 +93,24 @@ create table connectors (
 );
 create index on connectors (tenant_id, category);
 
+-- Optimization-surface registry (ADR 0043): surfaces the back engine scores
+-- stories for (Discover/Search/News/AIO/generative-AI/Subscription/Direct +
+-- custom), add/delete/disable per newsroom. Built-ins seeded per tenant.
+create table optimization_surfaces (
+  id          uuid primary key default gen_random_uuid(),
+  tenant_id   uuid not null references tenants(id) on delete cascade,
+  key         text not null,
+  name        text not null,
+  category    text not null,
+  signals     jsonb,
+  built_in    boolean not null default false,
+  enabled     boolean not null default true,
+  sort        int not null default 100,
+  created_at  timestamptz not null default now(),
+  unique (tenant_id, key)
+);
+create index on optimization_surfaces (tenant_id, enabled);
+
 create table beats (
   id              uuid primary key default gen_random_uuid(),
   tenant_id       uuid not null references tenants(id) on delete cascade,

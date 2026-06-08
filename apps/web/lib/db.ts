@@ -223,6 +223,70 @@ export async function deleteConnector(
   ]);
 }
 
+// ── Optimization surfaces (ADR 0043) ───────────────────────────────────────
+
+export type SurfaceRow = {
+  id: string;
+  key: string;
+  name: string;
+  category: string;
+  enabled: boolean;
+  built_in: boolean;
+  sort: number;
+};
+
+export async function listSurfaces(tenantId: string): Promise<SurfaceRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<SurfaceRow>(
+    `select id, key, name, category, enabled, built_in, sort
+       from optimization_surfaces
+      where tenant_id = $1
+      order by sort, name`,
+    [tenantId],
+  );
+  return rows;
+}
+
+export async function createSurface(
+  tenantId: string,
+  input: { key: string; name: string; category: string; signals?: Record<string, unknown> | null },
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `insert into optimization_surfaces (tenant_id, key, name, category, signals, built_in)
+     values ($1,$2,$3,$4,$5,false)
+     on conflict (tenant_id, key) do update
+       set name = excluded.name, category = excluded.category, signals = excluded.signals`,
+    [
+      tenantId,
+      input.key,
+      input.name,
+      input.category,
+      input.signals ? JSON.stringify(input.signals) : null,
+    ],
+  );
+}
+
+export async function setSurfaceEnabled(
+  tenantId: string,
+  id: string,
+  enabled: boolean,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    "update optimization_surfaces set enabled = $3 where tenant_id = $1 and id = $2",
+    [tenantId, id, enabled],
+  );
+}
+
+export async function deleteSurface(tenantId: string, id: string): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    "delete from optimization_surfaces where tenant_id = $1 and id = $2",
+    [tenantId, id],
+  );
+}
+
 export async function fetchLatestSignals(
   tenantId: string,
   limit = 20,
