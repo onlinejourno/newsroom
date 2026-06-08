@@ -115,11 +115,47 @@ create table signals (
   language        text default 'en',
   raw_payload     jsonb,
   embedding       vector(1024),                  -- pgvector for semantic dedup + retrieval
+  -- front-engine (EIP) model, generalised off masthead/India specifics (0007)
+  district        text,
+  region          text,                          -- EIP 'state', country-neutral
+  beat            text,
+  trend_score     real,
+  trend_reason    text,
+  enrichment      jsonb,                          -- {analyse:{}, classify:{}, archive:[], alert:{}}
   unique (tenant_id, url_hash)
 );
 
 create index on signals (tenant_id, published_at desc);
 create index on signals using ivfflat (embedding vector_cosine_ops);
+create index on signals (tenant_id, district);
+create index on signals (tenant_id, region);
+create index on signals (tenant_id, beat);
+
+-- Journalist directory (EIP journalists), tenant-scoped; optional link to a
+-- platform user. Per-journalist working `language` for localizable output.
+create table journalist_profiles (
+  id            uuid primary key default gen_random_uuid(),
+  tenant_id     uuid not null references tenants(id) on delete cascade,
+  user_id       uuid references users(id) on delete set null,
+  slug          text not null,
+  name          text not null,
+  email         text,
+  bureau        text,
+  city          text,
+  region        text,
+  beats         jsonb,
+  role          text,
+  reports_to    text,
+  language      text,
+  alert_webhook text,                            -- channel-neutral (was teams_webhook)
+  notes         text,
+  claimed_at    timestamptz,
+  onboarded_at  timestamptz,
+  created_at    timestamptz not null default now(),
+  unique (tenant_id, slug)
+);
+create index on journalist_profiles (tenant_id, region);
+create index on journalist_profiles (tenant_id, bureau);
 
 -- ============================================================
 -- Shortlist + editorial decisions
