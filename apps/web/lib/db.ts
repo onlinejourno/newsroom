@@ -144,6 +144,85 @@ export async function deleteSource(tenantId: string, id: string): Promise<void> 
   ]);
 }
 
+// ── Connectors (sub-project C) ─────────────────────────────────────────────
+
+export type ConnectorRow = {
+  id: string;
+  category: string;
+  provider: string;
+  mode: string;
+  config: Record<string, unknown> | null;
+  auth: { method?: string; secret_ref?: string } | null;
+  enabled: boolean;
+};
+
+export type ConnectorInput = {
+  category: string;
+  provider: string;
+  mode: string;
+  config?: Record<string, unknown> | null;
+  auth?: Record<string, unknown> | null;
+  enabled?: boolean;
+};
+
+export async function listConnectors(tenantId: string): Promise<ConnectorRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<ConnectorRow>(
+    `select id, category, provider, mode, config, auth, enabled
+       from connectors
+      where tenant_id = $1
+      order by category, provider`,
+    [tenantId],
+  );
+  return rows;
+}
+
+export async function upsertConnector(
+  tenantId: string,
+  input: ConnectorInput,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `insert into connectors (tenant_id, category, provider, mode, config, auth, enabled)
+     values ($1,$2,$3,$4,$5,$6,coalesce($7,true))
+     on conflict (tenant_id, category, provider) do update
+       set mode = excluded.mode, config = excluded.config,
+           auth = excluded.auth, enabled = excluded.enabled`,
+    [
+      tenantId,
+      input.category,
+      input.provider,
+      input.mode,
+      input.config ? JSON.stringify(input.config) : null,
+      input.auth ? JSON.stringify(input.auth) : null,
+      input.enabled ?? true,
+    ],
+  );
+}
+
+export async function setConnectorEnabled(
+  tenantId: string,
+  id: string,
+  enabled: boolean,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    "update connectors set enabled = $3 where tenant_id = $1 and id = $2",
+    [tenantId, id, enabled],
+  );
+}
+
+export async function deleteConnector(
+  tenantId: string,
+  id: string,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query("delete from connectors where tenant_id = $1 and id = $2", [
+    tenantId,
+    id,
+  ]);
+}
+
 export async function fetchLatestSignals(
   tenantId: string,
   limit = 20,
