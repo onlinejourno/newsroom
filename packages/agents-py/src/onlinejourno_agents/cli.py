@@ -195,6 +195,47 @@ def cmd_cms_pull(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_score_stories(args: argparse.Namespace) -> int:
+    """Score own stories for distribution fit — closes the loop (ADR 0046/0047).
+
+    For each own story, run the Channel Audit on its URL and store the per-surface
+    score (story-keyed). The fair-chance audit reads these.
+    """
+    import requests as _rq
+
+    from onlinejourno_agents.distribution_fit import analyze_url
+
+    db._load_env_once()
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        surfaces = db.enabled_surface_keys(conn, tenant_id) or None
+        stories = db.recent_stories(conn, tenant_id, limit=args.top)
+        if not stories:
+            print("No stories. Run `cms-pull` first.", file=sys.stderr)
+            return 1
+        scored = 0
+        failed = 0
+        for st in stories:
+            url = st.get("url")
+            if not url:
+                continue
+            try:
+                res = analyze_url(url, surfaces=surfaces)
+            except _rq.RequestException:
+                failed += 1
+                continue
+            for surface, v in res["channels"].items():
+                db.upsert_distribution_fit(
+                    conn, tenant_id=tenant_id, story_id=st["id"], surface=surface,
+                    score=v["score"], grade=v["grade"], top_fix=v["top_fix"],
+                    signals=v["signals"],
+                )
+            scored += 1
+        conn.commit()
+    print(f"scored {scored} stories · {failed} fetch-failed")
+    return 0
+
+
 def cmd_analyze_url(args: argparse.Namespace) -> int:
     """Channel Audit for a published URL — the real fair-chance scorer.
 
@@ -397,6 +438,14 @@ def main(argv: list[str] | None = None) -> int:
     p_cms.add_argument("--url", required=True, help="CMS base URL, e.g. https://onlinejournalism.in")
     p_cms.add_argument("--limit", type=int, default=20)
     p_cms.set_defaults(func=cmd_cms_pull)
+
+    p_ss = sub.add_parser(
+        "score-stories",
+        help="Channel-Audit own stories + store the scores (close the loop)",
+    )
+    p_ss.add_argument("--tenant", required=True)
+    p_ss.add_argument("--top", type=int, default=20)
+    p_ss.set_defaults(func=cmd_score_stories)
 
     args = parser.parse_args(argv)
     return args.func(args)
