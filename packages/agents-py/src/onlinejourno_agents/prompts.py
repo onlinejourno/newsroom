@@ -284,3 +284,35 @@ def build_frame_prompt(
     body = _truncate(signal.get("body_text"), body_char_limit)
     user = f"HEADLINE: {headline}\nBODY: {body or '(headline only)'}\n"
     return ScorePromptParts(system=system, user=user)
+
+
+ENRICH_BEATS = (
+    "National", "Politics", "Courts", "Business", "Economy", "Science & Tech",
+    "Climate", "Health", "Education", "Sport", "Culture", "Investigations", "Other",
+)
+
+
+def build_enrich_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
+    """Batch enrichment prompt (Analyse pillar): per signal extract entities, geo,
+    beat, topic, summary. Pure. The model returns one entry per 1-based index."""
+    system = (
+        "You are an editorial analyst. For EACH item below, extract structured "
+        "metadata. Respond with ONLY a JSON object, no prose, no markdown, exactly:\n"
+        '{"results": [{"index": <item number>, '
+        '"entities": [<named people/orgs/places/schemes>], '
+        '"geo": {"country": <string|null>, "region": <string|null>, '
+        '"district": <string|null>}, '
+        f'"beat": <one of {list(ENRICH_BEATS)}>, '
+        '"topic": <short topic>, "summary": <one sentence>}, ...]}\n'
+        "One object per item, using the item's number as `index`. Infer geo from "
+        "the text; use null when not identifiable."
+    )
+    lines = [f"ITEMS ({len(signals)}):", ""]
+    for idx, signal in enumerate(signals, start=1):
+        headline = signal.get("headline") or "(no headline)"
+        body = _truncate(signal.get("body_text"), 700)
+        lines.append(f"[{idx}] {headline}")
+        if body:
+            lines.append(f"    {body}")
+        lines.append("")
+    return ScorePromptParts(system=system, user="\n".join(lines))

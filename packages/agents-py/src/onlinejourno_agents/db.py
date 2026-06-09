@@ -305,6 +305,51 @@ def upsert_story(
 
 
 # ----------------------------------------------------------------------
+# Enrichment (Analyse pillar — L2)
+# ----------------------------------------------------------------------
+
+
+def signals_needing_enrichment(
+    conn: psycopg.Connection, tenant_id: UUID, *, since_hours: int = 48, limit: int = 60
+) -> list[dict[str, Any]]:
+    """Signals not yet enriched, newest first."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, body_text
+              from signals
+             where tenant_id = %s and enrichment is null
+               and coalesce(published_at, fetched_at) >= now() - make_interval(hours => %s)
+             order by coalesce(published_at, fetched_at) desc
+             limit %s
+            """,
+            (tenant_id, since_hours, limit),
+        )
+        return list(cur.fetchall())
+
+
+def update_signal_enrichment(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    signal_id: UUID,
+    district: str | None,
+    region: str | None,
+    beat: str | None,
+    enrichment: dict[str, Any],
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            update signals
+               set district = %s, region = %s, beat = %s, enrichment = %s
+             where tenant_id = %s and id = %s
+            """,
+            (district, region, beat, Json(enrichment), tenant_id, signal_id),
+        )
+
+
+# ----------------------------------------------------------------------
 # Brief reads + writes
 # ----------------------------------------------------------------------
 
