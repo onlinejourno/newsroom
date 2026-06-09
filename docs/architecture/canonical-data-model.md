@@ -15,6 +15,20 @@ The platform currently conflates two different objects on one `signals` table. T
 
 Distribution-fit, the Channel Audit, and post-publish all hang off **story**. Discovery, the brief, and threads hang off **signal**.
 
+## The bridge: CMS ↔ outside world
+
+The platform connects the newsroom's **CMS** (inside) to the **outside world**, and makes the two ends talk. Two inbound boundaries, two outbound, one feedback:
+
+| Direction | Boundary | Carries |
+|-----------|----------|---------|
+| world → in | **sources** (Collect) | external signals (the public record) → `signal` |
+| inside → in | **CMS adapter** (read-only) | the newsroom's own drafts + published → `story` (anchored by `story.cms_ref`) |
+| out → world | **surfaces** | the story pushed for a fair chance (distribution-fit / Channel Audit) |
+| out → reporter | **alert channels** | ranked signals to the reporter's phone |
+| world → back | **analytics / GSC / probity** | post-publish truth (engagement, AIO, tracker cost) → the chain |
+
+The **CMS is a first-class connector** (category `cms`: WordPress / Ghost / Méthode / custom), **read-only** — the platform is a companion, never the publish surface. It is the *inside* end, mirroring sources/surfaces (the *outside* ends). `story.cms_ref` is the anchor between the two.
+
 ## Core objects
 
 ```
