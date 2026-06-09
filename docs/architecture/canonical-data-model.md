@@ -27,7 +27,9 @@ The platform connects the newsroom's **CMS** (inside) to the **outside world**, 
 | out → reporter | **alert channels** | ranked signals to the reporter's phone |
 | world → back | **analytics / GSC / probity** | post-publish truth (engagement, AIO, tracker cost) → the chain |
 
-The **CMS is a first-class connector** (category `cms`: WordPress / Ghost / Méthode / custom), **read-only** — the platform is a companion, never the publish surface. It is the *inside* end, mirroring sources/surfaces (the *outside* ends). `story.cms_ref` is the anchor between the two.
+The **CMS is a first-class connector** (category `cms`), **read-only** — the platform is a companion, never the publish surface. It is the *inside* end, mirroring sources/surfaces (the *outside* ends). `story.cms_ref` is the anchor between the two.
+
+**Testing the inside end without proprietary access.** Build the open-source CMS adapters first — **WordPress** (onlinejournalism.in is a live target today), **Ghost**, **Superdesk** (an OSS *newsroom* CMS, used by AAP), and headless (Strapi/Directus). The proprietary newsroom CMSs — **CUE** (Naviga), Méthode, Arc XP — are built to their documented APIs + recorded fixtures, and validated live only when a design-partner newsroom grants a sandbox. No newsroom-CMS purchase is required to develop or test the bridge's inside end.
 
 ## Core objects
 
