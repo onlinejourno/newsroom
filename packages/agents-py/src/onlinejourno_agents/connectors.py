@@ -232,7 +232,9 @@ class GhostClient:
         resp.raise_for_status()
         out: list[dict[str, Any]] = []
         for p in resp.json().get("posts", []):
-            text = BeautifulSoup(p.get("html") or "", "html.parser").get_text(" ", strip=True)
+            text = BeautifulSoup(
+                p.get("html") or "", "html.parser"
+            ).get_text(" ", strip=True)
             out.append(
                 {
                     "cms_ref": p.get("id"),
