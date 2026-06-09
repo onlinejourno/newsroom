@@ -152,6 +152,31 @@ def cmd_frame_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_feed(args: argparse.Namespace) -> int:
+    """Signals routed to a journalist — her inflow (beat / region match)."""
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        jid = db.journalist_id_for_slug(conn, tenant_id, args.journalist)
+        if not jid:
+            print(f"No journalist '{args.journalist}'.", file=sys.stderr)
+            return 1
+        rows = db.signals_for_journalist(
+            conn, tenant_id, jid, since_hours=args.since_hours, limit=args.limit
+        )
+    if not rows:
+        print(
+            "No matching signals (need beat/region overlap + enriched signals).",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"{len(rows)} signals routed to {args.journalist}:")
+    for r in rows:
+        ents = ", ".join((r.get("entities") or [])[:3])
+        head = (r.get("headline") or r.get("url") or "")[:54]
+        print(f"  [{r.get('beat')}/{r.get('region') or '-'}] {head}  · {ents}")
+    return 0
+
+
 def cmd_enrich(args: argparse.Namespace) -> int:
     """L2 Analyse — enrich raw signals with entities, geo, beat, topic."""
     from onlinejourno_agents.enrich import run_enrich
@@ -473,6 +498,13 @@ def main(argv: list[str] | None = None) -> int:
     p_en.add_argument("--since-hours", type=int, default=48)
     p_en.add_argument("--limit", type=int, default=60)
     p_en.set_defaults(func=cmd_enrich)
+
+    p_fd = sub.add_parser("feed", help="signals routed to a journalist (her inflow)")
+    p_fd.add_argument("--tenant", required=True)
+    p_fd.add_argument("--journalist", required=True, help="journalist slug, e.g. td-lena-park")
+    p_fd.add_argument("--since-hours", type=int, default=72)
+    p_fd.add_argument("--limit", type=int, default=30)
+    p_fd.set_defaults(func=cmd_feed)
 
     args = parser.parse_args(argv)
     return args.func(args)
