@@ -106,3 +106,28 @@ def test_drupal_cms_parses(monkeypatch):
     assert rows[0]["cms_ref"] == "uuid-1"
     assert rows[0]["url"] == "https://d/news/1"
     assert "Article body" in rows[0]["body_text"]
+
+
+def test_ghost_cms_parses(monkeypatch):
+    import requests
+
+    class FakeResp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"posts": [{
+                "id": "g1", "url": "https://g/post", "title": "Ghost news",
+                "html": "<p>Ghost body</p>", "published_at": "2026-06-01T00:00:00",
+                "primary_tag": {"name": "Media"},
+            }]}
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: FakeResp())
+    client = make_connector(ConnectorConfig(
+        category="cms", provider="ghost", mode="api",
+        config={"base_url": "https://g", "content_key": "k"},
+    ))
+    rows = client.stories(limit=5)
+    assert rows[0]["cms_ref"] == "g1"
+    assert rows[0]["section"] == "Media"
+    assert "Ghost body" in rows[0]["body_text"]
