@@ -44,6 +44,13 @@ subscription_fit         on story: conversion signals ← subscriptions
 — graph / output —
 thread / thread_link     story-thread continuity (velocity)
 brief                    composed editorial brief (from signals)
+calendar_event           forward editorial calendar — an extracted promise /
+                         scheduled event from the public record (Predictive
+                         Editorial Calendar). who(person/org) · promise_text ·
+                         beat · due_date · lead_time · confidence · source(PIB…) ·
+                         status(upcoming|due|past_due|fulfilled) · from_signal ·
+                         story_potential. Derived from signals via promise
+                         extraction; past_due drives accountability coverage.
 
 — strategic / landscape (news-intel) —
 competitor_entity        OTHER newsrooms being benchmarked. tier india|global_benchmark|peer
@@ -76,6 +83,7 @@ Project for Excellence in Journalism framing — the **14 frames** + **16 topics
 | **news-intel** | framing_coding (PEJ) + competitor_entity/competitor_article/observation/event/benchmark_score (Deuze + PEJ) |
 | **web-bloat-checker** | probity_audit |
 | **subscriptions** | subscription_fit |
+| **Predictive Editorial Calendar** | `calendar_event` — forward promises + accountability (`m-editorial-calendar`) → L4 Forward-Calendar (Gantt) / Event-feed / Past-due / Pipeline surfaces |
 
 ## Reconciliations needed (the L0 migrations)
 
@@ -83,6 +91,7 @@ Project for Excellence in Journalism framing — the **14 frames** + **16 topics
 2. **Generalise `framing_pej_codings`** to target story|signal|competitor_article (keep PEJ frame/topic).
 3. **Add the competitive layer** (`competitor_entity` + `benchmark_score` + `observation`/`event`), Deuze-typed — the strategic/landscape module from news-intel.
 4. probity_audit + subscription_fit score tables (when those modules land).
+5. **Add `calendar_event`** + the past-due accountability loop — `m-editorial-calendar`, derived from signals via promise extraction (a forward axis distinct from discovery/own-story).
 
 ## Build order (bottom-up)
 
