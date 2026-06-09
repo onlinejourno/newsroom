@@ -89,6 +89,10 @@ Carried on `sources.deuze_type` (exists) and `competitor_entity.deuze_type`. Use
 
 Project for Excellence in Journalism framing — the **14 frames** + **16 topics** taxonomy (`docs/reports/framing-india-2026/`, the m-framing-pej goldset). `framing_coding` carries `frame`, `topic`, `frame_group`, `confidence`, `coder_model`, `coder_version`. Applies to a **story** (the newsroom's own framing) and to **competitor_article**/signal (framing-of-others, for balance audits). The strategic "fair-chance audit" + framing-balance views read this.
 
+## User Needs Model (first-class)
+
+Each story/signal is classified by the **reader need** it serves — `know` (facts/update), `understand` (explainer/perspective), `feel` (human/emotional), `do` (service/utility). The BBC/smartocto user-needs model, condensed to four; configurable to the fuller set per newsroom. Stored in `enrichment.classify.user_need`. It **steers the fair-chance audit** — surfaces + levers are weighted by need (Know→Discover/News/speed; Understand→Search/AIO/depth; Feel→social/share; Do→Search/conversion). The third theory-grounded classification, beside Deuze (source) + PEJ (frame). See ADR 0049.
+
 ## Project → canonical mapping
 
 | Project | Fills |
