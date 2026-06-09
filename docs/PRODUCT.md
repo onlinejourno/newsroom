@@ -4,6 +4,8 @@
 
 > **OnlineJourno** is editorial-intelligence **by a journalist, for journalists** — one integrated, vendor-neutral platform that finds the story for the reporter at the base of the newsroom, hands it to her with her own archive's depth behind it, and then gives every story she files a fair chance — pre-publish and after. It plugs into the newsroom's existing CMS; it never replaces it.
 
+**In one line: it connects the newsroom's CMS to the outside world, and makes the two ends talk.** Inside: the reporter, the story, the editorial chain. Outside: the public record, the distribution surfaces, the audience. The platform is the bridge — discovery flows *in* (what to cover), stories flow *out* (a fair chance), and the truth of how they landed flows *back*.
+
 It is not a CMS, not a dashboard bolted on the side, not branded to any one newsroom. It is the intelligence layer the newsroom never had, built to **invert the pyramid** — to give the reporter at the bottom the intelligence that today pools only at the top.
 
 ## The problem

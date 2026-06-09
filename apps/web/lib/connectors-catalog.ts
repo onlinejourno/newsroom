@@ -41,6 +41,17 @@ const MCP_FIELDS: ProviderField[] = [
 
 export const CONNECTOR_CATALOG: CategoryDef[] = [
   {
+    key: "cms",
+    label: "CMS (read-only — the inside end)",
+    contract: "stories(since) -> own drafts + published",
+    providers: [
+      { key: "wordpress", label: "WordPress", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Site URL" }, SECRET_REF] },
+      { key: "ghost", label: "Ghost", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Admin API URL" }, SECRET_REF] },
+      { key: "methode", label: "Méthode", modes: ["api", "mcp"], fields: [{ name: "base_url", label: "Endpoint" }, SECRET_REF] },
+      { key: "custom", label: "Custom (API/MCP)", modes: ["api", "mcp"], fields: [{ name: "endpoint", label: "Endpoint / MCP server" }, SECRET_REF] },
+    ],
+  },
+  {
     key: "analytics",
     label: "Analytics",
     contract: "page_performance(url, range)",
