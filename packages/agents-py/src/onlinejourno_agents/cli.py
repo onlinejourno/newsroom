@@ -152,6 +152,53 @@ def cmd_frame_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_trends(args: argparse.Namespace) -> int:
+    """Trend scoring — topic momentum from signal convergence; writes trend_score.
+
+    Ports the discover-dashboard momentum/trajectory bands, fed by our enriched
+    corpus (entity convergence in a recent window vs a prior one).
+    """
+    from onlinejourno_agents.trend_score import topic_momentum
+
+    window = args.window_hours
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        rows = db.enriched_signals_with_entities(
+            conn, tenant_id, since_hours=2 * window, limit=600
+        )
+        if not rows:
+            print("No enriched signals. Run `enrich` first.", file=sys.stderr)
+            return 1
+        recent = [r for r in rows if (r.get("age_h") or 0) < window]
+        prior = [r for r in rows if (r.get("age_h") or 0) >= window]
+        topics = topic_momentum(
+            [r["entities"] for r in recent], [r["entities"] for r in prior]
+        )
+        mom = {t.topic: t for t in topics}
+        scored = 0
+        for r in recent:
+            ents = r.get("entities") or []
+            best = max(
+                (mom[e] for e in ents if e in mom),
+                key=lambda t: t.momentum,
+                default=None,
+            )
+            if best is None:
+                continue
+            db.update_signal_trend(
+                conn, tenant_id=tenant_id, signal_id=r["id"],
+                trend_score=best.momentum,
+                trend_reason=f"{best.trajectory} · {best.topic}",
+            )
+            scored += 1
+        conn.commit()
+    print(f"topic momentum (recent {window}h vs prior {window}h) — top {args.top}:")
+    for t in topics[: args.top]:
+        print(f"  {t.momentum:>5}  {t.trajectory:<34}  {t.topic}  (×{t.recent})")
+    print(f"\nwrote trend_score to {scored} recent signals")
+    return 0
+
+
 def cmd_feed(args: argparse.Namespace) -> int:
     """Signals routed to a journalist — her inflow (beat / region match)."""
     with db.connect() as conn:
@@ -505,6 +552,12 @@ def main(argv: list[str] | None = None) -> int:
     p_fd.add_argument("--since-hours", type=int, default=72)
     p_fd.add_argument("--limit", type=int, default=30)
     p_fd.set_defaults(func=cmd_feed)
+
+    p_tr = sub.add_parser("trends", help="topic momentum from signal convergence")
+    p_tr.add_argument("--tenant", required=True)
+    p_tr.add_argument("--window-hours", type=int, default=24)
+    p_tr.add_argument("--top", type=int, default=12)
+    p_tr.set_defaults(func=cmd_trends)
 
     args = parser.parse_args(argv)
     return args.func(args)
