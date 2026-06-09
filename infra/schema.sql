@@ -127,7 +127,8 @@ create table stories (
   status       text not null default 'draft' check (status in ('draft','published')),
   published_at timestamptz,
   enrichment   jsonb,
-  created_at   timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  unique (tenant_id, cms_ref)                          -- idempotent CMS pulls
 );
 create index on stories (tenant_id, status, published_at desc);
 

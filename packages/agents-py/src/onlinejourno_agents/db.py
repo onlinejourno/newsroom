@@ -265,6 +265,45 @@ def upsert_distribution_fit(
         )
 
 
+def upsert_story(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    cms_ref: str,
+    url: str | None,
+    headline: str | None,
+    body_text: str | None,
+    section: str | None,
+    published_at: str | None,
+    status: str = "published",
+    source_id: UUID | None = None,
+) -> bool:
+    """Upsert an own story by (tenant, cms_ref) — the inside end (ADR 0046).
+
+    Returns True if the row was newly inserted (vs updated on re-pull).
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            insert into stories
+                (tenant_id, source_id, cms_ref, url, headline, body_text,
+                 section, status, published_at)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            on conflict (tenant_id, cms_ref) do update
+               set url = excluded.url, headline = excluded.headline,
+                   body_text = excluded.body_text, section = excluded.section,
+                   published_at = excluded.published_at
+            returning (xmax = 0) as inserted
+            """,
+            (
+                tenant_id, source_id, cms_ref, url, headline, body_text,
+                section, status, published_at,
+            ),
+        )
+        row = cur.fetchone()
+        return bool(row["inserted"]) if row else False
+
+
 # ----------------------------------------------------------------------
 # Brief reads + writes
 # ----------------------------------------------------------------------

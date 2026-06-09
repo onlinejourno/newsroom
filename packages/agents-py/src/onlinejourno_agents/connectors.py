@@ -67,7 +67,14 @@ class SocialClient(Protocol):
     def reach(self, url: str) -> dict[str, Any]: ...
 
 
+@runtime_checkable
+class CMSClient(Protocol):
+    # The inside end (ADR 0046): read the newsroom's own articles -> stories.
+    def stories(self, *, since: str | None = None, limit: int = 50) -> list[dict[str, Any]]: ...
+
+
 CONTRACTS: dict[str, type] = {
+    "cms": CMSClient,
     "analytics": AnalyticsClient,
     "keywords": KeywordsClient,
     "search_console": SearchConsoleClient,
@@ -110,6 +117,55 @@ class KeApiClient:
         }
 
 
+class WordPressClient:
+    """CMSClient over the WordPress REST API. Published posts are public; an app
+    password in secret_ref would unlock drafts (later). The first inside-end
+    adapter — testable against any WordPress site with no credentials."""
+
+    def __init__(self, cfg: ConnectorConfig) -> None:
+        self._base = str(cfg.config.get("base_url", "")).rstrip("/")
+
+    def stories(self, *, since: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        import requests
+        from bs4 import BeautifulSoup
+
+        params: dict[str, Any] = {"per_page": min(limit, 100), "_embed": "1"}
+        if since:
+            params["after"] = since
+        resp = requests.get(
+            f"{self._base}/wp-json/wp/v2/posts",
+            params=params,
+            headers={"User-Agent": "OnlineJourno-CMS/0.1"},
+            timeout=20,
+        )
+        resp.raise_for_status()
+
+        def text(html: str | None) -> str:
+            return BeautifulSoup(html or "", "html.parser").get_text(" ", strip=True)
+
+        out: list[dict[str, Any]] = []
+        for p in resp.json():
+            section = None
+            for group in (p.get("_embedded") or {}).get("wp:term") or []:
+                for term in group:
+                    if isinstance(term, dict) and term.get("taxonomy") == "category":
+                        section = term.get("name")
+                        break
+                if section:
+                    break
+            out.append(
+                {
+                    "cms_ref": str(p.get("id")),
+                    "url": p.get("link"),
+                    "headline": text((p.get("title") or {}).get("rendered")),
+                    "body_text": text((p.get("content") or {}).get("rendered")),
+                    "section": section,
+                    "published_at": p.get("date_gmt") or p.get("date"),
+                }
+            )
+        return out
+
+
 def make_connector(cfg: ConnectorConfig) -> Any:
     """Build a capability client for a connector configuration.
 
@@ -121,6 +177,9 @@ def make_connector(cfg: ConnectorConfig) -> Any:
         raise ValueError(f"unknown connector category: {cfg.category!r}")
     if cfg.mode not in ("api", "mcp"):
         raise ValueError(f"connector mode must be 'api' or 'mcp', got {cfg.mode!r}")
+
+    if cfg.category == "cms" and cfg.provider == "wordpress" and cfg.mode == "api":
+        return WordPressClient(cfg)
 
     if (
         cfg.category == "keywords"

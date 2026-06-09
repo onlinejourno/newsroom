@@ -152,6 +152,49 @@ def cmd_frame_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_cms_pull(args: argparse.Namespace) -> int:
+    """Pull own stories from a CMS into `stories` — the inside end (ADR 0046).
+
+    Mirrors how sources fill signals: the CMS connector fills the newsroom's own
+    content. Testable against any WordPress site (published posts need no creds).
+    """
+    import requests as _rq
+
+    from onlinejourno_agents.connectors import ConnectorConfig, make_connector
+
+    db._load_env_once()
+    client = make_connector(
+        ConnectorConfig(
+            category="cms", provider=args.provider, mode="api",
+            config={"base_url": args.url},
+        )
+    )
+    try:
+        stories = client.stories(limit=args.limit)
+    except _rq.RequestException as exc:
+        print(f"pull failed: {exc}", file=sys.stderr)
+        return 1
+    if not stories:
+        print("No stories returned.", file=sys.stderr)
+        return 1
+    new = 0
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        for s in stories:
+            if db.upsert_story(
+                conn, tenant_id=tenant_id, cms_ref=s["cms_ref"], url=s["url"],
+                headline=s["headline"], body_text=s["body_text"],
+                section=s["section"], published_at=s["published_at"],
+            ):
+                new += 1
+        conn.commit()
+    print(
+        f"pulled {len(stories)} from {args.provider} · "
+        f"{new} new, {len(stories) - new} updated"
+    )
+    return 0
+
+
 def cmd_analyze_url(args: argparse.Namespace) -> int:
     """Channel Audit for a published URL — the real fair-chance scorer.
 
@@ -344,6 +387,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_au.add_argument("url", help="the article URL to audit")
     p_au.set_defaults(func=cmd_analyze_url)
+
+    p_cms = sub.add_parser(
+        "cms-pull",
+        help="pull own stories from a CMS into the platform (the inside end)",
+    )
+    p_cms.add_argument("--tenant", required=True)
+    p_cms.add_argument("--provider", default="wordpress")
+    p_cms.add_argument("--url", required=True, help="CMS base URL, e.g. https://onlinejournalism.in")
+    p_cms.add_argument("--limit", type=int, default=20)
+    p_cms.set_defaults(func=cmd_cms_pull)
 
     args = parser.parse_args(argv)
     return args.func(args)
