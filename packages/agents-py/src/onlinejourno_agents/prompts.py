@@ -291,6 +291,9 @@ ENRICH_BEATS = (
     "Climate", "Health", "Education", "Sport", "Culture", "Investigations", "Other",
 )
 
+# User Needs Model drivers (ADR 0049) — what reader need a story serves.
+USER_NEEDS = ("know", "understand", "feel", "do")
+
 
 def build_enrich_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
     """Batch enrichment prompt (Analyse pillar): per signal extract entities, geo,
@@ -303,6 +306,7 @@ def build_enrich_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
         '"geo": {"country": <string|null>, "region": <string|null>, '
         '"district": <string|null>}, '
         f'"beat": <one of {list(ENRICH_BEATS)}>, '
+        f'"user_need": <one of {list(USER_NEEDS)} — the reader need it serves>, '
         '"topic": <short topic>, "summary": <one sentence>}, ...]}\n'
         "One object per item, using the item's number as `index`. Infer geo from "
         "the text; use null when not identifiable."
