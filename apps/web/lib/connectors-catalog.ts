@@ -41,6 +41,17 @@ const MCP_FIELDS: ProviderField[] = [
 
 export const CONNECTOR_CATALOG: CategoryDef[] = [
   {
+    key: "nlp",
+    label: "NLP (entity extraction)",
+    contract: "analyse(text) -> entities + geo",
+    providers: [
+      { key: "spacy", label: "spaCy (OSS)", modes: ["api"], oss: true, fields: [{ name: "model", label: "Model", placeholder: "en_core_web_sm" }] },
+      { key: "stanza", label: "Stanza (OSS, multilingual)", modes: ["api"], oss: true, fields: [{ name: "lang", label: "Language", placeholder: "en" }] },
+      { key: "gliner", label: "GLiNER (OSS, zero-shot)", modes: ["api"], oss: true, fields: [{ name: "labels", label: "Entity labels (comma-sep)" }] },
+      { key: "custom", label: "Custom (MCP)", modes: ["mcp"], fields: MCP_FIELDS },
+    ],
+  },
+  {
     key: "cms",
     label: "CMS (read-only — the inside end)",
     contract: "stories(since) -> own drafts + published",

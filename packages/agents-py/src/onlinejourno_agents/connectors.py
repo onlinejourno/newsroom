@@ -73,8 +73,15 @@ class CMSClient(Protocol):
     def stories(self, *, since: str | None = None, limit: int = 50) -> list[dict[str, Any]]: ...
 
 
+@runtime_checkable
+class NlpClient(Protocol):
+    # The Analyse NLP-first layer (ADR 0048): entities + geo, before the LLM.
+    def analyse(self, text: str) -> dict[str, Any]: ...
+
+
 CONTRACTS: dict[str, type] = {
     "cms": CMSClient,
+    "nlp": NlpClient,
     "analytics": AnalyticsClient,
     "keywords": KeywordsClient,
     "search_console": SearchConsoleClient,
@@ -251,6 +258,58 @@ class GhostClient:
         return out
 
 
+class SpacyNlpClient:
+    """NlpClient over spaCy NER (OSS, local). Lazy-loads the model; entities from
+    PERSON/ORG/GPE/LOC/FAC/NORP/EVENT/LAW/PRODUCT, geo from GPE/LOC. Free, offline,
+    runs before the LLM (ADR 0048)."""
+
+    _ENTITY_LABELS = {"PERSON", "ORG", "GPE", "LOC", "FAC", "NORP", "EVENT", "LAW", "PRODUCT"}
+    _GEO_LABELS = {"GPE", "LOC"}
+
+    def __init__(self, cfg: ConnectorConfig) -> None:
+        self._model = str((cfg.config or {}).get("model") or "en_core_web_sm")
+        self._nlp: Any = None
+
+    def _pipeline(self) -> Any:
+        if self._nlp is None:
+            try:
+                import spacy
+            except ImportError as exc:
+                raise RuntimeError(
+                    "spaCy not installed. Install the nlp extra: "
+                    "uv pip install 'onlinejourno-agents[nlp]'"
+                ) from exc
+            try:
+                self._nlp = spacy.load(self._model, disable=["lemmatizer", "textcat"])
+            except OSError as exc:
+                raise RuntimeError(
+                    f"spaCy model {self._model!r} not installed. Run: "
+                    f"python -m spacy download {self._model}"
+                ) from exc
+        return self._nlp
+
+    def analyse(self, text: str) -> dict[str, Any]:
+        doc = self._pipeline()(text[:20000])
+        entities: list[str] = []
+        geo: list[str] = []
+        seen: set[str] = set()
+        for ent in doc.ents:
+            if ent.label_ not in self._ENTITY_LABELS:
+                continue
+            name = ent.text.strip()
+            if not name:
+                continue
+            if name.lower() not in seen:
+                seen.add(name.lower())
+                entities.append(name)
+            if ent.label_ in self._GEO_LABELS and name not in geo:
+                geo.append(name)
+        return {
+            "entities": entities[:20],
+            "geo": {"region": geo[0] if geo else None, "all": geo[:8]},
+        }
+
+
 def make_connector(cfg: ConnectorConfig) -> Any:
     """Build a capability client for a connector configuration.
 
@@ -262,6 +321,9 @@ def make_connector(cfg: ConnectorConfig) -> Any:
         raise ValueError(f"unknown connector category: {cfg.category!r}")
     if cfg.mode not in ("api", "mcp"):
         raise ValueError(f"connector mode must be 'api' or 'mcp', got {cfg.mode!r}")
+
+    if cfg.category == "nlp" and cfg.provider == "spacy":
+        return SpacyNlpClient(cfg)
 
     if cfg.category == "cms" and cfg.provider == "wordpress" and cfg.mode == "api":
         return WordPressClient(cfg)

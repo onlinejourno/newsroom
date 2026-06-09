@@ -9,6 +9,8 @@ from onlinejourno_agents.connectors import (
     CMSClient,
     ConnectorConfig,
     KeywordsClient,
+    NlpClient,
+    SpacyNlpClient,
     make_connector,
 )
 
@@ -131,3 +133,24 @@ def test_ghost_cms_parses(monkeypatch):
     assert rows[0]["cms_ref"] == "g1"
     assert rows[0]["section"] == "Media"
     assert "Ghost body" in rows[0]["body_text"]
+
+
+def test_spacy_nlp_client_shapes():
+    # Inject a fake pipeline so the parsing logic is tested without spaCy installed.
+    class FakeEnt:
+        def __init__(self, text, label):
+            self.text = text
+            self.label_ = label
+
+    class FakeDoc:
+        ents = [FakeEnt("RBI", "ORG"), FakeEnt("New Delhi", "GPE")]
+
+    client = SpacyNlpClient(
+        ConnectorConfig(category="nlp", provider="spacy", mode="api")
+    )
+    client._nlp = lambda text: FakeDoc()  # bypass model load
+    assert isinstance(client, NlpClient)
+    res = client.analyse("whatever text")
+    assert "RBI" in res["entities"]
+    assert "New Delhi" in res["entities"]
+    assert res["geo"]["region"] == "New Delhi"
