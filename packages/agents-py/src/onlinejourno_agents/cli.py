@@ -152,6 +152,35 @@ def cmd_frame_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_analyze_url(args: argparse.Namespace) -> int:
+    """Channel Audit for a published URL — the real fair-chance scorer.
+
+    Fetches + parses the article (own published content), scores it for each
+    surface, prints composite + per-surface grade + the top fix. This is the
+    correct target (a real article), unlike scoring headline stubs.
+    """
+    import requests as _rq
+
+    from onlinejourno_agents.distribution_fit import analyze_url
+
+    db._load_env_once()
+    try:
+        res = analyze_url(args.url)
+    except _rq.RequestException as exc:
+        print(f"fetch failed: {exc}", file=sys.stderr)
+        return 1
+    story = res["story"]
+    print(args.url)
+    print(
+        f"  {story.title[:70] or '(no title)'}  ·  "
+        f"{story.word_count or 0} words · composite {res['composite']}/100"
+    )
+    for surface, v in res["channels"].items():
+        label = surface.split("_")[-1].title()
+        print(f"  {label:9} {v['grade']} ({v['score']:>3})   fix: {v['top_fix'] or '—'}")
+    return 0
+
+
 def cmd_distribution_fit(args: argparse.Namespace) -> int:
     """Score recent signals for distribution fit (m-distribution-fit Phase 1).
 
@@ -372,6 +401,13 @@ def main(argv: list[str] | None = None) -> int:
         help="persist scores to distribution_fit_scores (for /shortlist + brief)",
     )
     p_df.set_defaults(func=cmd_distribution_fit)
+
+    p_au = sub.add_parser(
+        "analyze-url",
+        help="Channel Audit for a published URL — the real fair-chance scorer",
+    )
+    p_au.add_argument("url", help="the article URL to audit")
+    p_au.set_defaults(func=cmd_analyze_url)
 
     args = parser.parse_args(argv)
     return args.func(args)
