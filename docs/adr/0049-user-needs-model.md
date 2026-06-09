@@ -40,6 +40,27 @@ It also closes a gap in the fair-chance audit (ADR 0047), which until now weighe
 - **Cheap to assign.** `user_need` is one more field the Classify LLM call already in `enrich` returns (no extra call); heuristics (headline cues, length, section) can seed it.
 - **Coverage balance** gets a second axis (need-mix) beside framing balance (PEJ).
 
+## The fuller model: 8 needs under the 4 drivers + brand-specific
+
+Each driver splits into two of the smartocto/BBC **eight universal needs** (room for nuance; newsrooms tune the boundaries):
+
+| Driver | Needs |
+|--------|-------|
+| **Know** | Update me · Keep me on trend |
+| **Understand** | Educate me · Give me perspective |
+| **Feel** | Divert me · Inspire me |
+| **Do** | Help me · Connect me |
+
+**Brand-specific needs.** A masthead has its own DNA — newsrooms **create their own needs** on top of the eight (the taxonomy is config, not hardcode). The Classify layer **discovers which need a story addresses** (the LLM tags it), so editors don't hand-code every article. The model is **named + shown in-app** (an explainer + the need badges), keeping the product in step with where the industry is going.
+
+## Need-mix analytics (what the data shows)
+
+The strategic need-mix view surfaces the industry's recurring findings:
+
+- **Overproduction of "Update me."** Newsrooms over-index on breaking/update and under-serve Understand/Feel/Do. The mix audit flags it.
+- **Section-specific mix.** Each IA section wants its own balance — the **economy** section gains from *Give me perspective*; **sport** grows the audience with *Inspire me*. Need-mix is analysed **per section**, not only newsroom-wide.
+- **Actionable content ("Do" / "Help me") is promising across all outlets** — a cross-cutting opportunity the mix audit highlights.
+
 ## Anti-patterns refused
 
 - One-size surface scoring that ignores what the story is *for*.
