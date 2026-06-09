@@ -48,6 +48,7 @@ export const CONNECTOR_CATALOG: CategoryDef[] = [
       { key: "wordpress", label: "WordPress (OSS — testable now)", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Site URL" }, SECRET_REF] },
       { key: "ghost", label: "Ghost (OSS)", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Admin API URL" }, SECRET_REF] },
       { key: "superdesk", label: "Superdesk (OSS newsroom CMS)", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Superdesk URL" }, SECRET_REF] },
+      { key: "drupal", label: "Drupal (OSS — JSON:API)", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "Site URL" }, SECRET_REF] },
       { key: "strapi", label: "Strapi / headless (OSS)", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "API URL" }, SECRET_REF] },
       { key: "cue", label: "CUE (Naviga) — proprietary", modes: ["api"], fields: [{ name: "base_url", label: "Content Store URL" }, SECRET_REF] },
       { key: "methode", label: "Méthode — proprietary", modes: ["api", "mcp"], fields: [{ name: "base_url", label: "Endpoint" }, SECRET_REF] },

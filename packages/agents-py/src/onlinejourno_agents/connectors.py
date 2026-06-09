@@ -166,6 +166,48 @@ class WordPressClient:
         return out
 
 
+class DrupalClient:
+    """CMSClient over the Drupal JSON:API (public articles). Field names vary by
+    site; handles the common case: node/article, title, body, created, path."""
+
+    def __init__(self, cfg: ConnectorConfig) -> None:
+        self._base = str(cfg.config.get("base_url", "")).rstrip("/")
+        self._node_type = str(cfg.config.get("node_type", "article"))
+
+    def stories(self, *, since: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        import requests
+        from bs4 import BeautifulSoup
+
+        resp = requests.get(
+            f"{self._base}/jsonapi/node/{self._node_type}",
+            params={"page[limit]": min(limit, 50), "sort": "-created"},
+            headers={
+                "User-Agent": "OnlineJourno-CMS/0.1",
+                "Accept": "application/vnd.api+json",
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+        out: list[dict[str, Any]] = []
+        for n in resp.json().get("data", []):
+            a = n.get("attributes") or {}
+            body = a.get("body") or {}
+            html = body.get("processed") or body.get("value") or ""
+            path = (a.get("path") or {}).get("alias")
+            self_link = ((n.get("links") or {}).get("self") or {}).get("href")
+            out.append(
+                {
+                    "cms_ref": n.get("id"),
+                    "url": f"{self._base}{path}" if path else self_link,
+                    "headline": a.get("title"),
+                    "body_text": BeautifulSoup(html, "html.parser").get_text(" ", strip=True),
+                    "section": None,
+                    "published_at": a.get("created"),
+                }
+            )
+        return out
+
+
 def make_connector(cfg: ConnectorConfig) -> Any:
     """Build a capability client for a connector configuration.
 
@@ -180,6 +222,9 @@ def make_connector(cfg: ConnectorConfig) -> Any:
 
     if cfg.category == "cms" and cfg.provider == "wordpress" and cfg.mode == "api":
         return WordPressClient(cfg)
+
+    if cfg.category == "cms" and cfg.provider == "drupal" and cfg.mode == "api":
+        return DrupalClient(cfg)
 
     if (
         cfg.category == "keywords"

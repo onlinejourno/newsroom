@@ -6,6 +6,7 @@ import pytest
 
 from onlinejourno_agents import keywords as kw
 from onlinejourno_agents.connectors import (
+    CMSClient,
     ConnectorConfig,
     KeywordsClient,
     make_connector,
@@ -52,3 +53,56 @@ def test_bad_mode_raises():
 def test_unimplemented_adapter_raises():
     with pytest.raises(NotImplementedError):
         make_connector(ConnectorConfig(category="analytics", provider="ga4", mode="api"))
+
+
+def test_wordpress_cms_parses(monkeypatch):
+    import requests
+
+    class FakeResp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return [{
+                "id": 7, "link": "https://x/post", "date_gmt": "2026-06-01T00:00:00",
+                "title": {"rendered": "Hello World"},
+                "content": {"rendered": "<p>Body text here</p>"},
+                "_embedded": {"wp:term": [[{"taxonomy": "category", "name": "Tech"}]]},
+            }]
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: FakeResp())
+    client = make_connector(ConnectorConfig(
+        category="cms", provider="wordpress", mode="api", config={"base_url": "https://x"},
+    ))
+    assert isinstance(client, CMSClient)
+    rows = client.stories(limit=5)
+    assert rows[0]["cms_ref"] == "7"
+    assert rows[0]["section"] == "Tech"
+    assert "Body text" in rows[0]["body_text"]
+
+
+def test_drupal_cms_parses(monkeypatch):
+    import requests
+
+    class FakeResp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"data": [{
+                "id": "uuid-1",
+                "attributes": {
+                    "title": "Drupal news", "created": "2026-06-01T00:00:00",
+                    "body": {"processed": "<p>Article body</p>"},
+                    "path": {"alias": "/news/1"},
+                },
+            }]}
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: FakeResp())
+    client = make_connector(ConnectorConfig(
+        category="cms", provider="drupal", mode="api", config={"base_url": "https://d"},
+    ))
+    rows = client.stories(limit=5)
+    assert rows[0]["cms_ref"] == "uuid-1"
+    assert rows[0]["url"] == "https://d/news/1"
+    assert "Article body" in rows[0]["body_text"]
