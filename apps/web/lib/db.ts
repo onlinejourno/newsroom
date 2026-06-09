@@ -439,25 +439,25 @@ export type FitScore = {
   top_fix: string | null;
 };
 
-// Distribution-fit scores for a set of signals (m-distribution-fit P1, slice 2).
+// Distribution-fit scores for a set of own stories (ADR 0046 — story-keyed).
 export async function fetchDistributionFit(
   tenantId: string,
-  signalIds: string[],
+  storyIds: string[],
 ): Promise<Map<string, FitScore[]>> {
   const map = new Map<string, FitScore[]>();
-  if (signalIds.length === 0) return map;
+  if (storyIds.length === 0) return map;
   const pool = getPool();
-  const { rows } = await pool.query<FitScore & { signal_id: string }>(
-    `select signal_id, surface, grade, score, top_fix
+  const { rows } = await pool.query<FitScore & { story_id: string }>(
+    `select story_id, surface, grade, score, top_fix
        from distribution_fit_scores
-      where tenant_id = $1 and signal_id = any($2::uuid[])
+      where tenant_id = $1 and story_id = any($2::uuid[])
       order by surface`,
-    [tenantId, signalIds],
+    [tenantId, storyIds],
   );
   for (const r of rows) {
-    const arr = map.get(r.signal_id) ?? [];
+    const arr = map.get(r.story_id) ?? [];
     arr.push({ surface: r.surface, grade: r.grade, score: r.score, top_fix: r.top_fix });
-    map.set(r.signal_id, arr);
+    map.set(r.story_id, arr);
   }
   return map;
 }

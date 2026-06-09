@@ -111,20 +111,39 @@ create table optimization_surfaces (
 );
 create index on optimization_surfaces (tenant_id, enabled);
 
--- Distribution-fit scores (m-distribution-fit P1): per-signal, per-surface
--- fair-chance score + top fix, surfaced on /shortlist + brief.
+-- Stories (ADR 0046): the newsroom's OWN article (draft -> published). The
+-- target of distribution-fit / Channel Audit / the fair-chance audit (ADR 0047).
+create table stories (
+  id           uuid primary key default gen_random_uuid(),
+  tenant_id    uuid not null references tenants(id) on delete cascade,
+  author_id    uuid references journalist_profiles(id) on delete set null,
+  source_id    uuid references sources(id) on delete set null,   -- the 'own' source
+  cms_ref      text,
+  url          text,
+  headline     text,
+  body_text    text,
+  section      text,                                             -- IA placement
+  beat         text,
+  status       text not null default 'draft' check (status in ('draft','published')),
+  published_at timestamptz,
+  enrichment   jsonb,
+  created_at   timestamptz not null default now()
+);
+create index on stories (tenant_id, status, published_at desc);
+
+-- Distribution-fit scores: per-STORY, per-surface fair-chance score + top fix.
 create table distribution_fit_scores (
   tenant_id  uuid not null references tenants(id) on delete cascade,
-  signal_id  uuid not null references signals(id) on delete cascade,
+  story_id   uuid not null references stories(id) on delete cascade,
   surface    text not null,
   score      int  not null,
   grade      text not null,
   top_fix    text,
   signals    jsonb,
   scored_at  timestamptz not null default now(),
-  primary key (tenant_id, signal_id, surface)
+  primary key (tenant_id, story_id, surface)
 );
-create index on distribution_fit_scores (tenant_id, signal_id);
+create index on distribution_fit_scores (tenant_id, story_id);
 
 create table beats (
   id              uuid primary key default gen_random_uuid(),

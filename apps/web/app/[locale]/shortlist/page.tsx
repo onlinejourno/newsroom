@@ -1,22 +1,8 @@
 import {
-  fetchDistributionFit,
-  type FitScore,
   fetchShortlistRanked,
   type ShortlistSort,
   tenantIdForSlug,
 } from "@/lib/db";
-
-const SURFACE_LABEL: Record<string, string> = {
-  discover: "Discover",
-  google_search: "Search",
-  google_news: "News",
-};
-
-function gradeColor(g: string): string {
-  if (g === "A" || g === "B") return "var(--ioj-green-600)";
-  if (g === "C") return "var(--amber-600)";
-  return "var(--color-fg-3)";
-}
 
 export const dynamic = "force-dynamic";
 
@@ -51,9 +37,6 @@ export default async function ShortlistPage({
 
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   const items = tenantId ? await fetchShortlistRanked(tenantId, { sort }) : [];
-  const fit: Map<string, FitScore[]> = tenantId
-    ? await fetchDistributionFit(tenantId, items.map((it) => it.signal_id))
-    : new Map();
 
   return (
     <main className="min-h-screen max-w-3xl mx-auto p-6 md:p-10">
@@ -154,40 +137,6 @@ export default async function ShortlistPage({
                   {it.rationale}
                 </p>
               ) : null}
-              {(() => {
-                const scores = fit.get(it.signal_id);
-                if (!scores || scores.length === 0) return null;
-                const worst = scores.reduce((a, b) => (a.score <= b.score ? a : b));
-                return (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="ds-label" style={{ color: "var(--color-fg-3)" }}>
-                      fair chance
-                    </span>
-                    {scores.map((s) => (
-                      <span
-                        key={s.surface}
-                        className="text-xs font-semibold px-2 py-0.5"
-                        title={`${s.surface} ${s.score}/100`}
-                        style={{
-                          borderRadius: "var(--radius-pill)",
-                          border: "1px solid var(--color-border)",
-                          color: gradeColor(s.grade),
-                        }}
-                      >
-                        {SURFACE_LABEL[s.surface] ?? s.surface} {s.grade}
-                      </span>
-                    ))}
-                    {worst.top_fix ? (
-                      <span
-                        className="text-xs"
-                        style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-3)" }}
-                      >
-                        · fix: {worst.top_fix}
-                      </span>
-                    ) : null}
-                  </div>
-                );
-              })()}
             </li>
           ))}
         </ol>
