@@ -225,7 +225,10 @@ class GhostClient:
 
         resp = requests.get(
             f"{self._base}/ghost/api/content/posts/",
-            params={"key": self._key, "limit": min(limit, 100), "include": "tags", "formats": "html"},
+            params={
+                "key": self._key, "limit": min(limit, 100),
+                "include": "tags", "formats": "html",
+            },
             headers={"User-Agent": "OnlineJourno-CMS/0.1"},
             timeout=20,
         )
