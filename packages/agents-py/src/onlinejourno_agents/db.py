@@ -406,6 +406,49 @@ def signals_for_journalist(
 
 
 # ----------------------------------------------------------------------
+# Trend scoring (convergence over the enriched signal corpus)
+# ----------------------------------------------------------------------
+
+
+def enriched_signals_with_entities(
+    conn: psycopg.Connection, tenant_id: UUID, *, since_hours: int = 48, limit: int = 600
+) -> list[dict[str, Any]]:
+    """Enriched signals with their entities + age in hours, for trend scoring."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id,
+                   coalesce(enrichment->'analyse'->'entities', '[]'::jsonb) as entities,
+                   extract(epoch from (now() - coalesce(published_at, fetched_at)))
+                       / 3600.0 as age_h
+              from signals
+             where tenant_id = %s and enrichment ? 'analyse'
+               and coalesce(published_at, fetched_at) >= now() - make_interval(hours => %s)
+             order by coalesce(published_at, fetched_at) desc
+             limit %s
+            """,
+            (tenant_id, since_hours, limit),
+        )
+        return list(cur.fetchall())
+
+
+def update_signal_trend(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    signal_id: UUID,
+    trend_score: float,
+    trend_reason: str,
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "update signals set trend_score = %s, trend_reason = %s "
+            "where tenant_id = %s and id = %s",
+            (trend_score, trend_reason, tenant_id, signal_id),
+        )
+
+
+# ----------------------------------------------------------------------
 # Brief reads + writes
 # ----------------------------------------------------------------------
 
