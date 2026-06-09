@@ -181,58 +181,6 @@ def cmd_analyze_url(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_distribution_fit(args: argparse.Namespace) -> int:
-    """Score recent signals for distribution fit (m-distribution-fit Phase 1).
-
-    Content-based, no API keys — prints per-surface grades + the top fix, i.e.
-    the reporter's pre-publish fair-chance cue.
-    """
-    from onlinejourno_agents.distribution_fit import Story, channel_score
-
-    with db.connect() as conn:
-        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
-        surfaces = db.enabled_surface_keys(conn, tenant_id) or None
-        rows = db.recent_signals(conn, tenant_id, limit=args.top)
-        if not rows:
-            print("No signals.", file=sys.stderr)
-            return 1
-        stored = 0
-        for r in rows:
-            body = r.get("body_text") or ""
-            story = Story(
-                title=r.get("headline") or "",
-                published=r.get("published_at"),
-                word_count=len(body.split()) or None,
-                url=r.get("url"),
-                trend_alignment=int((r.get("trend_score") or 0) / 5),
-            )
-            res = channel_score(story, surfaces=surfaces)
-            if not res:
-                continue
-            if args.store:
-                for surface, v in res.items():
-                    db.upsert_distribution_fit(
-                        conn, tenant_id=tenant_id, signal_id=r["id"], surface=surface,
-                        score=v["score"], grade=v["grade"], top_fix=v["top_fix"],
-                        signals=v["signals"],
-                    )
-                    stored += 1
-            else:
-                grades = "  ".join(
-                    f"{k.split('_')[-1][:4].title()} {v['grade']}({v['score']:>2})"
-                    for k, v in res.items()
-                )
-                head = (r.get("headline") or r.get("url") or "")[:64]
-                print(f"{grades}   {head}")
-                weakest = min(res.values(), key=lambda v: v["score"])
-                if weakest["top_fix"]:
-                    print(f"        fix: {weakest['top_fix']}")
-        if args.store:
-            conn.commit()
-            print(f"stored {stored} scores across {len(rows)} signals")
-    return 0
-
-
 def cmd_keyword_data(args: argparse.Namespace) -> int:
     """Test handle for the Keywords Everywhere connector (C2, ADR 0044).
 
@@ -389,18 +337,6 @@ def main(argv: list[str] | None = None) -> int:
     p_kw.add_argument("--country", default="in")
     p_kw.add_argument("--currency", default="inr")
     p_kw.set_defaults(func=cmd_keyword_data)
-
-    p_df = sub.add_parser(
-        "distribution-fit",
-        help="score recent signals for distribution fit (m-distribution-fit P1)",
-    )
-    p_df.add_argument("--tenant", required=True)
-    p_df.add_argument("--top", type=int, default=10)
-    p_df.add_argument(
-        "--store", action="store_true",
-        help="persist scores to distribution_fit_scores (for /shortlist + brief)",
-    )
-    p_df.set_defaults(func=cmd_distribution_fit)
 
     p_au = sub.add_parser(
         "analyze-url",

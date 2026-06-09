@@ -221,17 +221,17 @@ def enabled_surface_keys(conn: psycopg.Connection, tenant_id: UUID) -> list[str]
         return [r["key"] for r in cur.fetchall()]
 
 
-def recent_signals(
+def recent_stories(
     conn: psycopg.Connection, tenant_id: UUID, *, limit: int = 50
 ) -> list[dict[str, Any]]:
-    """Recent signals with the fields the content scorer needs."""
+    """Recent own stories (ADR 0046) — the distribution-fit / Channel Audit target."""
     with conn.cursor() as cur:
         cur.execute(
             """
-            select id, headline, body_text, url, published_at, trend_score
-              from signals
+            select id, headline, body_text, url, section, published_at
+              from stories
              where tenant_id = %s
-             order by coalesce(published_at, fetched_at) desc
+             order by coalesce(published_at, created_at) desc
              limit %s
             """,
             (tenant_id, limit),
@@ -243,7 +243,7 @@ def upsert_distribution_fit(
     conn: psycopg.Connection,
     *,
     tenant_id: UUID,
-    signal_id: UUID,
+    story_id: UUID,
     surface: str,
     score: int,
     grade: str,
@@ -254,14 +254,14 @@ def upsert_distribution_fit(
         cur.execute(
             """
             insert into distribution_fit_scores
-                (tenant_id, signal_id, surface, score, grade, top_fix, signals, scored_at)
+                (tenant_id, story_id, surface, score, grade, top_fix, signals, scored_at)
             values (%s, %s, %s, %s, %s, %s, %s, now())
-            on conflict (tenant_id, signal_id, surface) do update
+            on conflict (tenant_id, story_id, surface) do update
                set score = excluded.score, grade = excluded.grade,
                    top_fix = excluded.top_fix, signals = excluded.signals,
                    scored_at = now()
             """,
-            (tenant_id, signal_id, surface, score, grade, top_fix, Json(signals)),
+            (tenant_id, story_id, surface, score, grade, top_fix, Json(signals)),
         )
 
 
