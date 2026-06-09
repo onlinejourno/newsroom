@@ -37,6 +37,17 @@ export type SignalRow = {
   published_at: Date | null;
   fetched_at: Date;
   language: string;
+  beat: string | null;
+  region: string | null;
+  district: string | null;
+  enrichment: {
+    analyse?: { entities?: string[] | null; summary?: string | null };
+    classify?: {
+      beat?: string | null;
+      topic?: string | null;
+      user_need?: string | null;
+    };
+  } | null;
 };
 
 export async function tenantIdForSlug(slug: string): Promise<string | null> {
@@ -321,7 +332,8 @@ export async function fetchLatestSignals(
     select s.id, s.tenant_id, s.source_id,
            src.name as source_name,
            s.url, s.headline, s.body_text,
-           s.published_at, s.fetched_at, s.language
+           s.published_at, s.fetched_at, s.language,
+           s.beat, s.region, s.district, s.enrichment
       from signals s
       join sources src on src.id = s.source_id
      where s.tenant_id = $1
