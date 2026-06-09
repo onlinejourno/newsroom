@@ -17,7 +17,7 @@ from typing import Any
 
 from onlinejourno_agents import db
 from onlinejourno_agents.client import Completion
-from onlinejourno_agents.prompts import ENRICH_BEATS, build_enrich_prompt
+from onlinejourno_agents.prompts import ENRICH_BEATS, USER_NEEDS, build_enrich_prompt
 
 Completer = Callable[..., Completion]
 
@@ -40,6 +40,10 @@ def _chunks(seq: list[Any], size: int) -> Iterator[list[Any]]:
 
 def _coerce_beat(raw: Any) -> str:
     return raw if isinstance(raw, str) and raw in ENRICH_BEATS else "Other"
+
+
+def _coerce_need(raw: Any) -> str | None:
+    return raw if isinstance(raw, str) and raw in USER_NEEDS else None
 
 
 def _max_tokens(n: int) -> int:
@@ -100,7 +104,11 @@ def run_enrich(
                             "entities": r.get("entities") or [],
                             "summary": r.get("summary"),
                         },
-                        "classify": {"beat": beat, "topic": r.get("topic")},
+                        "classify": {
+                        "beat": beat,
+                        "topic": r.get("topic"),
+                        "user_need": _coerce_need(r.get("user_need")),
+                    },
                         "geo": geo,
                     },
                 )
