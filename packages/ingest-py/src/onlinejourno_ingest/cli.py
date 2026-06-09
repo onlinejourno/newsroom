@@ -18,6 +18,7 @@ import sys
 from typing import Any
 from uuid import UUID
 
+from onlinejourno_ingest.collectors.api import ApiCollector
 from onlinejourno_ingest.collectors.gdelt import GDELTCollector
 from onlinejourno_ingest.collectors.rss import RSSCollector
 from onlinejourno_ingest.db import (
@@ -38,6 +39,7 @@ from onlinejourno_ingest.protocols import FetchError
 COLLECTORS = {
     "rss": RSSCollector,
     "gdelt": GDELTCollector,
+    "api": ApiCollector,
 }
 
 
