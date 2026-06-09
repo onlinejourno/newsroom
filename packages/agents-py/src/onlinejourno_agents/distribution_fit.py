@@ -16,10 +16,14 @@ Generalised off any one newsroom: no masthead-specific partial-credit hacks.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+
+import requests
+from bs4 import BeautifulSoup
 
 
 @dataclass
@@ -211,3 +215,123 @@ def channel_score(
     """
     keys = surfaces if surfaces is not None else list(_SCORERS)
     return {k: _SCORERS[k](story) for k in keys if k in _SCORERS}
+
+
+# ── analyze-a-URL: fetch + parse a published article into a Story ───────────
+# Generalised port of discover-dashboard seo_eeat extraction (no newsroom
+# specifics). This is what makes the audit real: it scores the actual article
+# (own published content), not a headline stub.
+
+_UA = "Mozilla/5.0 (compatible; OnlineJourno-DistributionFit/0.1)"
+
+
+def _meta(soup: BeautifulSoup, **attrs: str) -> str | None:
+    tag = soup.find("meta", attrs=attrs)
+    content = tag.get("content") if tag else None
+    return content.strip() if content else None
+
+
+def _jsonld(soup: BeautifulSoup) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for tag in soup.find_all("script", attrs={"type": "application/ld+json"}):
+        try:
+            data = json.loads(tag.string or "")
+        except (ValueError, TypeError):
+            continue
+        nodes = data if isinstance(data, list) else [data]
+        for n in nodes:
+            if isinstance(n, dict):
+                graph = n.get("@graph")
+                if isinstance(graph, list):
+                    out.extend(g for g in graph if isinstance(g, dict))
+                out.append(n)
+    return out
+
+
+def _schema_types(nodes: list[dict[str, Any]]) -> list[str]:
+    types: list[str] = []
+    for n in nodes:
+        t = n.get("@type")
+        if isinstance(t, str):
+            types.append(t)
+        elif isinstance(t, list):
+            types.extend(str(x) for x in t)
+    return list(dict.fromkeys(types))
+
+
+def _author(soup: BeautifulSoup, nodes: list[dict[str, Any]]) -> str | None:
+    name = _meta(soup, name="author")
+    if name:
+        return name
+    for n in nodes:
+        a = n.get("author")
+        if isinstance(a, dict) and a.get("name"):
+            return str(a["name"])
+        if isinstance(a, list) and a and isinstance(a[0], dict) and a[0].get("name"):
+            return str(a[0]["name"])
+    el = soup.find(attrs={"rel": "author"}) or soup.select_one(
+        '[class*="byline"], [class*="author"]'
+    )
+    if el:
+        text = el.get_text(strip=True)
+        return text[:80] if text else None
+    return None
+
+
+def fetch_story(url: str, *, timeout: int = 15) -> Story:
+    """Fetch a published article and parse it into a Story for scoring.
+
+    Raises requests.RequestException on fetch failure (caller handles).
+    """
+    resp = requests.get(
+        url, headers={"User-Agent": _UA, "Accept": "text/html"}, timeout=timeout
+    )
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+    nodes = _jsonld(soup)
+
+    title = _meta(soup, property="og:title")
+    if not title and soup.title and soup.title.string:
+        title = soup.title.string.strip()
+
+    published = _meta(soup, property="article:published_time")
+    if not published:
+        t = soup.find("time", attrs={"datetime": True})
+        published = t.get("datetime") if t else None
+    if not published:
+        for n in nodes:
+            if n.get("datePublished"):
+                published = str(n["datePublished"])
+                break
+    pub_dt: datetime | None = None
+    if published:
+        try:
+            pub_dt = datetime.fromisoformat(published.replace("Z", "+00:00"))
+        except ValueError:
+            pub_dt = None
+
+    body = soup.find("article") or soup.find("main") or soup.body
+    text = body.get_text(" ", strip=True) if body else ""
+    author = _author(soup, nodes)
+
+    return Story(
+        title=title or "",
+        published=pub_dt,
+        word_count=len(text.split()) or None,
+        image=_meta(soup, property="og:image"),
+        schema_types=_schema_types(nodes),
+        has_byline=bool(author),
+        author=author,
+        url=url,
+    )
+
+
+def analyze_url(url: str, surfaces: list[str] | None = None) -> dict[str, Any]:
+    """Fetch + score a published URL: {story, channels, composite}."""
+    story = fetch_story(url)
+    channels = channel_score(story, surfaces=surfaces)
+    if channels:
+        composite = round(sum(c["score"] for c in channels.values()) / len(channels))
+    else:
+        composite = 0
+    return {"story": story, "channels": channels, "composite": composite}
