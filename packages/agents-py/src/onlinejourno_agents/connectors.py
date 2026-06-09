@@ -193,6 +193,7 @@ class DrupalClient:
             a = n.get("attributes") or {}
             body = a.get("body") or {}
             html = body.get("processed") or body.get("value") or ""
+            text = BeautifulSoup(html, "html.parser").get_text(" ", strip=True)
             path = (a.get("path") or {}).get("alias")
             self_link = ((n.get("links") or {}).get("self") or {}).get("href")
             out.append(
@@ -200,9 +201,46 @@ class DrupalClient:
                     "cms_ref": n.get("id"),
                     "url": f"{self._base}{path}" if path else self_link,
                     "headline": a.get("title"),
-                    "body_text": BeautifulSoup(html, "html.parser").get_text(" ", strip=True),
+                    "body_text": text,
                     "section": None,
                     "published_at": a.get("created"),
+                }
+            )
+        return out
+
+
+class GhostClient:
+    """CMSClient over the Ghost Content API. Needs the site's content API key
+    (public-ish, in secret_ref env or config.content_key)."""
+
+    def __init__(self, cfg: ConnectorConfig) -> None:
+        self._base = str(cfg.config.get("base_url", "")).rstrip("/")
+        self._key = cfg.config.get("content_key")
+        if not self._key and cfg.secret_ref:
+            self._key = os.environ.get(cfg.secret_ref)
+
+    def stories(self, *, since: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        import requests
+        from bs4 import BeautifulSoup
+
+        resp = requests.get(
+            f"{self._base}/ghost/api/content/posts/",
+            params={"key": self._key, "limit": min(limit, 100), "include": "tags", "formats": "html"},
+            headers={"User-Agent": "OnlineJourno-CMS/0.1"},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        out: list[dict[str, Any]] = []
+        for p in resp.json().get("posts", []):
+            text = BeautifulSoup(p.get("html") or "", "html.parser").get_text(" ", strip=True)
+            out.append(
+                {
+                    "cms_ref": p.get("id"),
+                    "url": p.get("url"),
+                    "headline": p.get("title"),
+                    "body_text": text,
+                    "section": (p.get("primary_tag") or {}).get("name"),
+                    "published_at": p.get("published_at"),
                 }
             )
         return out
@@ -225,6 +263,9 @@ def make_connector(cfg: ConnectorConfig) -> Any:
 
     if cfg.category == "cms" and cfg.provider == "drupal" and cfg.mode == "api":
         return DrupalClient(cfg)
+
+    if cfg.category == "cms" and cfg.provider == "ghost" and cfg.mode == "api":
+        return GhostClient(cfg)
 
     if (
         cfg.category == "keywords"
