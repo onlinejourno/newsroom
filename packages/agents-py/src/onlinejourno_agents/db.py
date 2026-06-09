@@ -350,6 +350,62 @@ def update_signal_enrichment(
 
 
 # ----------------------------------------------------------------------
+# Signal -> reporter routing (the inflow to the right reporter)
+# ----------------------------------------------------------------------
+
+
+def journalist_id_for_slug(
+    conn: psycopg.Connection, tenant_id: UUID, slug: str
+) -> UUID | None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select id from journalist_profiles where tenant_id = %s and slug = %s",
+            (tenant_id, slug),
+        )
+        row = cur.fetchone()
+        return row["id"] if row else None
+
+
+def signals_for_journalist(
+    conn: psycopg.Connection,
+    tenant_id: UUID,
+    journalist_id: UUID,
+    *,
+    since_hours: int = 72,
+    limit: int = 30,
+) -> list[dict[str, Any]]:
+    """Enriched signals routed to a journalist — matched on her beats or region.
+
+    The reporter's inflow: a signal reaches her when its enriched `beat` is one
+    of her beats, or its geography (region/district) is her region.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select s.id, s.headline, s.url, s.beat, s.region, s.district,
+                   s.enrichment->'analyse'->'entities' as entities,
+                   coalesce(s.published_at, s.fetched_at) as at
+              from signals s, journalist_profiles j
+             where s.tenant_id = %s and j.tenant_id = %s and j.id = %s
+               and s.enrichment is not null
+               and (
+                    (s.beat is not null and j.beats ? s.beat)
+                 or (s.region is not null and j.region is not null
+                     and lower(s.region) = lower(j.region))
+                 or (s.district is not null and j.region is not null
+                     and lower(s.district) = lower(j.region))
+               )
+               and coalesce(s.published_at, s.fetched_at)
+                   >= now() - make_interval(hours => %s)
+             order by coalesce(s.published_at, s.fetched_at) desc
+             limit %s
+            """,
+            (tenant_id, tenant_id, journalist_id, since_hours, limit),
+        )
+        return list(cur.fetchall())
+
+
+# ----------------------------------------------------------------------
 # Brief reads + writes
 # ----------------------------------------------------------------------
 
