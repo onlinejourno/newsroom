@@ -152,6 +152,27 @@ def cmd_frame_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_enrich(args: argparse.Namespace) -> int:
+    """L2 Analyse — enrich raw signals with entities, geo, beat, topic."""
+    from onlinejourno_agents.enrich import run_enrich
+
+    completer = make_completer(_resolve_provider())
+    res = run_enrich(
+        tenant_slug=args.tenant,
+        completer=completer,
+        since_hours=args.since_hours,
+        limit=args.limit,
+    )
+    if res.status == "empty":
+        print("No signals need enrichment.", file=sys.stderr)
+        return 1
+    print(
+        f"enriched {res.enriched} signals · {res.failed} failed · "
+        f"spent ${res.spent_usd:.4f} of ${res.cap_usd:.2f} cap"
+    )
+    return 0
+
+
 def cmd_cms_pull(args: argparse.Namespace) -> int:
     """Pull own stories from a CMS into `stories` — the inside end (ADR 0046).
 
@@ -446,6 +467,12 @@ def main(argv: list[str] | None = None) -> int:
     p_ss.add_argument("--tenant", required=True)
     p_ss.add_argument("--top", type=int, default=20)
     p_ss.set_defaults(func=cmd_score_stories)
+
+    p_en = sub.add_parser("enrich", help="L2 Analyse — enrich signals (entities/geo/beat)")
+    p_en.add_argument("--tenant", required=True)
+    p_en.add_argument("--since-hours", type=int, default=48)
+    p_en.add_argument("--limit", type=int, default=60)
+    p_en.set_defaults(func=cmd_enrich)
 
     args = parser.parse_args(argv)
     return args.func(args)
