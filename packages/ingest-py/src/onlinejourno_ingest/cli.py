@@ -21,6 +21,7 @@ from uuid import UUID
 from onlinejourno_ingest.collectors.api import ApiCollector
 from onlinejourno_ingest.collectors.gdelt import GDELTCollector
 from onlinejourno_ingest.collectors.rss import RSSCollector
+from onlinejourno_ingest.collectors.scrape import ScrapeCollector
 from onlinejourno_ingest.db import (
     connect,
     enabled_sources,
@@ -40,6 +41,7 @@ COLLECTORS = {
     "rss": RSSCollector,
     "gdelt": GDELTCollector,
     "api": ApiCollector,
+    "scrape": ScrapeCollector,
 }
 
 
