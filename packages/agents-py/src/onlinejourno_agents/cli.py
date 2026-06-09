@@ -152,6 +152,25 @@ def cmd_frame_eval(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_nlp_extract(args: argparse.Namespace) -> int:
+    """Test the NLP connector — entities + geo from text (ADR 0048, spaCy)."""
+    from onlinejourno_agents.connectors import ConnectorConfig, make_connector
+
+    cfg_kw = {"model": args.model} if args.model else {}
+    client = make_connector(
+        ConnectorConfig(category="nlp", provider=args.provider, mode="api", config=cfg_kw)
+    )
+    try:
+        res = client.analyse(args.text)
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    print("entities: " + (", ".join(res.get("entities") or []) or "(none)"))
+    geo = res.get("geo") or {}
+    print(f"geo: {geo.get('region') or '-'}  ·  {', '.join(geo.get('all') or [])}")
+    return 0
+
+
 def cmd_trends(args: argparse.Namespace) -> int:
     """Trend scoring — topic momentum from signal convergence; writes trend_score.
 
@@ -558,6 +577,12 @@ def main(argv: list[str] | None = None) -> int:
     p_tr.add_argument("--window-hours", type=int, default=24)
     p_tr.add_argument("--top", type=int, default=12)
     p_tr.set_defaults(func=cmd_trends)
+
+    p_nlp = sub.add_parser("nlp-extract", help="NLP entity/geo extraction from text (spaCy)")
+    p_nlp.add_argument("text")
+    p_nlp.add_argument("--provider", default="spacy")
+    p_nlp.add_argument("--model", default=None)
+    p_nlp.set_defaults(func=cmd_nlp_extract)
 
     args = parser.parse_args(argv)
     return args.func(args)

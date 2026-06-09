@@ -16,6 +16,9 @@ dependencies = [
   "python-dotenv>=1.0",
 ]
 
+[project.optional-dependencies]
+nlp = ["spacy>=3.7"]
+
 [project.scripts]
 onlinejourno-agents = "onlinejourno_agents.cli:main"
 
