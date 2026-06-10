@@ -19,6 +19,15 @@ const FRAME_GROUP_COLOR: Record<string, string> = {
   other: "#a16207",
 };
 
+// Editorial display names for PEJ frames whose codebook label reads loaded
+// next to a live story. The stored coding keeps the formal goldset
+// vocabulary; only the chip text softens (formal name stays in the tooltip).
+const FRAME_DISPLAY: Record<string, string> = {
+  "Horse Race": "Standings",
+  "Wrongdoing Exposed": "Accountability",
+  Conjecture: "What's next",
+};
+
 /** Enrichment chip row: user-need badge, beat, place, top entities. */
 export function SignalChips({ signal }: { signal: SignalRow }) {
   const e = signal.enrichment ?? {};
@@ -48,10 +57,10 @@ export function SignalChips({ signal }: { signal: SignalRow }) {
       {frame ? (
         <span
           className={CHIP}
-          title={e.framing?.rationale ?? `PEJ frame: ${frame}`}
+          title={`PEJ frame: ${frame}${e.framing?.rationale ? ` — ${e.framing.rationale}` : ""}`}
           style={{ color: frameColor, border: `1px dashed ${frameColor}` }}
         >
-          {frame}
+          {FRAME_DISPLAY[frame] ?? frame}
         </span>
       ) : null}
       {beat ? (
