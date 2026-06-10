@@ -335,3 +335,56 @@ def build_enrich_prompt(
             lines.append(f"    {body}")
         lines.append("")
     return ScorePromptParts(system=system, user="\n".join(lines))
+
+
+# The 14-frame codebook (framing-india-2026): the 13 PEJ "Framing the News"
+# frames + the India-tuned Institutional Critique. Descriptions ported from
+# the news-intel coder + the codebook's cue notes.
+FRAME_DESCRIPTIONS: dict[str, str] = {
+    "Straight News": "Just-the-facts report; no narrative device dominates "
+    "beyond the basic who/what/when/where/why/how.",
+    "Conflict": "Built around conflict inherent to the situation or brewing "
+    "among the players.",
+    "Wrongdoing Exposed": "The uncovering of wrongdoing or injustice.",
+    "Horse Race": "Who is winning and who is losing (esp. elections).",
+    "Process": "An explanation of the process of something or how something works.",
+    "Trend": "The news presented as an ongoing trend or pattern over time.",
+    "Conjecture": "Built around speculation about what is to come.",
+    "Reality Check": "A close look into the veracity of a statement or claim.",
+    "Policy Explored": "A focus on exploring a policy and its impact.",
+    "Personality Profile": "A profile of the newsmaker.",
+    "Historical Outlook": "How the current news fits into history.",
+    "Reaction": "A response or reaction from one of the major players.",
+    "Institutional Critique": "Scrutiny of an institution's functioning "
+    "(India-tuned addition).",
+    "Consensus": "Emphasis on the points of agreement around an issue.",
+}
+
+
+def build_framing_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
+    """Batch PEJ framing prompt (m-framing-pej): per signal the dominant frame,
+    topic, confidence, one-line rationale. Pure; one entry per 1-based index."""
+    system = (
+        "You are a news content analyst applying the Project for Excellence in "
+        'Journalism (PEJ) "Framing the News" codebook. For EACH item identify '
+        "the single dominant narrative FRAME and the primary TOPIC.\n\n"
+        "THE 14 FRAMES — choose exactly one:\n"
+        + "\n".join(f"- {name}: {desc}" for name, desc in FRAME_DESCRIPTIONS.items())
+        + "\n\nTHE TOPICS — choose exactly one:\n"
+        + ", ".join(PEJ_TOPICS)
+        + "\n\nPick the frame that dominates how the item is BUILT, not merely a "
+        'theme appearing in it. Use "Straight News" only when no narrative '
+        "device dominates. Respond with ONLY a JSON object, exactly:\n"
+        '{"results": [{"index": <item number>, "frame": <frame>, '
+        '"topic": <topic>, "confidence": <0.0-1.0>, '
+        '"rationale": <one sentence naming the cue>}, ...]}'
+    )
+    lines = [f"ITEMS ({len(signals)}):", ""]
+    for idx, signal in enumerate(signals, start=1):
+        headline = signal.get("headline") or "(no headline)"
+        body = _truncate(signal.get("body_text"), 1500)
+        lines.append(f"[{idx}] {headline}")
+        if body:
+            lines.append(f"    {body}")
+        lines.append("")
+    return ScorePromptParts(system=system, user="\n".join(lines))

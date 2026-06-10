@@ -846,3 +846,44 @@ def need_mix_counts(
             (tenant_id, window_hours),
         )
         return list(cur.fetchall())
+
+
+def signals_needing_framing(
+    conn: psycopg.Connection, tenant_id: UUID, *, since_hours: int = 168, limit: int = 60
+) -> list[dict[str, Any]]:
+    """Enriched signals without a framing coding, newest first (m-framing-pej)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, body_text
+              from signals
+             where tenant_id = %s
+               and enrichment is not null
+               and enrichment->'framing' is null
+               and coalesce(published_at, fetched_at) >= now() - make_interval(hours => %s)
+             order by coalesce(published_at, fetched_at) desc
+             limit %s
+            """,
+            (tenant_id, since_hours, limit),
+        )
+        return list(cur.fetchall())
+
+
+def update_signal_framing(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    signal_id: UUID,
+    framing: dict[str, Any],
+) -> None:
+    """Merge a PEJ framing coding into the signal's enrichment."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            update signals
+               set enrichment = coalesce(enrichment, '{}'::jsonb)
+                   || jsonb_build_object('framing', %s::jsonb)
+             where tenant_id = %s and id = %s
+            """,
+            (Json(framing), tenant_id, signal_id),
+        )

@@ -171,6 +171,27 @@ def cmd_nlp_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_frame(args: argparse.Namespace) -> int:
+    """m-framing-pej — code signals against the PEJ 14-frame codebook."""
+    from onlinejourno_agents.framing import run_framing
+
+    completer = make_completer(_resolve_provider())
+    res = run_framing(
+        tenant_slug=args.tenant,
+        completer=completer,
+        since_hours=args.since_hours,
+        limit=args.limit,
+    )
+    if res.status == "empty":
+        print("No signals need framing.", file=sys.stderr)
+        return 1
+    print(
+        f"coded {res.coded} signals · {res.failed} failed · "
+        f"spent ${res.spent_usd:.4f} of ${res.cap_usd:.2f} cap"
+    )
+    return 0
+
+
 def cmd_need_mix(args: argparse.Namespace) -> int:
     """Need-mix view (ADR 0049) — reader-need distribution overall + per beat."""
     from onlinejourno_agents.need_mix import build_mix, render_mix
@@ -619,6 +640,12 @@ def main(argv: list[str] | None = None) -> int:
     p_nm.add_argument("--tenant", required=True)
     p_nm.add_argument("--window-hours", type=int, default=168)
     p_nm.set_defaults(func=cmd_need_mix)
+
+    p_fr = sub.add_parser("frame", help="PEJ framing coder (m-framing-pej)")
+    p_fr.add_argument("--tenant", required=True)
+    p_fr.add_argument("--since-hours", type=int, default=168)
+    p_fr.add_argument("--limit", type=int, default=60)
+    p_fr.set_defaults(func=cmd_frame)
 
     p_nlp = sub.add_parser("nlp-extract", help="NLP entity/geo extraction from text (spaCy)")
     p_nlp.add_argument("text")
