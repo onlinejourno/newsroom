@@ -71,3 +71,17 @@ def url_hash(url: str) -> str:
     the same article behind different tracking params hash to one value.
     """
     return hashlib.sha256(canonical_url(url).encode("utf-8")).hexdigest()
+
+
+def latin_share(text: str) -> float:
+    """Share of alphabetic chars that are basic-Latin — a cheap script gate.
+
+    Portals sometimes serve vernacular content on an 'English' endpoint (PIB's
+    RSS redirects by region); when a source expects English, entries whose
+    letters are mostly non-Latin are skipped at Collect (ADR: /en tenant
+    ingests English).
+    """
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return 1.0
+    return sum(1 for c in letters if c.isascii()) / len(letters)
