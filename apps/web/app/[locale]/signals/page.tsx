@@ -1,5 +1,6 @@
 import { SignalChips } from "@/components/SignalChips";
 import {
+  distinctSignalBeats,
   fetchLatestSignals,
   needMixCounts,
   tenantIdForSlug,
@@ -122,7 +123,12 @@ function truncate(value: string, max: number): string {
   return `${slice.slice(0, lastSpace > 0 ? lastSpace : max).trimEnd()}…`;
 }
 
-export default async function SignalsPage() {
+export default async function SignalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ beat?: string }>;
+}) {
+  const { beat } = await searchParams;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
 
   if (!tenantId) {
@@ -151,9 +157,10 @@ export default async function SignalsPage() {
     );
   }
 
-  const [signals, mixRows] = await Promise.all([
-    fetchLatestSignals(tenantId, LIMIT),
+  const [signals, mixRows, beats] = await Promise.all([
+    fetchLatestSignals(tenantId, LIMIT, beat || null),
     needMixCounts(tenantId, MIX_WINDOW_HOURS),
+    distinctSignalBeats(tenantId),
   ]);
 
   return (
@@ -182,6 +189,39 @@ export default async function SignalsPage() {
       </header>
 
       <hr className="ds-rule mb-10" />
+
+      <form
+        method="get"
+        className="mb-6 flex items-center gap-2 text-sm"
+        style={{ fontFamily: "var(--font-ui)" }}
+      >
+        <label>
+          Beat:{" "}
+          <select
+            name="beat"
+            defaultValue={beat ?? ""}
+            className="border rounded-sm px-2 py-1"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg)",
+            }}
+          >
+            <option value="">all beats</option>
+            {beats.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="submit"
+          className="px-3 py-1 rounded-sm border font-semibold"
+          style={{ borderColor: "var(--color-border)" }}
+        >
+          Apply
+        </button>
+      </form>
 
       <NeedMixPanel rows={mixRows} />
 

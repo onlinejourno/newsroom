@@ -13,6 +13,7 @@ which is the artifact you put in front of a journalist.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 
 from onlinejourno_agents import db
@@ -406,9 +407,26 @@ def cmd_analyze_url(args: argparse.Namespace) -> int:
     try:
         res = analyze_url(args.url, user_need=args.need)
     except _rq.RequestException as exc:
-        print(f"fetch failed: {exc}", file=sys.stderr)
+        if args.json:
+            print(json.dumps({"error": f"fetch failed: {exc}"}))
+        else:
+            print(f"fetch failed: {exc}", file=sys.stderr)
         return 1
     story = res["story"]
+    if args.json:
+        out = {
+            "url": args.url,
+            "title": story.title,
+            "word_count": story.word_count,
+            "composite": res["composite"],
+            "channels": res["channels"],
+        }
+        if args.need:
+            out["user_need"] = args.need
+            out["priority_surfaces"] = res.get("priority_surfaces") or []
+            out["top_fix"] = res.get("top_fix")
+        print(json.dumps(out))
+        return 0
     print(args.url)
     print(
         f"  {story.title[:70] or '(no title)'}  ·  "
@@ -592,6 +610,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=["know", "understand", "feel", "do"],
         help="reader need the story serves — weights the audit (ADR 0049)",
     )
+    p_au.add_argument("--json", action="store_true", help="machine-readable output")
     p_au.set_defaults(func=cmd_analyze_url)
 
     p_cms = sub.add_parser(
