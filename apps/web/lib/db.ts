@@ -302,6 +302,7 @@ export async function deleteSurface(tenantId: string, id: string): Promise<void>
 
 export type JournalistRow = {
   id: string;
+  slug: string;
   name: string;
   bureau: string | null;
   region: string | null;
@@ -313,11 +314,64 @@ export type JournalistRow = {
 export async function listJournalists(tenantId: string): Promise<JournalistRow[]> {
   const pool = getPool();
   const { rows } = await pool.query<JournalistRow>(
-    `select id, name, bureau, region, beats, role, language
+    `select id, slug, name, bureau, region, beats, role, language
        from journalist_profiles
       where tenant_id = $1
       order by name`,
     [tenantId],
+  );
+  return rows;
+}
+
+export async function journalistBySlug(
+  tenantId: string,
+  slug: string,
+): Promise<JournalistRow | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<JournalistRow>(
+    `select id, slug, name, bureau, region, beats, role, language
+       from journalist_profiles
+      where tenant_id = $1 and slug = $2`,
+    [tenantId, slug],
+  );
+  return rows[0] ?? null;
+}
+
+// The reporter's inflow (mirrors agents-py signals_for_journalist): an enriched
+// signal reaches her when its beat is one of her beats, or its geography
+// (region/district) is her region.
+export async function signalsForJournalist(
+  tenantId: string,
+  journalistId: string,
+  sinceHours = 72,
+  limit = 30,
+): Promise<SignalRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<SignalRow>(
+    `
+    select s.id, s.tenant_id, s.source_id,
+           src.name as source_name,
+           s.url, s.headline, s.body_text,
+           s.published_at, s.fetched_at, s.language,
+           s.beat, s.region, s.district, s.enrichment
+      from signals s
+      join sources src on src.id = s.source_id,
+           journalist_profiles j
+     where s.tenant_id = $1 and j.tenant_id = $1 and j.id = $2
+       and s.enrichment is not null
+       and (
+            (s.beat is not null and j.beats ? s.beat)
+         or (s.region is not null and j.region is not null
+             and lower(s.region) = lower(j.region))
+         or (s.district is not null and j.region is not null
+             and lower(s.district) = lower(j.region))
+       )
+       and coalesce(s.published_at, s.fetched_at)
+           >= now() - make_interval(hours => $3)
+     order by coalesce(s.published_at, s.fetched_at) desc
+     limit $4
+    `,
+    [tenantId, journalistId, sinceHours, limit],
   );
   return rows;
 }

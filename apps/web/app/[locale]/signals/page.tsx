@@ -1,3 +1,4 @@
+import { SignalChips } from "@/components/SignalChips";
 import { fetchLatestSignals, tenantIdForSlug } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -5,14 +6,6 @@ export const dynamic = "force-dynamic";
 const TENANT_SLUG = "self";
 const LIMIT = 20;
 const BODY_TRUNCATE_CHARS = 280;
-
-// User Needs Model (ADR 0049) — the reader need a signal serves, colour-coded.
-const NEED_META: Record<string, { label: string; color: string }> = {
-  know: { label: "Know", color: "#2563eb" },
-  understand: { label: "Understand", color: "#7c3aed" },
-  feel: { label: "Feel", color: "#ea580c" },
-  do: { label: "Do", color: "#16a34a" },
-};
 
 function formatDate(value: Date | null): string {
   if (!value) return "—";
@@ -142,67 +135,7 @@ export default async function SignalsPage() {
               >
                 {signal.headline ?? signal.url}
               </a>
-              {(() => {
-                const e = signal.enrichment ?? {};
-                const need = e.classify?.user_need ?? null;
-                const nm = need ? NEED_META[need] : null;
-                const beat = signal.beat ?? e.classify?.beat ?? null;
-                const place = signal.district || signal.region || null;
-                const entities = (e.analyse?.entities ?? []).slice(0, 5);
-                if (!nm && !beat && !place && entities.length === 0) return null;
-                const chip =
-                  "text-xs px-2 py-0.5 rounded-full whitespace-nowrap";
-                return (
-                  <div
-                    className="mt-3 flex flex-wrap items-center gap-2"
-                    style={{ fontFamily: "var(--font-ui)" }}
-                  >
-                    {nm ? (
-                      <span
-                        className={`${chip} font-semibold`}
-                        title={`Reader need: ${nm.label}`}
-                        style={{
-                          color: nm.color,
-                          border: `1px solid ${nm.color}`,
-                        }}
-                      >
-                        {nm.label}
-                      </span>
-                    ) : null}
-                    {beat ? (
-                      <span
-                        className={chip}
-                        style={{
-                          color: "var(--color-fg-secondary)",
-                          border: "1px solid var(--color-fg-tertiary)",
-                        }}
-                      >
-                        {beat}
-                      </span>
-                    ) : null}
-                    {place ? (
-                      <span
-                        className={chip}
-                        style={{
-                          color: "var(--color-fg-secondary)",
-                          border: "1px solid var(--color-fg-tertiary)",
-                        }}
-                      >
-                        📍 {place}
-                      </span>
-                    ) : null}
-                    {entities.map((ent) => (
-                      <span
-                        key={ent}
-                        className="text-xs"
-                        style={{ color: "var(--color-fg-tertiary)" }}
-                      >
-                        {ent}
-                      </span>
-                    ))}
-                  </div>
-                );
-              })()}
+              <SignalChips signal={signal} />
               {signal.body_text ? (
                 <p
                   className="mt-2 text-base"
