@@ -54,3 +54,40 @@ def test_surfaces_filter():
     # an AI/unknown surface is skipped (no content scorer yet)
     res2 = channel_score(Story(title="hello"), surfaces=["discover", "ai_overviews"])
     assert set(res2) == {"discover"}
+
+
+def test_need_weighted_composite_steers_by_need():
+    from onlinejourno_agents.distribution_fit import need_weighted_composite
+
+    channels = {
+        "discover": {"score": 90, "signals": [
+            {"name": "Image", "value": 25, "max": 25, "note": "image ok"}]},
+        "google_news": {"score": 80, "signals": [
+            {"name": "Schema", "value": 25, "max": 25, "note": "schema ok"}]},
+        "google_search": {"score": 30, "signals": [
+            {"name": "Depth", "value": 0, "max": 30, "note": "add depth"}]},
+    }
+    # Know: Discover/News weighted up -> composite above the plain average.
+    plain = round((90 + 80 + 30) / 3)
+    know = need_weighted_composite(channels, "know")
+    assert know["composite"] > plain
+    assert set(know["priority_surfaces"]) == {"discover", "google_news"}
+    # Understand: Search weighted up -> composite below plain; fix from Search.
+    und = need_weighted_composite(channels, "understand")
+    assert und["composite"] < plain
+    assert und["priority_surfaces"] == ["google_search"]
+    assert und["top_fix"] == "add depth"
+    # Know's fix comes from its priority pool, not the globally weakest surface.
+    assert know["top_fix"] != "add depth"
+
+
+def test_need_weighted_composite_no_need_is_plain_average():
+    from onlinejourno_agents.distribution_fit import need_weighted_composite
+
+    channels = {
+        "discover": {"score": 60, "signals": []},
+        "google_search": {"score": 40, "signals": []},
+    }
+    res = need_weighted_composite(channels, None)
+    assert res["composite"] == 50
+    assert res["priority_surfaces"] == []

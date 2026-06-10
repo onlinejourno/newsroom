@@ -203,6 +203,53 @@ _SCORERS = {
     "google_news": score_news,
 }
 
+# ── need-aware weighting (ADR 0049) ──────────────────────────────────────────
+# The User Needs Model steers the audit: surfaces are weighted by the reader
+# need the story serves, so a Know story is judged Discover/News-first and an
+# Understand piece Search-first. Feel's primary surfaces (Social/Direct) and
+# Do's Subscription have no content scorer yet — the closest existing surface
+# gets a mild boost until those scorers land.
+
+NEED_SURFACE_WEIGHTS: dict[str, dict[str, float]] = {
+    "know": {"discover": 1.5, "google_news": 1.5, "google_search": 1.0},
+    "understand": {"google_search": 1.5, "google_news": 1.0, "discover": 0.75},
+    "feel": {"discover": 1.25, "google_news": 0.75, "google_search": 0.75},
+    "do": {"google_search": 1.5, "google_news": 0.75, "discover": 0.75},
+}
+
+
+def need_weighted_composite(
+    channels: dict[str, dict[str, Any]], user_need: str | None
+) -> dict[str, Any]:
+    """Composite + priority surfaces + top fix, weighted by the reader need.
+
+    Without a need (or an unknown one) every surface weighs 1.0 — identical to
+    the plain average. The top fix is the biggest weighted signal gap across
+    the priority surfaces, so the recommended action serves what the story is
+    *for*, not the surface it happens to be weakest on.
+    """
+    if not channels:
+        return {"composite": 0, "priority_surfaces": [], "top_fix": None}
+    weights = NEED_SURFACE_WEIGHTS.get(user_need or "", {})
+    total = wsum = 0.0
+    for key, ch in channels.items():
+        w = weights.get(key, 1.0)
+        wsum += w
+        total += ch["score"] * w
+    priority = [k for k, w in weights.items() if w > 1.0 and k in channels]
+    pool = priority or list(channels)
+    best_gap, best_note = 0.0, None
+    for k in pool:
+        for s in channels[k]["signals"]:
+            gap = (s["max"] - s["value"]) * weights.get(k, 1.0)
+            if gap > best_gap:
+                best_gap, best_note = gap, s["note"]
+    return {
+        "composite": round(total / wsum),
+        "priority_surfaces": priority,
+        "top_fix": best_note,
+    }
+
 
 def channel_score(
     story: Story, surfaces: list[str] | None = None
@@ -326,12 +373,26 @@ def fetch_story(url: str, *, timeout: int = 15) -> Story:
     )
 
 
-def analyze_url(url: str, surfaces: list[str] | None = None) -> dict[str, Any]:
-    """Fetch + score a published URL: {story, channels, composite}."""
+def analyze_url(
+    url: str,
+    surfaces: list[str] | None = None,
+    user_need: str | None = None,
+) -> dict[str, Any]:
+    """Fetch + score a published URL: {story, channels, composite}.
+
+    With ``user_need`` (ADR 0049) the composite and top fix are weighted for
+    the reader need the story serves; ``priority_surfaces`` names where the
+    fair chance is decided for this story."""
     story = fetch_story(url)
     channels = channel_score(story, surfaces=surfaces)
-    if channels:
-        composite = round(sum(c["score"] for c in channels.values()) / len(channels))
-    else:
-        composite = 0
-    return {"story": story, "channels": channels, "composite": composite}
+    weighted = need_weighted_composite(channels, user_need)
+    out: dict[str, Any] = {
+        "story": story,
+        "channels": channels,
+        "composite": weighted["composite"],
+    }
+    if user_need:
+        out["user_need"] = user_need
+        out["priority_surfaces"] = weighted["priority_surfaces"]
+        out["top_fix"] = weighted["top_fix"]
+    return out

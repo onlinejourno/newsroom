@@ -369,7 +369,7 @@ def cmd_analyze_url(args: argparse.Namespace) -> int:
 
     db._load_env_once()
     try:
-        res = analyze_url(args.url)
+        res = analyze_url(args.url, user_need=args.need)
     except _rq.RequestException as exc:
         print(f"fetch failed: {exc}", file=sys.stderr)
         return 1
@@ -379,9 +379,13 @@ def cmd_analyze_url(args: argparse.Namespace) -> int:
         f"  {story.title[:70] or '(no title)'}  ·  "
         f"{story.word_count or 0} words · composite {res['composite']}/100"
     )
+    priority = set(res.get("priority_surfaces") or [])
     for surface, v in res["channels"].items():
         label = surface.split("_")[-1].title()
-        print(f"  {label:9} {v['grade']} ({v['score']:>3})   fix: {v['top_fix'] or '—'}")
+        star = "*" if surface in priority else " "
+        print(f" {star}{label:9} {v['grade']} ({v['score']:>3})   fix: {v['top_fix'] or '—'}")
+    if args.need:
+        print(f"  need: {args.need} (* = priority surface) · fix first: {res['top_fix'] or '—'}")
     return 0
 
 
@@ -547,6 +551,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Channel Audit for a published URL — the real fair-chance scorer",
     )
     p_au.add_argument("url", help="the article URL to audit")
+    p_au.add_argument(
+        "--need",
+        default=None,
+        choices=["know", "understand", "feel", "do"],
+        help="reader need the story serves — weights the audit (ADR 0049)",
+    )
     p_au.set_defaults(func=cmd_analyze_url)
 
     p_cms = sub.add_parser(
