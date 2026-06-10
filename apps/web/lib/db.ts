@@ -47,8 +47,36 @@ export type SignalRow = {
       topic?: string | null;
       user_need?: string | null;
     };
+    framing?: {
+      frame?: string | null;
+      frame_group?: string | null;
+      rationale?: string | null;
+    };
   } | null;
 };
+
+// Reader-need mix over classified signals (ADR 0049 need-mix view).
+export type NeedMixRow = { user_need: string; n: number };
+
+export async function needMixCounts(
+  tenantId: string,
+  windowHours = 168,
+): Promise<NeedMixRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<NeedMixRow>(
+    `
+    select enrichment->'classify'->>'user_need' as user_need, count(*)::int as n
+      from signals
+     where tenant_id = $1
+       and enrichment->'classify'->>'user_need' is not null
+       and coalesce(published_at, fetched_at) >= now() - make_interval(hours => $2)
+     group by 1
+     order by 2 desc
+    `,
+    [tenantId, windowHours],
+  );
+  return rows;
+}
 
 export async function tenantIdForSlug(slug: string): Promise<string | null> {
   const pool = getPool();
