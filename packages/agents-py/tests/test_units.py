@@ -289,3 +289,16 @@ def test_build_enrich_prompt_slim_for_nlp_first():
     for part in (full, slim):
         assert '"beat"' in part.system and '"user_need"' in part.system
     assert len(slim.system) < len(full.system)
+
+
+def test_build_enrich_prompt_output_language():
+    from onlinejourno_agents.prompts import build_enrich_prompt
+
+    sigs = [{"headline": "Cabinet approves housing scheme", "body_text": None}]
+    en = build_enrich_prompt(sigs)
+    hi = build_enrich_prompt(sigs, output_language="hi")
+    # English default adds no language note; another language instructs a
+    # native-language summary while structured fields stay English (ADR 0051).
+    assert "ISO 639-1" not in en.system
+    assert "'hi'" in hi.system and "not a" in hi.system
+    assert '"beat"' in hi.system  # vocabularies unchanged

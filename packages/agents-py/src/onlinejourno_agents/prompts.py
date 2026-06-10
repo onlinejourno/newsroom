@@ -298,14 +298,21 @@ USER_NEEDS = ("know", "understand", "feel", "do")
 
 
 def build_enrich_prompt(
-    signals: list[dict[str, Any]], *, include_extraction: bool = True
+    signals: list[dict[str, Any]],
+    *,
+    include_extraction: bool = True,
+    output_language: str = "en",
 ) -> ScorePromptParts:
     """Batch enrichment prompt (Analyse pillar): per signal extract entities, geo,
     beat, topic, summary. Pure. The model returns one entry per 1-based index.
 
     With ``include_extraction=False`` (NLP-first, ADR 0048) entities + geo come
     from the local NLP pass, so the LLM is asked only for the classification
-    fields — fewer output tokens, same Classify quality."""
+    fields — fewer output tokens, same Classify quality.
+
+    ``output_language`` (ISO 639-1, from the tenant's primary_locale) is the
+    language the SUMMARY is written in — a summary in that language, not a
+    translation (ADR 0051). Structured fields stay in the codebook vocabulary."""
     extraction = (
         '"entities": [<named people/orgs/places/schemes>], '
         '"geo": {"country": <string|null>, "region": <string|null>, '
@@ -318,6 +325,16 @@ def build_enrich_prompt(
         if include_extraction
         else ""
     )
+    lang_note = (
+        ""
+        if output_language == "en"
+        else (
+            f" Write each `summary` in the language with ISO 639-1 code "
+            f"'{output_language}' — a native one-sentence summary, not a "
+            f"translation. All other fields stay exactly in the English "
+            f"vocabularies given."
+        )
+    )
     system = (
         "You are an editorial analyst. For EACH item below, extract structured "
         "metadata. Respond with ONLY a JSON object, no prose, no markdown, exactly:\n"
@@ -327,6 +344,7 @@ def build_enrich_prompt(
         f'"user_need": <one of {list(USER_NEEDS)} — the reader need it serves>, '
         '"topic": <short topic>, "summary": <one sentence>}, ...]}\n'
         f"One object per item, using the item's number as `index`. {geo_note}"
+        f"{lang_note}"
     )
     lines = [f"ITEMS ({len(signals)}):", ""]
     for idx, signal in enumerate(signals, start=1):
