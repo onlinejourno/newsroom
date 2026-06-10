@@ -887,3 +887,16 @@ def update_signal_framing(
             """,
             (Json(framing), tenant_id, signal_id),
         )
+
+
+def tenant_output_language(conn: psycopg.Connection, tenant_id: UUID) -> str:
+    """ISO 639-1 output language from the tenant's primary_locale (ADR 0051).
+
+    'hi-IN' -> 'hi'; missing/odd values fall back to 'en'.
+    """
+    with conn.cursor() as cur:
+        cur.execute("select primary_locale from tenants where id = %s", (tenant_id,))
+        row = cur.fetchone()
+    locale = (row or {}).get("primary_locale") or "en"
+    lang = str(locale).split("-")[0].strip().lower()
+    return lang if len(lang) in (2, 3) and lang.isalpha() else "en"

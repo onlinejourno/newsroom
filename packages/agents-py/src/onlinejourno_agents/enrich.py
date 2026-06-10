@@ -64,6 +64,7 @@ def run_enrich(
     failed = 0
     with db.connect() as conn:
         tenant_id = db.tenant_id_for_slug(conn, tenant_slug)
+        output_language = db.tenant_output_language(conn, tenant_id)
         cap = db.daily_cap_usd(conn, tenant_id)
         spent = db.today_cost_usd(conn, tenant_id)
         rows = db.signals_needing_enrichment(
@@ -83,7 +84,11 @@ def run_enrich(
                         nlp_by_id[sig["id"]] = nlp.analyse(text)
                     except Exception:  # NLP failure -> this signal gets no entities
                         pass
-            parts = build_enrich_prompt(batch, include_extraction=nlp is None)
+            parts = build_enrich_prompt(
+                batch,
+                include_extraction=nlp is None,
+                output_language=output_language,
+            )
             try:
                 completion = completer(
                     system=parts.system, user=parts.user, max_tokens=_max_tokens(len(batch))
