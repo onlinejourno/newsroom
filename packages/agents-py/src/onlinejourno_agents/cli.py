@@ -247,12 +247,20 @@ def cmd_enrich(args: argparse.Namespace) -> int:
     """L2 Analyse — enrich raw signals with entities, geo, beat, topic."""
     from onlinejourno_agents.enrich import run_enrich
 
+    nlp = None
+    if args.nlp:
+        from onlinejourno_agents.connectors import ConnectorConfig, make_connector
+
+        nlp = make_connector(
+            ConnectorConfig(category="nlp", provider=args.nlp, mode="api")
+        )
     completer = make_completer(_resolve_provider())
     res = run_enrich(
         tenant_slug=args.tenant,
         completer=completer,
         since_hours=args.since_hours,
         limit=args.limit,
+        nlp=nlp,
     )
     if res.status == "empty":
         print("No signals need enrichment.", file=sys.stderr)
@@ -563,6 +571,11 @@ def main(argv: list[str] | None = None) -> int:
     p_en.add_argument("--tenant", required=True)
     p_en.add_argument("--since-hours", type=int, default=48)
     p_en.add_argument("--limit", type=int, default=60)
+    p_en.add_argument(
+        "--nlp",
+        default=None,
+        help="NLP-first entities/geo via this provider (e.g. spacy), ADR 0048",
+    )
     p_en.set_defaults(func=cmd_enrich)
 
     p_fd = sub.add_parser("feed", help="signals routed to a journalist (her inflow)")
