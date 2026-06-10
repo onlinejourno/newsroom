@@ -59,8 +59,17 @@ class RSSCollector:
         if not feed_url:
             raise FetchError(f"no RSS feed found for {source['url']}")
 
+        # Some public-record portals (e.g. PIB) WAF-block non-browser UAs;
+        # such a source carries its own UA in params.user_agent.
+        headers = {}
+        params = source.get("params") or {}
+        if isinstance(params, dict) and params.get("user_agent"):
+            headers["User-Agent"] = str(params["user_agent"])
+
         try:
-            response = self.session.get(feed_url, timeout=self.timeout)
+            response = self.session.get(
+                feed_url, timeout=self.timeout, headers=headers or None
+            )
             response.raise_for_status()
         except requests.RequestException as exc:
             raise FetchError(f"fetch failed: {exc}") from exc
