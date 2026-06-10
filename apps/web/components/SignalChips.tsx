@@ -10,6 +10,15 @@ const NEED_META: Record<string, { label: string; color: string }> = {
 
 const CHIP = "text-xs px-2 py-0.5 rounded-full whitespace-nowrap";
 
+// PEJ frame groups (m-framing-pej), colour-coded by narrative family.
+const FRAME_GROUP_COLOR: Record<string, string> = {
+  combative: "#dc2626",
+  explanatory: "#0d9488",
+  straight: "#6b7280",
+  policy: "#4f46e5",
+  other: "#a16207",
+};
+
 /** Enrichment chip row: user-need badge, beat, place, top entities. */
 export function SignalChips({ signal }: { signal: SignalRow }) {
   const e = signal.enrichment ?? {};
@@ -18,7 +27,10 @@ export function SignalChips({ signal }: { signal: SignalRow }) {
   const beat = signal.beat ?? e.classify?.beat ?? null;
   const place = signal.district || signal.region || null;
   const entities = (e.analyse?.entities ?? []).slice(0, 5);
-  if (!nm && !beat && !place && entities.length === 0) return null;
+  const frame = e.framing?.frame ?? null;
+  const frameColor =
+    FRAME_GROUP_COLOR[e.framing?.frame_group ?? ""] ?? FRAME_GROUP_COLOR.other;
+  if (!nm && !beat && !place && !frame && entities.length === 0) return null;
   return (
     <div
       className="mt-3 flex flex-wrap items-center gap-2"
@@ -31,6 +43,15 @@ export function SignalChips({ signal }: { signal: SignalRow }) {
           style={{ color: nm.color, border: `1px solid ${nm.color}` }}
         >
           {nm.label}
+        </span>
+      ) : null}
+      {frame ? (
+        <span
+          className={CHIP}
+          title={e.framing?.rationale ?? `PEJ frame: ${frame}`}
+          style={{ color: frameColor, border: `1px dashed ${frameColor}` }}
+        >
+          {frame}
         </span>
       ) : null}
       {beat ? (

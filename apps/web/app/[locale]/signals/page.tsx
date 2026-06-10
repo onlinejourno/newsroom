@@ -1,11 +1,88 @@
 import { SignalChips } from "@/components/SignalChips";
-import { fetchLatestSignals, tenantIdForSlug } from "@/lib/db";
+import {
+  fetchLatestSignals,
+  needMixCounts,
+  tenantIdForSlug,
+} from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
 const LIMIT = 20;
 const BODY_TRUNCATE_CHARS = 280;
+const MIX_WINDOW_HOURS = 168;
+
+// Need-mix panel (ADR 0049): the reader-need balance of the classified inflow,
+// with the classic overproduction flag.
+const NEED_ORDER = ["know", "understand", "feel", "do"] as const;
+const NEED_COLORS: Record<string, string> = {
+  know: "#2563eb",
+  understand: "#7c3aed",
+  feel: "#ea580c",
+  do: "#16a34a",
+};
+const OVERPRODUCTION_SHARE = 0.6;
+
+function NeedMixPanel({ rows }: { rows: { user_need: string; n: number }[] }) {
+  const total = rows.reduce((s, r) => s + r.n, 0);
+  if (total === 0) return null;
+  const share = (need: string) =>
+    (rows.find((r) => r.user_need === need)?.n ?? 0) / total;
+  const flags: string[] = [];
+  for (const need of NEED_ORDER) {
+    if (share(need) > OVERPRODUCTION_SHARE) {
+      flags.push(
+        need === "know"
+          ? `'Update me' overproduction (${Math.round(share(need) * 100)}%)`
+          : `'${need}' heavy (${Math.round(share(need) * 100)}%)`,
+      );
+    }
+  }
+  if (total >= 5 && share("do") === 0) {
+    flags.push("no actionable ('do') coverage — promising gap");
+  }
+  return (
+    <section
+      className="mb-10 rounded-sm border p-4"
+      style={{
+        borderColor: "var(--color-border)",
+        background: "var(--color-bg-card)",
+        fontFamily: "var(--font-ui)",
+      }}
+    >
+      <p className="ds-label mb-2">
+        Need mix · last {MIX_WINDOW_HOURS / 24} days · {total} classified
+      </p>
+      <div
+        className="flex h-3 w-full overflow-hidden rounded-full mb-2"
+        style={{ background: "var(--color-border)" }}
+      >
+        {NEED_ORDER.map((need) =>
+          share(need) > 0 ? (
+            <div
+              key={need}
+              style={{
+                width: `${share(need) * 100}%`,
+                background: NEED_COLORS[need],
+              }}
+              title={`${need}: ${Math.round(share(need) * 100)}%`}
+            />
+          ) : null,
+        )}
+      </div>
+      <p className="text-xs" style={{ color: "var(--color-fg-secondary)" }}>
+        {NEED_ORDER.map(
+          (need) => `${need} ${Math.round(share(need) * 100)}%`,
+        ).join(" · ")}
+      </p>
+      {flags.length > 0 ? (
+        <p className="text-xs mt-1 font-semibold" style={{ color: "#b45309" }}>
+          ⚠ {flags.join("; ")}
+        </p>
+      ) : null}
+    </section>
+  );
+}
 
 function formatDate(value: Date | null): string {
   if (!value) return "—";
@@ -74,7 +151,10 @@ export default async function SignalsPage() {
     );
   }
 
-  const signals = await fetchLatestSignals(tenantId, LIMIT);
+  const [signals, mixRows] = await Promise.all([
+    fetchLatestSignals(tenantId, LIMIT),
+    needMixCounts(tenantId, MIX_WINDOW_HOURS),
+  ]);
 
   return (
     <main className="min-h-screen max-w-3xl mx-auto p-6 md:p-10">
@@ -102,6 +182,8 @@ export default async function SignalsPage() {
       </header>
 
       <hr className="ds-rule mb-10" />
+
+      <NeedMixPanel rows={mixRows} />
 
       {signals.length === 0 ? (
         <p
