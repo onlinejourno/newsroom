@@ -126,9 +126,10 @@ function truncate(value: string, max: number): string {
 export default async function SignalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ beat?: string }>;
+  searchParams: Promise<{ beat?: string; primary?: string }>;
 }) {
-  const { beat } = await searchParams;
+  const { beat, primary } = await searchParams;
+  const primaryOnly = primary === "1";
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
 
   if (!tenantId) {
@@ -158,7 +159,7 @@ export default async function SignalsPage({
   }
 
   const [signals, mixRows, beats] = await Promise.all([
-    fetchLatestSignals(tenantId, LIMIT, beat || null),
+    fetchLatestSignals(tenantId, LIMIT, beat || null, primaryOnly),
     needMixCounts(tenantId, MIX_WINDOW_HOURS),
     distinctSignalBeats(tenantId),
   ]);
@@ -213,6 +214,15 @@ export default async function SignalsPage({
               </option>
             ))}
           </select>
+        </label>
+        <label className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            name="primary"
+            value="1"
+            defaultChecked={primaryOnly}
+          />
+          Primary sources only
         </label>
         <button
           type="submit"

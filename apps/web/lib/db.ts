@@ -408,6 +408,7 @@ export async function fetchLatestSignals(
   tenantId: string,
   limit = 20,
   beat?: string | null,
+  primaryOnly = false,
 ): Promise<SignalRow[]> {
   const pool = getPool();
   const { rows } = await pool.query<SignalRow>(
@@ -421,10 +422,11 @@ export async function fetchLatestSignals(
       join sources src on src.id = s.source_id
      where s.tenant_id = $1
        and ($3::text is null or s.beat = $3)
+       and ($4::bool is false or src.family is distinct from 'msm_test')
      order by coalesce(s.published_at, s.fetched_at) desc
      limit $2
     `,
-    [tenantId, limit, beat ?? null],
+    [tenantId, limit, beat ?? null, primaryOnly],
   );
   return rows;
 }

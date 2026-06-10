@@ -5,7 +5,11 @@
 --   psql "$DATABASE_URL" -v tenant="'<tenant-uuid>'" -f infra/seeds/primary_sources.sql
 
 insert into sources (tenant_id, name, kind, family, tier, sections_fed, url, rss_url, geo, enabled, params) values
-(:tenant,'PIB — All Ministries (press releases)','rss','gov_wire',1,'{National,Governance}','https://pib.gov.in','https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3','IN',true,'{"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}'),
+-- reg=3 pins PIB to the English (national) region; without it the portal
+-- redirects by geography and can serve vernacular items on Lang=1.
+(:tenant,'PIB — All Ministries (press releases)','rss','gov_wire',1,'{National,Governance}','https://pib.gov.in','https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3&reg=3','IN',true,'{"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}'),
+(:tenant,'PTI — National wire (GDELT)','gdelt','news_wire',1,'{National,Politics,Business}','https://www.ptinews.com','domainis:ptinews.com sourcelang:english','IN',true,null),
+(:tenant,'PTI — Direct (needs scrape adapter)','scrape','news_wire',1,'{National,Politics,Business}','https://www.ptinews.com',null,'IN',false,null),
 (:tenant,'Parliament — Questions & Debates','scrape','parliament',1,'{National,Politics,Governance}','https://sansad.in',null,'IN',false,null),
 (:tenant,'Courts — Cause lists & Judgements','scrape','courts',1,'{Courts,National}','https://ecourts.gov.in',null,'IN',false,null),
 (:tenant,'Supreme Court of India','scrape','courts',1,'{Courts,National}','https://www.sci.gov.in',null,'IN',false,null),
