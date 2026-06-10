@@ -824,3 +824,25 @@ def clear_recent_thread_links(
             """,
             (tenant_id, since_hours),
         )
+
+
+def need_mix_counts(
+    conn: psycopg.Connection, tenant_id: UUID, *, window_hours: int = 168
+) -> list[dict[str, Any]]:
+    """Per-beat counts of classified reader needs (ADR 0049 need-mix view)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select coalesce(beat, '(none)') as beat,
+                   enrichment->'classify'->>'user_need' as user_need,
+                   count(*)::int as n
+              from signals
+             where tenant_id = %s
+               and enrichment->'classify'->>'user_need' is not null
+               and coalesce(published_at, fetched_at) >= now() - make_interval(hours => %s)
+             group by 1, 2
+             order by 1, 3 desc
+            """,
+            (tenant_id, window_hours),
+        )
+        return list(cur.fetchall())
