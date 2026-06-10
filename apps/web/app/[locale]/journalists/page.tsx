@@ -1,10 +1,17 @@
+import Link from "next/link";
+
 import { listJournalists, tenantIdForSlug } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
 
-export default async function JournalistsPage() {
+export default async function JournalistsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   const journalists = tenantId ? await listJournalists(tenantId) : [];
 
@@ -41,12 +48,13 @@ export default async function JournalistsPage() {
               }}
             >
               <div className="flex items-baseline justify-between gap-2">
-                <span
-                  className="text-base font-bold"
+                <Link
+                  href={`/${locale}/feed/${j.slug}`}
+                  className="text-base font-bold hover:underline"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {j.name}
-                </span>
+                </Link>
                 <span className="text-xs uppercase tracking-wide" style={{ color: "var(--color-fg-tertiary)" }}>
                   {j.role ?? "reporter"}
                 </span>
