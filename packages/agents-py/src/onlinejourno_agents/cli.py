@@ -171,6 +171,20 @@ def cmd_nlp_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_need_mix(args: argparse.Namespace) -> int:
+    """Need-mix view (ADR 0049) — reader-need distribution overall + per beat."""
+    from onlinejourno_agents.need_mix import build_mix, render_mix
+
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        rows = db.need_mix_counts(conn, tenant_id, window_hours=args.window_hours)
+    if not rows:
+        print("No classified signals in the window.", file=sys.stderr)
+        return 1
+    print(render_mix(build_mix(rows)))
+    return 0
+
+
 def cmd_trends(args: argparse.Namespace) -> int:
     """Trend scoring — topic momentum from signal convergence; writes trend_score.
 
@@ -600,6 +614,11 @@ def main(argv: list[str] | None = None) -> int:
     p_tr.add_argument("--window-hours", type=int, default=24)
     p_tr.add_argument("--top", type=int, default=12)
     p_tr.set_defaults(func=cmd_trends)
+
+    p_nm = sub.add_parser("need-mix", help="reader-need mix per beat (ADR 0049)")
+    p_nm.add_argument("--tenant", required=True)
+    p_nm.add_argument("--window-hours", type=int, default=168)
+    p_nm.set_defaults(func=cmd_need_mix)
 
     p_nlp = sub.add_parser("nlp-extract", help="NLP entity/geo extraction from text (spaCy)")
     p_nlp.add_argument("text")
