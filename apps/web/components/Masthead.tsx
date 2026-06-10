@@ -3,12 +3,14 @@ const EDITORIAL = [
   { path: "brief", label: "Brief" },
   { path: "shortlist", label: "Shortlist" },
   { path: "signals", label: "Signals" },
+  { path: "scores", label: "Scores" },
   { path: "journalists", label: "Journalists" },
 ];
 const ADMIN = [
   { path: "admin/sources", label: "Sources" },
   { path: "admin/connectors", label: "Connectors" },
   { path: "admin/surfaces", label: "Surfaces" },
+  { path: "architecture", label: "Architecture" },
 ];
 
 const linkStyle = { color: "var(--color-fg-secondary)" } as const;

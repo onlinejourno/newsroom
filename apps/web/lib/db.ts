@@ -407,6 +407,7 @@ export async function signalsForJournalist(
 export async function fetchLatestSignals(
   tenantId: string,
   limit = 20,
+  beat?: string | null,
 ): Promise<SignalRow[]> {
   const pool = getPool();
   const { rows } = await pool.query<SignalRow>(
@@ -419,10 +420,11 @@ export async function fetchLatestSignals(
       from signals s
       join sources src on src.id = s.source_id
      where s.tenant_id = $1
+       and ($3::text is null or s.beat = $3)
      order by coalesce(s.published_at, s.fetched_at) desc
      limit $2
     `,
-    [tenantId, limit],
+    [tenantId, limit, beat ?? null],
   );
   return rows;
 }
@@ -566,4 +568,55 @@ export async function withClient<T>(
   } finally {
     client.release();
   }
+}
+
+// ── Story Scores (m-distribution-fit dashboard) ─────────────────────────────
+
+export type ScoredStoryRow = {
+  id: string;
+  headline: string | null;
+  url: string | null;
+  section: string | null;
+  beat: string | null;
+  published_at: Date | null;
+  scores: Record<
+    string,
+    { score: number; grade: string; top_fix: string | null }
+  >;
+};
+
+export async function storiesWithScores(
+  tenantId: string,
+  limit = 200,
+): Promise<ScoredStoryRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<ScoredStoryRow>(
+    `
+    select st.id, st.headline, st.url, st.section, st.beat, st.published_at,
+           jsonb_object_agg(
+             d.surface,
+             jsonb_build_object('score', d.score, 'grade', d.grade,
+                                'top_fix', d.top_fix)
+           ) as scores
+      from stories st
+      join distribution_fit_scores d
+        on d.tenant_id = st.tenant_id and d.story_id = st.id
+     where st.tenant_id = $1
+     group by st.id
+     order by max(d.scored_at) desc
+     limit $2
+    `,
+    [tenantId, limit],
+  );
+  return rows;
+}
+
+export async function distinctSignalBeats(tenantId: string): Promise<string[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ beat: string }>(
+    `select distinct beat from signals
+      where tenant_id = $1 and beat is not null order by beat`,
+    [tenantId],
+  );
+  return rows.map((r) => r.beat);
 }
