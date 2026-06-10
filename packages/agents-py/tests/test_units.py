@@ -275,3 +275,17 @@ def test_render_search_fit_strong_and_weak():
     md = brief_to_markdown(content)
     assert "Search fit:** strong" in md and "repo rate" in md and "135,000" in md
     assert "Search fit:** weak" in md and "not a Search play" in md
+
+
+def test_build_enrich_prompt_slim_for_nlp_first():
+    from onlinejourno_agents.prompts import build_enrich_prompt
+
+    sigs = [{"headline": "RBI cuts repo rate", "body_text": "The central bank…"}]
+    full = build_enrich_prompt(sigs)
+    slim = build_enrich_prompt(sigs, include_extraction=False)
+    assert '"entities"' in full.system and '"geo"' in full.system
+    assert '"entities"' not in slim.system and '"geo"' not in slim.system
+    # Classification fields stay in both (ADR 0048: NLP-first trims extraction only).
+    for part in (full, slim):
+        assert '"beat"' in part.system and '"user_need"' in part.system
+    assert len(slim.system) < len(full.system)

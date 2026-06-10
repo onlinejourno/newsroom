@@ -56,7 +56,10 @@ def run_enrich(
     completer: Completer,
     since_hours: int = 48,
     limit: int = 60,
+    nlp: Any = None,
 ) -> EnrichResult:
+    """With an ``nlp`` client (NlpClient, ADR 0048) entities + geo come from the
+    local NLP pass and the LLM call slims to classification only."""
     enriched = 0
     failed = 0
     with db.connect() as conn:
@@ -72,7 +75,15 @@ def run_enrich(
         for batch in _chunks(rows, BATCH_SIZE):
             if spent >= cap:
                 break
-            parts = build_enrich_prompt(batch)
+            nlp_by_id: dict[Any, dict[str, Any]] = {}
+            if nlp is not None:
+                for sig in batch:
+                    text = f"{sig.get('headline') or ''} {sig.get('body_text') or ''}"
+                    try:
+                        nlp_by_id[sig["id"]] = nlp.analyse(text)
+                    except Exception:  # NLP failure -> this signal gets no entities
+                        pass
+            parts = build_enrich_prompt(batch, include_extraction=nlp is None)
             try:
                 completion = completer(
                     system=parts.system, user=parts.user, max_tokens=_max_tokens(len(batch))
@@ -90,7 +101,13 @@ def run_enrich(
                 r = by_index.get(i)
                 if not isinstance(r, dict):
                     continue
-                geo = r.get("geo") if isinstance(r.get("geo"), dict) else {}
+                nlp_res = nlp_by_id.get(sig["id"])
+                if nlp_res is not None:
+                    entities = nlp_res.get("entities") or []
+                    geo = nlp_res.get("geo") or {}
+                else:
+                    entities = r.get("entities") or []
+                    geo = r.get("geo") if isinstance(r.get("geo"), dict) else {}
                 beat = _coerce_beat(r.get("beat"))
                 db.update_signal_enrichment(
                     conn,
@@ -101,14 +118,14 @@ def run_enrich(
                     beat=beat,
                     enrichment={
                         "analyse": {
-                            "entities": r.get("entities") or [],
+                            "entities": entities,
                             "summary": r.get("summary"),
                         },
                         "classify": {
-                        "beat": beat,
-                        "topic": r.get("topic"),
-                        "user_need": _coerce_need(r.get("user_need")),
-                    },
+                            "beat": beat,
+                            "topic": r.get("topic"),
+                            "user_need": _coerce_need(r.get("user_need")),
+                        },
                         "geo": geo,
                     },
                 )

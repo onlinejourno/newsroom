@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-nlp = ["spacy>=3.7"]
+nlp = ["spacy>=3.7", "click>=8"]
 
 [project.scripts]
 onlinejourno-agents = "onlinejourno_agents.cli:main"

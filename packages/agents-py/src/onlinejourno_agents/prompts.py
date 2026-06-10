@@ -295,21 +295,36 @@ ENRICH_BEATS = (
 USER_NEEDS = ("know", "understand", "feel", "do")
 
 
-def build_enrich_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
+def build_enrich_prompt(
+    signals: list[dict[str, Any]], *, include_extraction: bool = True
+) -> ScorePromptParts:
     """Batch enrichment prompt (Analyse pillar): per signal extract entities, geo,
-    beat, topic, summary. Pure. The model returns one entry per 1-based index."""
+    beat, topic, summary. Pure. The model returns one entry per 1-based index.
+
+    With ``include_extraction=False`` (NLP-first, ADR 0048) entities + geo come
+    from the local NLP pass, so the LLM is asked only for the classification
+    fields — fewer output tokens, same Classify quality."""
+    extraction = (
+        '"entities": [<named people/orgs/places/schemes>], '
+        '"geo": {"country": <string|null>, "region": <string|null>, '
+        '"district": <string|null>}, '
+        if include_extraction
+        else ""
+    )
+    geo_note = (
+        "Infer geo from the text; use null when not identifiable."
+        if include_extraction
+        else ""
+    )
     system = (
         "You are an editorial analyst. For EACH item below, extract structured "
         "metadata. Respond with ONLY a JSON object, no prose, no markdown, exactly:\n"
         '{"results": [{"index": <item number>, '
-        '"entities": [<named people/orgs/places/schemes>], '
-        '"geo": {"country": <string|null>, "region": <string|null>, '
-        '"district": <string|null>}, '
+        f"{extraction}"
         f'"beat": <one of {list(ENRICH_BEATS)}>, '
         f'"user_need": <one of {list(USER_NEEDS)} — the reader need it serves>, '
         '"topic": <short topic>, "summary": <one sentence>}, ...]}\n'
-        "One object per item, using the item's number as `index`. Infer geo from "
-        "the text; use null when not identifiable."
+        f"One object per item, using the item's number as `index`. {geo_note}"
     )
     lines = [f"ITEMS ({len(signals)}):", ""]
     for idx, signal in enumerate(signals, start=1):
