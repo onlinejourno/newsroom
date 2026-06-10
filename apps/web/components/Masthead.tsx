@@ -3,7 +3,9 @@ const EDITORIAL = [
   { path: "brief", label: "Brief" },
   { path: "shortlist", label: "Shortlist" },
   { path: "signals", label: "Signals" },
+  { path: "trends", label: "Trends" },
   { path: "scores", label: "Scores" },
+  { path: "gems", label: "Gems" },
   { path: "journalists", label: "Journalists" },
 ];
 const ADMIN = [

@@ -620,3 +620,52 @@ export async function distinctSignalBeats(tenantId: string): Promise<string[]> {
   );
   return rows.map((r) => r.beat);
 }
+
+// Per-signal entity lists in a window (for topic momentum). Two calls give
+// the recent/prior windows.
+export async function entityWindows(
+  tenantId: string,
+  fromHoursAgo: number,
+  toHoursAgo: number,
+): Promise<string[][]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ entities: string[] | null }>(
+    `
+    select coalesce(
+             (select array_agg(e) from jsonb_array_elements_text(
+                enrichment->'analyse'->'entities') as e), '{}'
+           ) as entities
+      from signals
+     where tenant_id = $1
+       and enrichment->'analyse'->'entities' is not null
+       and coalesce(published_at, fetched_at)
+           between now() - make_interval(hours => $2)
+               and now() - make_interval(hours => $3)
+    `,
+    [tenantId, fromHoursAgo, toHoursAgo],
+  );
+  return rows.map((r) => r.entities ?? []);
+}
+
+// Recent signals mentioning an entity (topic drill-down on /trends).
+export async function signalsMentioning(
+  tenantId: string,
+  entity: string,
+  sinceHours: number,
+  limit = 5,
+): Promise<{ id: string; headline: string | null; url: string }[]> {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `
+    select id, headline, url
+      from signals
+     where tenant_id = $1
+       and enrichment->'analyse'->'entities' @> to_jsonb(array[$2::text])
+       and coalesce(published_at, fetched_at) >= now() - make_interval(hours => $3)
+     order by coalesce(published_at, fetched_at) desc
+     limit $4
+    `,
+    [tenantId, entity, sinceHours, limit],
+  );
+  return rows;
+}
