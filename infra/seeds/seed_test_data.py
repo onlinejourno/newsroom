@@ -23,22 +23,24 @@ TENANT_SLUG = "self"
 SOURCE_NAME = "TEST · Sample public-record wire"
 
 # 15 invented journalists — globally varied, to show the product is not India-only.
+# Beats use the ENRICH_BEATS vocabulary (prompts.py) so enriched signals
+# actually route to these journalists.
 JOURNALISTS = [
-    ("Asha Verma", "National", ["Governance", "Law"], "Capital", "reporter"),
-    ("Diego Mensah", "World", ["Diplomacy", "Trade"], "West Coast", "reporter"),
-    ("Lena Park", "Markets", ["Markets", "Economy"], "Harbour", "reporter"),
-    ("Tunde Okafor", "Investigations", ["Governance", "Corruption"], "Northern", "reporter"),
-    ("Mariana Silva", "Business", ["Industry", "Energy"], "Delta", "reporter"),
-    ("Ravi Nair", "Science & Tech", ["Climate", "Science"], "Coastal", "reporter"),
-    ("Sofia Haddad", "Culture", ["Film", "Heritage"], "Old City", "reporter"),
-    ("Wei Chen", "Markets", ["Banking", "Regulation"], "Financial", "reporter"),
-    ("Nadia Petrova", "World", ["Multilaterals", "Aid"], "Capital", "editor"),
-    ("Kofi Addo", "Sport", ["Football", "Athletics"], "Stadium", "reporter"),
-    ("Ines Costa", "Education", ["Schools", "Exams"], "Inland", "reporter"),
-    ("Yuki Tanaka", "Science & Tech", ["Space", "Research"], "Tech Park", "reporter"),
-    ("Omar Khalid", "National", ["Courts", "Rights"], "Capital", "editor"),
-    ("Grace Mwangi", "Business", ["Agriculture", "Commodities"], "Rift", "reporter"),
-    ("Pablo Ruiz", "National", ["Local Govt", "Civic"], "Riverside", "chief"),
+    ("Asha Verma", "National", ["Governance", "Courts"], "Capital", "reporter"),
+    ("Diego Mensah", "World", ["World", "Economy"], "West Coast", "reporter"),
+    ("Lena Park", "Markets", ["Business", "Economy"], "India", "reporter"),
+    ("Tunde Okafor", "Investigations", ["Investigations", "Governance"], "Northern", "reporter"),
+    ("Mariana Silva", "Business", ["Business", "Economy"], "Delta", "reporter"),
+    ("Ravi Nair", "Science & Tech", ["Climate", "Science & Tech"], "Coastal", "reporter"),
+    ("Sofia Haddad", "Culture", ["Culture"], "Old City", "reporter"),
+    ("Wei Chen", "Markets", ["Markets", "Business"], "Financial", "reporter"),
+    ("Nadia Petrova", "World", ["World"], "Capital", "editor"),
+    ("Kofi Addo", "Sport", ["Sport"], "Stadium", "reporter"),
+    ("Ines Costa", "Education", ["Education"], "Inland", "reporter"),
+    ("Yuki Tanaka", "Science & Tech", ["Science & Tech"], "Tech Park", "reporter"),
+    ("Omar Khalid", "National", ["Courts", "National"], "Capital", "editor"),
+    ("Grace Mwangi", "Business", ["Agriculture", "Business"], "Rift", "reporter"),
+    ("Pablo Ruiz", "National", ["Governance", "National"], "Riverside", "chief"),
 ]
 
 # 12 invented signals with the front-engine enrichment (geo / beat / entities).
