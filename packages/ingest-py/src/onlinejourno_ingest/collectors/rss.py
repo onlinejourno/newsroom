@@ -26,6 +26,7 @@ from bs4 import BeautifulSoup
 from onlinejourno_ingest.collectors.base import (
     DEFAULT_TIMEOUT_SECONDS,
     http_session,
+    latin_share,
     url_hash,
 )
 from onlinejourno_ingest.protocols import FetchError, Signal
@@ -131,6 +132,11 @@ class RSSCollector:
         url = entry.get("link")
         if not url:
             return None
+        expected_lang = (source.get("expected_languages") or ["en"])[0]
+        if expected_lang == "en":
+            sample = f"{entry.get('title') or ''} {entry.get('summary') or ''}"
+            if sample.strip() and latin_share(sample) < 0.5:
+                return None  # vernacular item on an English source — skip
         return Signal(
             tenant_id=source["tenant_id"],
             source_id=source["id"],
