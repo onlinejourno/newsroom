@@ -1,4 +1,10 @@
-import { entityWindows, signalsMentioning, tenantIdForSlug } from "@/lib/db";
+import {
+  distinctSignalRegions,
+  entityWindows,
+  signalsMentioning,
+  tenantIdForSlug,
+  topicDomains,
+} from "@/lib/db";
 import { momentumLabel, topicMomentum } from "@/lib/trends";
 
 export const dynamic = "force-dynamic";
@@ -21,23 +27,28 @@ function labelColor(label: string): string {
 export default async function TrendsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ window?: string }>;
+  searchParams: Promise<{ window?: string; region?: string }>;
 }) {
-  const { window: w } = await searchParams;
+  const { window: w, region } = await searchParams;
   const windowHours = Math.max(1, Number(w) || 24);
+  const regionPick = region || null;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   if (!tenantId) return null;
 
-  const [recent, prior] = await Promise.all([
-    entityWindows(tenantId, windowHours, 0),
-    entityWindows(tenantId, windowHours * 2, windowHours),
+  const [recent, prior, regions] = await Promise.all([
+    entityWindows(tenantId, windowHours, 0, regionPick),
+    entityWindows(tenantId, windowHours * 2, windowHours, regionPick),
+    distinctSignalRegions(tenantId),
   ]);
   const topics = topicMomentum(recent, prior).slice(0, TOP);
-  const drill = await Promise.all(
-    topics.map((t) =>
-      signalsMentioning(tenantId, t.topic, windowHours, 3),
+  const [drill, owners] = await Promise.all([
+    Promise.all(
+      topics.map((t) => signalsMentioning(tenantId, t.topic, windowHours, 3)),
     ),
-  );
+    Promise.all(
+      topics.map((t) => topicDomains(tenantId, t.topic, windowHours, 4)),
+    ),
+  ]);
 
   return (
     <main className="min-h-screen max-w-4xl mx-auto p-6 md:p-10">
@@ -82,6 +93,25 @@ export default async function TrendsPage({
             {[6, 12, 24, 48, 168].map((h) => (
               <option key={h} value={h}>
                 Last {h} hours
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Local pulse:{" "}
+          <select
+            name="region"
+            defaultValue={regionPick ?? ""}
+            className="border rounded-sm px-2 py-1"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg)",
+            }}
+          >
+            <option value="">everywhere</option>
+            {regions.map((r) => (
+              <option key={r} value={r}>
+                {r}
               </option>
             ))}
           </select>
@@ -137,6 +167,21 @@ export default async function TrendsPage({
                   momentum {t.momentum} · ×{t.recent} recent vs ×{t.prior}{" "}
                   prior · {t.trajectory}
                 </p>
+                {owners[i].length > 0 ? (
+                  <p
+                    className="text-xs mt-1"
+                    style={{
+                      fontFamily: "var(--font-ui)",
+                      color: "var(--color-fg-tertiary)",
+                    }}
+                    title="Which sources own coverage of this topic in the inflow (Topic → Domains)"
+                  >
+                    coverage:{" "}
+                    {owners[i]
+                      .map((o) => `${o.host} ×${o.n}`)
+                      .join(" · ")}
+                  </p>
+                ) : null}
                 {drill[i].length > 0 ? (
                   <ul className="mt-2 space-y-1">
                     {drill[i].map((s) => (

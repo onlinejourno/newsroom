@@ -629,6 +629,7 @@ export async function entityWindows(
   tenantId: string,
   fromHoursAgo: number,
   toHoursAgo: number,
+  region?: string | null,
 ): Promise<string[][]> {
   const pool = getPool();
   const { rows } = await pool.query<{ entities: string[] | null }>(
@@ -640,11 +641,12 @@ export async function entityWindows(
       from signals
      where tenant_id = $1
        and enrichment->'analyse'->'entities' is not null
+       and ($4::text is null or lower(region) = lower($4))
        and coalesce(published_at, fetched_at)
            between now() - make_interval(hours => $2)
                and now() - make_interval(hours => $3)
     `,
-    [tenantId, fromHoursAgo, toHoursAgo],
+    [tenantId, fromHoursAgo, toHoursAgo, region ?? null],
   );
   return rows.map((r) => r.entities ?? []);
 }
@@ -670,4 +672,42 @@ export async function signalsMentioning(
     [tenantId, entity, sinceHours, limit],
   );
   return rows;
+}
+
+// Which domains own coverage of a topic in our corpus (Topic -> Domains).
+export async function topicDomains(
+  tenantId: string,
+  entity: string,
+  sinceHours: number,
+  limit = 6,
+): Promise<{ host: string; n: number }[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ host: string; n: number }>(
+    `
+    select regexp_replace(substring(url from 'https?://([^/]+)'), '^www\\.', '')
+             as host,
+           count(*)::int as n
+      from signals
+     where tenant_id = $1
+       and enrichment->'analyse'->'entities' @> to_jsonb(array[$2::text])
+       and coalesce(published_at, fetched_at) >= now() - make_interval(hours => $3)
+     group by 1
+     order by 2 desc
+     limit $4
+    `,
+    [tenantId, entity, sinceHours, limit],
+  );
+  return rows;
+}
+
+export async function distinctSignalRegions(
+  tenantId: string,
+): Promise<string[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ region: string }>(
+    `select distinct region from signals
+      where tenant_id = $1 and region is not null order by region`,
+    [tenantId],
+  );
+  return rows.map((r) => r.region);
 }
