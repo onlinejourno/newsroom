@@ -287,8 +287,10 @@ def build_frame_prompt(
 
 
 ENRICH_BEATS = (
-    "National", "Politics", "Courts", "Business", "Economy", "Science & Tech",
-    "Climate", "Health", "Education", "Sport", "Culture", "Investigations", "Other",
+    "National", "Politics", "Governance", "Courts", "Crime", "Business",
+    "Economy", "Markets", "Agriculture", "World", "Defence", "Science & Tech",
+    "Climate", "Health", "Education", "Sport", "Culture", "Investigations",
+    "Other",
 )
 
 # User Needs Model drivers (ADR 0049) — what reader need a story serves.
