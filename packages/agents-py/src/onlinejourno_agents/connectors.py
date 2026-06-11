@@ -51,6 +51,15 @@ class SearchConsoleClient(Protocol):
     # Per-URL drill-down underneath (not the headline view).
     def performance(self, url: str, *, range: str) -> dict[str, Any]: ...
 
+    # PROVISIONED, no adapter yet (ADR 0054-C adjacency): AI-Mode query
+    # fan-out. When Search Console exposes the sub-queries Gemini fans a
+    # query out into, this returns them per URL/entity so the AI-surface
+    # audit can score whether a story answers the fan-out, not just the
+    # head query. Adapters raise NotImplementedError until the API exists.
+    def query_fanout(
+        self, *, url: str | None = None, entity: str | None = None, range: str
+    ) -> dict[str, Any]: ...
+
 
 @runtime_checkable
 class TrendsClient(Protocol):
