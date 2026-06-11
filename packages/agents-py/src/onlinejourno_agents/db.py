@@ -944,3 +944,80 @@ def mark_alerted(
             """,
             (channel, tenant_id, signal_id),
         )
+
+
+# ── Own-story classification (ADR 0054-B: the Differentiation Ratio needs the
+# Classify + Framing passes on stories, not only signals) ────────────────────
+
+
+def stories_needing_classify(
+    conn: psycopg.Connection, tenant_id: UUID, *, limit: int = 60
+) -> list[dict[str, Any]]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, body_text
+              from stories
+             where tenant_id = %s and enrichment->'classify' is null
+             order by coalesce(published_at, created_at) desc
+             limit %s
+            """,
+            (tenant_id, limit),
+        )
+        return list(cur.fetchall())
+
+
+def update_story_classify(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    story_id: UUID,
+    beat: str,
+    enrichment: dict[str, Any],
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            update stories
+               set beat = coalesce(beat, %s),
+                   enrichment = coalesce(enrichment, '{}'::jsonb) || %s::jsonb
+             where tenant_id = %s and id = %s
+            """,
+            (beat, Json(enrichment), tenant_id, story_id),
+        )
+
+
+def stories_needing_framing(
+    conn: psycopg.Connection, tenant_id: UUID, *, limit: int = 60
+) -> list[dict[str, Any]]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, body_text
+              from stories
+             where tenant_id = %s and enrichment->'framing' is null
+             order by coalesce(published_at, created_at) desc
+             limit %s
+            """,
+            (tenant_id, limit),
+        )
+        return list(cur.fetchall())
+
+
+def update_story_framing(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    story_id: UUID,
+    framing: dict[str, Any],
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            update stories
+               set enrichment = coalesce(enrichment, '{}'::jsonb)
+                   || jsonb_build_object('framing', %s::jsonb)
+             where tenant_id = %s and id = %s
+            """,
+            (Json(framing), tenant_id, story_id),
+        )

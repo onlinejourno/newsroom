@@ -31,6 +31,7 @@ const ROOMS: {
     items: [
       { path: "journalists", label: "Journalists" },
       { path: "gaps", label: "Regional gaps" },
+      { path: "coverage", label: "Coverage gaps" },
     ],
   },
   {

@@ -199,6 +199,7 @@ def cmd_frame(args: argparse.Namespace) -> int:
         completer=completer,
         since_hours=args.since_hours,
         limit=args.limit,
+        target="stories" if args.stories else "signals",
     )
     if res.status == "empty":
         print("No signals need framing.", file=sys.stderr)
@@ -300,6 +301,21 @@ def cmd_enrich(args: argparse.Namespace) -> int:
     """L2 Analyse — enrich raw signals with entities, geo, beat, topic."""
     from onlinejourno_agents.enrich import run_enrich
 
+    if args.stories:
+        from onlinejourno_agents.enrich import run_enrich_stories
+
+        completer = make_completer(_resolve_provider())
+        res = run_enrich_stories(
+            tenant_slug=args.tenant, completer=completer, limit=args.limit
+        )
+        if res.status == "empty":
+            print("No stories need classification.", file=sys.stderr)
+            return 1
+        print(
+            f"classified {res.enriched} stories · {res.failed} failed · "
+            f"spent ${res.spent_usd:.4f} of ${res.cap_usd:.2f} cap"
+        )
+        return 0
     nlp = None
     if args.nlp:
         from onlinejourno_agents.connectors import ConnectorConfig, make_connector
@@ -653,6 +669,11 @@ def main(argv: list[str] | None = None) -> int:
     p_en.add_argument("--since-hours", type=int, default=48)
     p_en.add_argument("--limit", type=int, default=60)
     p_en.add_argument(
+        "--stories",
+        action="store_true",
+        help="classify OWN stories instead of signals (ADR 0054-B)",
+    )
+    p_en.add_argument(
         "--nlp",
         default=None,
         help="NLP-first entities/geo via this provider (e.g. spacy), ADR 0048",
@@ -681,6 +702,11 @@ def main(argv: list[str] | None = None) -> int:
     p_fr.add_argument("--tenant", required=True)
     p_fr.add_argument("--since-hours", type=int, default=168)
     p_fr.add_argument("--limit", type=int, default=60)
+    p_fr.add_argument(
+        "--stories",
+        action="store_true",
+        help="frame OWN stories instead of signals (ADR 0054-B)",
+    )
     p_fr.set_defaults(func=cmd_frame)
 
     p_al = sub.add_parser("alert", help="push high-trend signals over ntfy (m-alerts)")

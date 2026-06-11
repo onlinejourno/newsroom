@@ -138,3 +138,68 @@ def run_enrich(
             conn.commit()
 
     return EnrichResult(enriched, failed, spent, cap, "success")
+
+
+def run_enrich_stories(
+    *,
+    tenant_slug: str,
+    completer: Completer,
+    limit: int = 60,
+) -> EnrichResult:
+    """Classify OWN stories (beat / reader need / topic / entities) — the
+    Differentiation Ratio's prerequisite (ADR 0054-B). No geo columns: these
+    are the newsroom's articles, not located inflow."""
+    enriched = 0
+    failed = 0
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, tenant_slug)
+        output_language = db.tenant_output_language(conn, tenant_id)
+        cap = db.daily_cap_usd(conn, tenant_id)
+        spent = db.today_cost_usd(conn, tenant_id)
+        rows = db.stories_needing_classify(conn, tenant_id, limit=limit)
+        if not rows:
+            return EnrichResult(0, 0, spent, cap, "empty")
+
+        for batch in _chunks(rows, BATCH_SIZE):
+            if spent >= cap:
+                break
+            parts = build_enrich_prompt(batch, output_language=output_language)
+            try:
+                completion = completer(
+                    system=parts.system,
+                    user=parts.user,
+                    max_tokens=_max_tokens(len(batch)),
+                )
+            except Exception:
+                failed += len(batch)
+                continue
+            spent += completion.cost_usd
+
+            results = (completion.data or {}).get("results") or []
+            by_index = {r.get("index"): r for r in results if isinstance(r, dict)}
+            for i, story in enumerate(batch, start=1):
+                r = by_index.get(i)
+                if not isinstance(r, dict):
+                    continue
+                beat = _coerce_beat(r.get("beat"))
+                db.update_story_classify(
+                    conn,
+                    tenant_id=tenant_id,
+                    story_id=story["id"],
+                    beat=beat,
+                    enrichment={
+                        "analyse": {
+                            "entities": r.get("entities") or [],
+                            "summary": r.get("summary"),
+                        },
+                        "classify": {
+                            "beat": beat,
+                            "topic": r.get("topic"),
+                            "user_need": _coerce_need(r.get("user_need")),
+                        },
+                    },
+                )
+                enriched += 1
+            conn.commit()
+
+    return EnrichResult(enriched, failed, spent, cap, "success")

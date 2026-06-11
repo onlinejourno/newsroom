@@ -94,16 +94,22 @@ def run_framing(
     completer: Completer,
     since_hours: int = 168,
     limit: int = 60,
+    target: str = "signals",
 ) -> FramingResult:
+    """``target`` = "signals" (the inflow) or "stories" (own published work,
+    ADR 0054-B — the Differentiation Ratio needs frames on stories)."""
     coded = 0
     failed = 0
     with db.connect() as conn:
         tenant_id = db.tenant_id_for_slug(conn, tenant_slug)
         cap = db.daily_cap_usd(conn, tenant_id)
         spent = db.today_cost_usd(conn, tenant_id)
-        rows = db.signals_needing_framing(
-            conn, tenant_id, since_hours=since_hours, limit=limit
-        )
+        if target == "stories":
+            rows = db.stories_needing_framing(conn, tenant_id, limit=limit)
+        else:
+            rows = db.signals_needing_framing(
+                conn, tenant_id, since_hours=since_hours, limit=limit
+            )
         if not rows:
             return FramingResult(0, 0, spent, cap, "empty")
 
@@ -129,9 +135,14 @@ def run_framing(
                 if coding is None:
                     failed += 1
                     continue
-                db.update_signal_framing(
-                    conn, tenant_id=tenant_id, signal_id=sig["id"], framing=coding
-                )
+                if target == "stories":
+                    db.update_story_framing(
+                        conn, tenant_id=tenant_id, story_id=sig["id"], framing=coding
+                    )
+                else:
+                    db.update_signal_framing(
+                        conn, tenant_id=tenant_id, signal_id=sig["id"], framing=coding
+                    )
                 coded += 1
             conn.commit()
 
