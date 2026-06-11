@@ -1,36 +1,55 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const SURFACES = [
+// The five rooms of the story lifecycle (ADR 0053), each with who stands in
+// it and what question it answers. The front door routes by role, not tool.
+const ROOMS = [
   {
     href: "signals",
-    title: "Signals",
-    desc: "The enriched inflow — every public-record item with beat, place, entities and the reader need it serves.",
-    label: "Collect · Analyse · Classify",
+    room: "① Today",
+    who: "Reporter · Bureau chief · Editor",
+    title: "What is going on",
+    desc: "The public record flowing in — governments, courts, tenders, wires — analysed, classified and routed to the reporter on the beat, with alerts. Potential tells her what to take up first: trending now, likely to trend today.",
+    links: [
+      { href: "potential", label: "Potential" },
+      { href: "trends", label: "Trends" },
+      { href: "journalists", label: "Reporter feeds" },
+    ],
   },
   {
-    href: "journalists",
-    title: "Reporter inflows",
-    desc: "The directory routes each signal to the reporter on the beat — open a correspondent to see her personal feed.",
-    label: "Route",
+    href: "scores",
+    room: "② Stories",
+    who: "Desk · Reporter",
+    title: "A fair chance on every surface",
+    desc: "Once published, is the story built for each surface — Discover, News, Search, and the AI surfaces each reading in their own way? Automatic audits, paste-a-URL checks, and the hidden gems the night desk buried.",
+    links: [
+      { href: "gems", label: "Hidden gems" },
+      { href: "scores", label: "Audit a URL" },
+    ],
   },
   {
-    href: "shortlist",
-    title: "Shortlist",
-    desc: "Scored picks for the desk — what deserves attention now, with the why.",
-    label: "Score",
+    href: "probity",
+    room: "③ Standards",
+    who: "Everyone",
+    title: "Probity and verification",
+    desc: "What the page does to the reader — trackers, consent honesty, weight — seared into the workflow. Factcheck joins here. The conscience dashboards: reader-need mix and framing balance.",
+    links: [{ href: "signals", label: "Need mix" }],
   },
   {
-    href: "brief",
-    title: "Morning brief",
-    desc: "The composed editorial brief, built from the scored inflow.",
-    label: "Deliver",
+    href: "gaps",
+    room: "④ Newsroom",
+    who: "Editor · Vertical heads",
+    title: "People and strategy",
+    desc: "Who covers what, where the record moves with no reporter on it, and — coming — the masthead's strategic topics and what its subscribers actually read.",
+    links: [{ href: "journalists", label: "Directory" }],
   },
   {
-    href: "admin/sources",
-    title: "Admin",
-    desc: "Sources, connectors (CMS · NLP · keywords), and the optimization-surface registry.",
-    label: "Configure",
+    href: "scores",
+    room: "⑤ Learn",
+    who: "Everyone new to digital",
+    title: "The medium, explained inside the tool",
+    desc: "Assistive for those who don't know, a workhorse for the cognoscenti: every score, frame and surface explains itself. Start with the explainers on Potential and Scores; the full learning layer (m-learn) is being built.",
+    links: [{ href: "potential", label: "See an explainer" }],
   },
 ] as const;
 
@@ -46,8 +65,8 @@ export default async function Home({
         <Image
           src="/brand/logo-mark.png"
           alt="OnlineJourno"
-          width={120}
-          height={120}
+          width={110}
+          height={110}
           priority
           className="mx-auto mb-8"
         />
@@ -70,43 +89,69 @@ export default async function Home({
             lineHeight: 1.55,
           }}
         >
-          The platform connects the newsroom&rsquo;s CMS to the outside world
-          and makes the two ends talk: public signals flow in to the reporter
-          on the beat; her published story is audited for the fair chance it
-          deserves on every distribution surface.
+          One place where everyone in the newsroom — rookie to editor — sees
+          what is going on and what needs to be done: the original sources in,
+          the story&rsquo;s fair chance out. About journalism, by journalists,
+          for journalists. Open source.
         </p>
 
         <hr className="ds-rule my-10" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-          {SURFACES.map((s) => (
-            <Link
-              key={s.href}
-              href={`/${locale}/${s.href}`}
-              className="rounded-sm border p-4 block hover:shadow-sm transition-shadow"
+        <div className="grid grid-cols-1 gap-4 text-left">
+          {ROOMS.map((r) => (
+            <div
+              key={r.room}
+              className="rounded-sm border p-5"
               style={{
                 borderColor: "var(--color-border)",
                 background: "var(--color-bg-card)",
               }}
             >
-              <p className="ds-label mb-1">{s.label}</p>
-              <p
-                className="text-lg font-bold mb-1"
+              <div
+                className="flex items-baseline justify-between gap-3 flex-wrap mb-1"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                <p className="ds-label">{r.room}</p>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--color-fg-tertiary)" }}
+                >
+                  {r.who}
+                </span>
+              </div>
+              <Link
+                href={`/${locale}/${r.href}`}
+                className="text-xl font-bold hover:underline"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                {s.title}
-              </p>
+                {r.title}
+              </Link>
               <p
-                className="text-sm"
+                className="text-sm mt-1"
                 style={{
                   fontFamily: "var(--font-body)",
                   color: "var(--color-fg-secondary)",
                   lineHeight: 1.5,
                 }}
               >
-                {s.desc}
+                {r.desc}
               </p>
-            </Link>
+              <p
+                className="text-sm mt-2 flex gap-4 flex-wrap"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                {r.links.map((l) => (
+                  <Link
+                    key={l.label}
+                    href={`/${locale}/${l.href}`}
+                    className="underline"
+                    style={{ color: "var(--color-brand)" }}
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </p>
+            </div>
           ))}
         </div>
 
@@ -117,12 +162,12 @@ export default async function Home({
           style={{ fontFamily: "var(--font-ui)" }}
         >
           <div>
-            <p className="ds-label mb-2">Backbone</p>
+            <p className="ds-label mb-2">The loop</p>
             <p
               className="font-semibold text-sm"
               style={{ color: "var(--color-fg-primary)" }}
             >
-              Collect → Analyse → Classify → Route → Score
+              Sources → Analyse → Classify → Route → Alert → Publish → Audit
             </p>
           </div>
           <div>
@@ -131,16 +176,16 @@ export default async function Home({
               className="font-semibold text-sm"
               style={{ color: "var(--color-fg-primary)" }}
             >
-              Deuze · PEJ frames · User Needs
+              PEJ framing · Deuze · User Needs
             </p>
           </div>
           <div>
-            <p className="ds-label mb-2">Maintainer</p>
+            <p className="ds-label mb-2">Licence</p>
             <p
               className="font-semibold text-sm"
               style={{ color: "var(--color-fg-primary)" }}
             >
-              Subhash Rai (solo)
+              Apache 2.0 — run it in your newsroom
             </p>
           </div>
         </div>
