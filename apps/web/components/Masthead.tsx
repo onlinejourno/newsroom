@@ -7,6 +7,7 @@ const EDITORIAL = [
   { path: "trends", label: "Trends" },
   { path: "scores", label: "Scores" },
   { path: "gems", label: "Gems" },
+  { path: "probity", label: "Probity" },
   { path: "journalists", label: "Journalists" },
 ];
 const ADMIN = [
