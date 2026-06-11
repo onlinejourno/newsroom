@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { SignalChips } from "@/components/SignalChips";
 import {
+  archiveMatches,
   journalistsForSignal,
   signalById,
   tenantIdForSlug,
@@ -70,8 +71,11 @@ export default async function SignalDetailPage({
     );
   }
 
-  const routed = await journalistsForSignal(tenantId!, id);
   const e = signal.enrichment ?? {};
+  const [routed, archive] = await Promise.all([
+    journalistsForSignal(tenantId!, id),
+    archiveMatches(tenantId!, e.analyse?.entities ?? []),
+  ]);
   const analyse = e.analyse ?? {};
   const classify = e.classify ?? {};
   const framing = e.framing ?? {};
@@ -211,11 +215,31 @@ export default async function SignalDetailPage({
           )}
         </Stage>
 
-        <Stage label="⑥ Archive context" by="m-archive">
-          <p style={{ color: "var(--color-fg-tertiary)" }}>
-            Not yet connected — the pluggable archive (ADR 0042) attaches the
-            newsroom&rsquo;s prior coverage of these entities here.
-          </p>
+        <Stage label="⑥ Archive context" by="m-archive v1 — own coverage">
+          {archive.length ? (
+            <ul className="space-y-1">
+              {archive.map((m) => (
+                <li key={m.id}>
+                  <a
+                    className="underline"
+                    href={m.url ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {m.headline ?? m.url}
+                  </a>{" "}
+                  <span style={{ color: "var(--color-fg-tertiary)" }}>
+                    · {m.overlap} shared entit{m.overlap === 1 ? "y" : "ies"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ color: "var(--color-fg-tertiary)" }}>
+              No prior coverage of these entities in the connected corpus —
+              a digitised archive plugs in via the connector seam (ADR 0042).
+            </p>
+          )}
         </Stage>
       </div>
     </main>

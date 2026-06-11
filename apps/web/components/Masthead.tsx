@@ -29,6 +29,7 @@ const ROOMS: {
   {
     label: "Newsroom",
     items: [
+      { path: "onboarding", label: "Join — 3 questions" },
       { path: "journalists", label: "Journalists" },
       { path: "gaps", label: "Regional gaps" },
       { path: "coverage", label: "Coverage gaps" },
@@ -67,7 +68,7 @@ export default function Masthead({ locale = "en" }: { locale?: string }) {
 
       <nav className="flex items-center gap-x-5 gap-y-1 text-sm flex-wrap md:ml-auto">
         {ROOMS.map((room) => (
-          <details key={room.label} className="relative">
+          <details key={room.label} name="masthead-rooms" className="relative">
             <summary
               className="cursor-pointer list-none select-none no-underline hover:underline font-semibold"
               style={linkStyle}

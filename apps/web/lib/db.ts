@@ -884,3 +884,66 @@ export async function storyCount(tenantId: string): Promise<number> {
   );
   return rows[0]?.n ?? 0;
 }
+
+// EIP onboarding (3 questions, under 2 minutes): create the journalist whose
+// district/beats drive routing from the next collect run.
+export async function createJournalist(
+  tenantId: string,
+  input: {
+    slug: string;
+    name: string;
+    region: string;
+    beats: string[];
+    role: string;
+    language: string;
+  },
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `insert into journalist_profiles
+       (tenant_id, slug, name, region, beats, role, language)
+     values ($1,$2,$3,$4,$5,$6,$7)
+     on conflict (tenant_id, slug) do update
+       set region = excluded.region, beats = excluded.beats,
+           role = excluded.role, language = excluded.language`,
+    [
+      tenantId,
+      input.slug,
+      input.name,
+      input.region,
+      JSON.stringify(input.beats),
+      input.role,
+      input.language,
+    ],
+  );
+}
+
+// m-archive v1 (ADR 0042): the newsroom's prior coverage of a signal's
+// entities — top matches by shared-entity count from own stories. The OSS
+// stand-in for a digitised archive (Sarvajna-class systems plug in via the
+// connector seam later); v1 is deterministic entity overlap, no embeddings.
+export async function archiveMatches(
+  tenantId: string,
+  entities: string[],
+  limit = 3,
+): Promise<
+  { id: string; headline: string | null; url: string | null; overlap: number }[]
+> {
+  if (entities.length === 0) return [];
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `
+    select id, headline, url,
+           (select count(*) from jsonb_array_elements_text(
+              enrichment->'analyse'->'entities') e
+             where e = any($2::text[]))::int as overlap
+      from stories
+     where tenant_id = $1
+       and enrichment->'analyse'->'entities' is not null
+     order by overlap desc, coalesce(published_at, created_at) desc
+     limit $3
+    `,
+    [tenantId, entities, limit],
+  );
+  return rows.filter((r: { overlap: number }) => r.overlap > 0);
+}
