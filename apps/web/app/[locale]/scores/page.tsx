@@ -1,9 +1,92 @@
 import { analyzeUrl, type AnalyzeResult } from "@/lib/analyze";
-import { storiesWithScores, tenantIdForSlug } from "@/lib/db";
+import {
+  storiesWithScores,
+  storyClassifications,
+  storyCount,
+  tenantIdForSlug,
+} from "@/lib/db";
+import {
+  ROLE_META,
+  subscriptionRole,
+  type SubscriptionRole,
+} from "@/lib/differentiation";
 
 export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
+
+// The Differentiation Ratio (ADR 0054-B): share of own output that is
+// conversion/renewal-driver content vs the commodity AI summarises for free —
+// "the single most important number" for a subscription masthead.
+function DifferentiationPanel({
+  classes,
+  total,
+}: {
+  classes: { frame: string | null; user_need: string | null }[];
+  total: number;
+}) {
+  if (classes.length === 0) return null;
+  const counts: Record<SubscriptionRole, number> = {
+    table_stakes: 0,
+    conversion_driver: 0,
+    renewal_driver: 0,
+  };
+  for (const c of classes) counts[subscriptionRole(c.frame, c.user_need)]++;
+  const n = classes.length;
+  const drivers = counts.conversion_driver + counts.renewal_driver;
+  const ratio = Math.round((drivers / n) * 100);
+  const order: SubscriptionRole[] = [
+    "conversion_driver",
+    "renewal_driver",
+    "table_stakes",
+  ];
+  return (
+    <section
+      className="rounded-sm border p-4 mb-8"
+      style={{
+        borderColor: "var(--color-border)",
+        background: "var(--color-bg-card)",
+        fontFamily: "var(--font-ui)",
+      }}
+    >
+      <p className="ds-label mb-2">
+        Differentiation ratio · {ratio}% driver content · {n} of {total}{" "}
+        stories classified
+      </p>
+      <div
+        className="flex h-3 w-full overflow-hidden rounded-full mb-2"
+        style={{ background: "var(--color-border)" }}
+      >
+        {order.map((role) =>
+          counts[role] > 0 ? (
+            <div
+              key={role}
+              style={{
+                width: `${(counts[role] / n) * 100}%`,
+                background: ROLE_META[role].color,
+              }}
+              title={`${ROLE_META[role].label}: ${counts[role]}`}
+            />
+          ) : null,
+        )}
+      </div>
+      <p className="text-xs" style={{ color: "var(--color-fg-secondary)" }}>
+        {order
+          .map(
+            (role) =>
+              `${ROLE_META[role].label} ${Math.round((counts[role] / n) * 100)}%`,
+          )
+          .join(" · ")}
+      </p>
+      <p className="text-xs mt-1" style={{ color: "var(--color-fg-tertiary)" }}>
+        Heuristic v1 over PEJ frame + reader need (ADR 0054): analysis,
+        accountability and profile frames → conversion; service (&lsquo;do&rsquo;)
+        and explainer depth → renewal; straight/update output → table stakes,
+        the layer AI summarises for free.
+      </p>
+    </section>
+  );
+}
 
 const SURFACE_ORDER = ["discover", "google_news", "google_search"] as const;
 const SURFACE_SHORT: Record<string, string> = {
@@ -100,7 +183,13 @@ export default async function ScoresPage({
   const { section, sort, url, need } = await searchParams;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
 
-  const all = tenantId ? await storiesWithScores(tenantId) : [];
+  const [all, classes, total] = tenantId
+    ? await Promise.all([
+        storiesWithScores(tenantId),
+        storyClassifications(tenantId),
+        storyCount(tenantId),
+      ])
+    : [[], [], 0];
   const sections = Array.from(
     new Set(all.map((s) => s.section).filter((x): x is string => Boolean(x))),
   ).sort();
@@ -140,6 +229,8 @@ export default async function ScoresPage({
           Search. {rows.length} of {all.length} shown.
         </p>
       </header>
+
+      <DifferentiationPanel classes={classes} total={total} />
 
       <section
         className="rounded-sm border p-4 mb-8"

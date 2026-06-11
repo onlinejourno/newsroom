@@ -809,3 +809,78 @@ export async function regionCoverage(
   );
   return rows;
 }
+
+// Coverage Gap Matrix (ADR 0054-A): per beat — enabled sources (and how many
+// are primary, i.e. not msm_test), and 7-day signal flow.
+export type CoverageRow = {
+  beat: string;
+  src_enabled: number;
+  src_primary: number;
+  src_names: string | null;
+  signals7d: number;
+};
+
+export async function coverageMatrix(tenantId: string): Promise<CoverageRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<CoverageRow>(
+    `
+    with feeds as (
+      select unnest(sections_fed) as beat,
+             count(*) filter (where enabled)::int as src_enabled,
+             count(*) filter (
+               where enabled and coalesce(family,'') <> 'msm_test'
+             )::int as src_primary,
+             string_agg(name, ', ' order by name)
+               filter (where enabled) as src_names
+        from sources
+       where tenant_id = $1
+       group by 1
+    ),
+    flow as (
+      select beat, count(*)::int as n
+        from signals
+       where tenant_id = $1 and beat is not null
+         and coalesce(published_at, fetched_at) >= now() - interval '7 days'
+       group by 1
+    )
+    select coalesce(f.beat, fl.beat) as beat,
+           coalesce(f.src_enabled, 0) as src_enabled,
+           coalesce(f.src_primary, 0) as src_primary,
+           f.src_names,
+           coalesce(fl.n, 0) as signals7d
+      from feeds f
+      full outer join flow fl on f.beat = fl.beat
+     order by 1
+    `,
+    [tenantId],
+  );
+  return rows;
+}
+
+// Own stories' classification for the Differentiation Ratio (ADR 0054-B).
+export async function storyClassifications(
+  tenantId: string,
+): Promise<{ frame: string | null; user_need: string | null }[]> {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `
+    select enrichment->'framing'->>'frame' as frame,
+           enrichment->'classify'->>'user_need' as user_need
+      from stories
+     where tenant_id = $1
+       and (enrichment->'framing' is not null
+            or enrichment->'classify' is not null)
+    `,
+    [tenantId],
+  );
+  return rows;
+}
+
+export async function storyCount(tenantId: string): Promise<number> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ n: number }>(
+    "select count(*)::int as n from stories where tenant_id = $1",
+    [tenantId],
+  );
+  return rows[0]?.n ?? 0;
+}
