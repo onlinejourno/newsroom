@@ -1021,3 +1021,37 @@ def update_story_framing(
             """,
             (Json(framing), tenant_id, story_id),
         )
+
+
+def stories_from_signals(
+    conn: psycopg.Connection,
+    tenant_id: UUID,
+    *,
+    host_like: str,
+    limit: int = 30,
+) -> int:
+    """Promote ingested signals from one publication into the own-stories
+    corpus (demo mode: audit a real masthead's output exactly as the
+    discover-dashboard prototype did with thehindu.com RSS). Idempotent via
+    the (tenant_id, cms_ref) unique key; cms_ref = 'sig:<signal id>'."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            insert into stories
+                   (tenant_id, cms_ref, url, headline, body_text, section,
+                    status, published_at)
+            select s.tenant_id, 'sig:' || s.id, s.url, s.headline,
+                   s.body_text, s.beat, 'published',
+                   coalesce(s.published_at, s.fetched_at)
+              from signals s
+             where s.tenant_id = %s
+               and s.url ilike %s
+               and coalesce(s.published_at, s.fetched_at)
+                   >= now() - interval '7 days'
+             order by coalesce(s.published_at, s.fetched_at) desc
+             limit %s
+            on conflict (tenant_id, cms_ref) do nothing
+            """,
+            (tenant_id, f"%{host_like}%", limit),
+        )
+        return cur.rowcount
