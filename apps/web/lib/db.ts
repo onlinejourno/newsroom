@@ -768,3 +768,44 @@ export async function journalistsForSignal(
   );
   return rows;
 }
+
+// Regional Gaps (EIP editor view): where signals flow vs where reporters are.
+export type RegionCoverageRow = {
+  region: string;
+  signals7d: number;
+  reporters: number;
+  reporter_names: string | null;
+};
+
+export async function regionCoverage(
+  tenantId: string,
+): Promise<RegionCoverageRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<RegionCoverageRow>(
+    `
+    with sig as (
+      select region, count(*)::int as n
+        from signals
+       where tenant_id = $1 and region is not null
+         and coalesce(published_at, fetched_at) >= now() - interval '7 days'
+       group by 1
+    ),
+    rep as (
+      select region, count(*)::int as r,
+             string_agg(name, ', ' order by name) as names
+        from journalist_profiles
+       where tenant_id = $1 and region is not null
+       group by 1
+    )
+    select coalesce(s.region, p.region) as region,
+           coalesce(s.n, 0) as signals7d,
+           coalesce(p.r, 0) as reporters,
+           p.names as reporter_names
+      from sig s
+      full outer join rep p on lower(s.region) = lower(p.region)
+     order by coalesce(s.n, 0) desc, region
+    `,
+    [tenantId],
+  );
+  return rows;
+}

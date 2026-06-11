@@ -900,3 +900,47 @@ def tenant_output_language(conn: psycopg.Connection, tenant_id: UUID) -> str:
     locale = (row or {}).get("primary_locale") or "en"
     lang = str(locale).split("-")[0].strip().lower()
     return lang if len(lang) in (2, 3) and lang.isalpha() else "en"
+
+
+def signals_for_alert(
+    conn: psycopg.Connection,
+    tenant_id: UUID,
+    *,
+    threshold: int = 70,
+    since_hours: int = 24,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    """High-trend signals not yet alerted (the EIP Alert stage)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, url, beat, region, trend_score
+              from signals
+             where tenant_id = %s
+               and trend_score >= %s
+               and enrichment->'alert' is null
+               and coalesce(published_at, fetched_at) >= now() - make_interval(hours => %s)
+             order by trend_score desc
+             limit %s
+            """,
+            (tenant_id, threshold, since_hours, limit),
+        )
+        return list(cur.fetchall())
+
+
+def mark_alerted(
+    conn: psycopg.Connection, *, tenant_id: UUID, signal_id: UUID, channel: str
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            update signals
+               set enrichment = coalesce(enrichment, '{}'::jsonb)
+                   || jsonb_build_object('alert', jsonb_build_object(
+                        'sent_at', to_char(now() at time zone 'utc',
+                                           'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+                        'channel', %s::text))
+             where tenant_id = %s and id = %s
+            """,
+            (channel, tenant_id, signal_id),
+        )
