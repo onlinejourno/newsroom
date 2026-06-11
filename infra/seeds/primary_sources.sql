@@ -32,3 +32,14 @@ update sources set auth='{"method":"api_key","secret_ref":"DATA_GOV_IN_KEY"}'
 update sources set family='msm_test', tier=9
  where tenant_id = :tenant
    and name ~ '^(The Hindu|BBC|Guardian|Al Jazeera|Mint|Economic Times|Business Standard|Moneycontrol)';
+
+-- Working primary feeds verified 2026-06-11 (regulators, exchange, think-tank,
+-- multilateral). UA param: gov WAFs block bot agents.
+insert into sources (tenant_id, name, kind, family, tier, sections_fed, url, rss_url, geo, enabled, params) values
+(:tenant,'RBI — Press releases','rss','regulator',1,'{Economy,Markets,Business}','https://rbi.org.in','https://rbi.org.in/pressreleases_rss.xml','IN',true,'{"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}'),
+(:tenant,'RBI — Notifications','rss','regulator',1,'{Economy,Markets}','https://rbi.org.in','https://rbi.org.in/notifications_rss.xml','IN',true,'{"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}'),
+(:tenant,'SEBI — Latest','rss','regulator',1,'{Markets,Business}','https://www.sebi.gov.in','https://www.sebi.gov.in/sebirss.xml','IN',true,'{"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}'),
+(:tenant,'BSE — Notices','rss','exchange',1,'{Markets,Business}','https://www.bseindia.com','https://www.bseindia.com/data/xml/notices.xml','IN',true,'{"user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}'),
+(:tenant,'CPR India — Research','rss','think_tank',2,'{Governance,Politics,Economy}','https://cprindia.org','https://cprindia.org/feed','IN',true,null),
+(:tenant,'UN News — Asia-Pacific','rss','multilateral',1,'{World}','https://news.un.org','https://news.un.org/feed/subscribe/en/news/region/asia-pacific/feed/rss.xml','UN',true,null)
+on conflict do nothing;

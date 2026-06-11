@@ -128,11 +128,12 @@ export default async function SignalsPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ beat?: string; primary?: string }>;
+  searchParams: Promise<{ beat?: string; msm?: string }>;
 }) {
   const { locale } = await params;
-  const { beat, primary } = await searchParams;
-  const primaryOnly = primary === "1";
+  const { beat, msm } = await searchParams;
+  // Original sources dominate by default (ADR 0050); MSM test feeds opt-in.
+  const primaryOnly = msm !== "1";
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
 
   if (!tenantId) {
@@ -221,11 +222,11 @@ export default async function SignalsPage({
         <label className="flex items-center gap-1">
           <input
             type="checkbox"
-            name="primary"
+            name="msm"
             value="1"
-            defaultChecked={primaryOnly}
+            defaultChecked={!primaryOnly}
           />
-          Primary sources only
+          Include test feeds (MSM)
         </label>
         <button
           type="submit"
