@@ -172,6 +172,23 @@ def cmd_nlp_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_alert(args: argparse.Namespace) -> int:
+    """m-alerts — push high-trend signals to the newsroom over ntfy."""
+    from onlinejourno_agents.alerts import run_alerts
+
+    res = run_alerts(
+        tenant_slug=args.tenant,
+        topic=args.topic,
+        threshold=args.threshold,
+        since_hours=args.since_hours,
+        limit=args.limit,
+        detail_base=args.detail_base,
+        dry_run=args.dry_run,
+    )
+    print(f"alerts: {res.sent} sent · {res.skipped} skipped · {res.status}")
+    return 0 if res.status in ("success", "empty") else 1
+
+
 def cmd_frame(args: argparse.Namespace) -> int:
     """m-framing-pej — code signals against the PEJ 14-frame codebook."""
     from onlinejourno_agents.framing import run_framing
@@ -665,6 +682,20 @@ def main(argv: list[str] | None = None) -> int:
     p_fr.add_argument("--since-hours", type=int, default=168)
     p_fr.add_argument("--limit", type=int, default=60)
     p_fr.set_defaults(func=cmd_frame)
+
+    p_al = sub.add_parser("alert", help="push high-trend signals over ntfy (m-alerts)")
+    p_al.add_argument("--tenant", required=True)
+    p_al.add_argument("--topic", default=None, help="ntfy topic (or NTFY_TOPIC env)")
+    p_al.add_argument("--threshold", type=int, default=70)
+    p_al.add_argument("--since-hours", type=int, default=24)
+    p_al.add_argument("--limit", type=int, default=10)
+    p_al.add_argument(
+        "--detail-base",
+        default="http://localhost:3001/en",
+        help="base URL for the signal-detail click-through",
+    )
+    p_al.add_argument("--dry-run", action="store_true")
+    p_al.set_defaults(func=cmd_alert)
 
     p_nlp = sub.add_parser("nlp-extract", help="NLP entity/geo extraction from text (spaCy)")
     p_nlp.add_argument("text")

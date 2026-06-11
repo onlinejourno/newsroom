@@ -8,6 +8,7 @@ const EDITORIAL = [
   { path: "scores", label: "Scores" },
   { path: "gems", label: "Gems" },
   { path: "probity", label: "Probity" },
+  { path: "gaps", label: "Regional Gaps" },
   { path: "journalists", label: "Journalists" },
 ];
 const ADMIN = [
@@ -43,17 +44,34 @@ export default function Masthead({ locale = "en" }: { locale?: string }) {
             {l.label}
           </a>
         ))}
-        <span aria-hidden className="opacity-40" style={linkStyle}>
-          ·
-        </span>
-        <span className="text-xs uppercase tracking-wide" style={{ color: "var(--color-fg-tertiary)" }}>
-          Admin
-        </span>
-        {ADMIN.map((l) => (
-          <a key={l.path} href={href(l.path)} className="no-underline hover:underline" style={linkStyle}>
-            {l.label}
-          </a>
-        ))}
+        {/* Admin folds into one menu (no-JS <details> popover). */}
+        <details className="relative">
+          <summary
+            className="cursor-pointer list-none select-none no-underline hover:underline"
+            style={linkStyle}
+          >
+            Admin ▾
+          </summary>
+          <div
+            className="absolute right-0 mt-2 flex flex-col gap-1 rounded-sm border p-3 min-w-36 shadow-sm"
+            style={{
+              background: "var(--color-bg-card)",
+              borderColor: "var(--color-border)",
+              zIndex: 20,
+            }}
+          >
+            {ADMIN.map((l) => (
+              <a
+                key={l.path}
+                href={href(l.path)}
+                className="no-underline hover:underline whitespace-nowrap"
+                style={linkStyle}
+              >
+                {l.label}
+              </a>
+            ))}
+          </div>
+        </details>
       </nav>
     </header>
   );
