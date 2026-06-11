@@ -711,3 +711,60 @@ export async function distinctSignalRegions(
   );
   return rows.map((r) => r.region);
 }
+
+// Single signal with its source row (the provenance trail on /signal/[id]).
+export async function signalById(
+  tenantId: string,
+  id: string,
+): Promise<
+  | (SignalRow & {
+      trend_score: number | null;
+      source_family: string | null;
+      source_kind: string | null;
+      source_url: string | null;
+    })
+  | null
+> {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `
+    select s.id, s.tenant_id, s.source_id, src.name as source_name,
+           s.url, s.headline, s.body_text, s.published_at, s.fetched_at,
+           s.language, s.beat, s.region, s.district, s.enrichment,
+           s.trend_score,
+           src.family as source_family, src.kind as source_kind,
+           src.url as source_url
+      from signals s
+      join sources src on src.id = s.source_id
+     where s.tenant_id = $1 and s.id = $2
+    `,
+    [tenantId, id],
+  );
+  return rows[0] ?? null;
+}
+
+// Reverse routing: which journalists this signal reaches (beat or place match
+// — the same predicate as signalsForJournalist, inverted).
+export async function journalistsForSignal(
+  tenantId: string,
+  signalId: string,
+): Promise<{ slug: string; name: string }[]> {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `
+    select j.slug, j.name
+      from journalist_profiles j, signals s
+     where j.tenant_id = $1 and s.tenant_id = $1 and s.id = $2
+       and (
+            (s.beat is not null and j.beats ? s.beat)
+         or (s.region is not null and j.region is not null
+             and lower(s.region) = lower(j.region))
+         or (s.district is not null and j.region is not null
+             and lower(s.district) = lower(j.region))
+       )
+     order by j.name
+    `,
+    [tenantId, signalId],
+  );
+  return rows;
+}

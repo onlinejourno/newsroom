@@ -25,7 +25,7 @@ export default async function FeedPage({
 }: {
   params: Promise<{ locale: string; journalist: string }>;
 }) {
-  const { journalist: slug } = await params;
+  const { locale, journalist: slug } = await params;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   const journalist = tenantId ? await journalistBySlug(tenantId, slug) : null;
 
@@ -113,6 +113,18 @@ export default async function FeedPage({
                 {signal.headline ?? signal.url}
               </a>
               <SignalChips signal={signal} />
+              <p
+                className="mt-2 text-xs"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                <a
+                  className="underline"
+                  style={{ color: "var(--color-fg-tertiary)" }}
+                  href={`/${locale}/signal/${signal.id}`}
+                >
+                  detail
+                </a>
+              </p>
             </li>
           ))}
         </ol>
