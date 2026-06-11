@@ -124,10 +124,13 @@ function truncate(value: string, max: number): string {
 }
 
 export default async function SignalsPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ beat?: string; primary?: string }>;
 }) {
+  const { locale } = await params;
   const { beat, primary } = await searchParams;
   const primaryOnly = primary === "1";
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
@@ -286,7 +289,10 @@ export default async function SignalsPage({
                   color: "var(--color-fg-tertiary)",
                 }}
               >
-                Fetched {formatDate(signal.fetched_at)} · {signal.language}
+                Fetched {formatDate(signal.fetched_at)} · {signal.language} ·{" "}
+                <a className="underline" href={`/${locale}/signal/${signal.id}`}>
+                  detail
+                </a>
               </p>
             </li>
           ))}
