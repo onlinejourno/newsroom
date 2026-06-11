@@ -172,6 +172,18 @@ def cmd_nlp_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_stories_from_signals(args: argparse.Namespace) -> int:
+    """Demo corpus: promote one publication's ingested signals into stories."""
+    with db.connect() as conn:
+        tenant_id = db.tenant_id_for_slug(conn, args.tenant)
+        n = db.stories_from_signals(
+            conn, tenant_id, host_like=args.host, limit=args.limit
+        )
+        conn.commit()
+    print(f"promoted {n} signals from {args.host} into stories")
+    return 0
+
+
 def cmd_alert(args: argparse.Namespace) -> int:
     """m-alerts — push high-trend signals to the newsroom over ntfy."""
     from onlinejourno_agents.alerts import run_alerts
@@ -708,6 +720,15 @@ def main(argv: list[str] | None = None) -> int:
         help="frame OWN stories instead of signals (ADR 0054-B)",
     )
     p_fr.set_defaults(func=cmd_frame)
+
+    p_sf = sub.add_parser(
+        "stories-from-signals",
+        help="promote a publication's signals into the own-stories demo corpus",
+    )
+    p_sf.add_argument("--tenant", required=True)
+    p_sf.add_argument("--host", required=True, help="e.g. thehindu.com")
+    p_sf.add_argument("--limit", type=int, default=30)
+    p_sf.set_defaults(func=cmd_stories_from_signals)
 
     p_al = sub.add_parser("alert", help="push high-trend signals over ntfy (m-alerts)")
     p_al.add_argument("--tenant", required=True)

@@ -246,7 +246,7 @@ export default async function ScoresPage({
             name="url"
             required
             defaultValue={url ?? ""}
-            placeholder="https://…/article"
+            placeholder="https://www.thehindu.com/…/article…ece"
             className="flex-1 min-w-64 border rounded-sm px-3 py-2 text-sm"
             style={{
               borderColor: "var(--color-border)",
