@@ -10,6 +10,8 @@ import {
 } from "@/lib/potential";
 import { topicMomentum } from "@/lib/trends";
 
+import { MinScoreSlider } from "@/components/MinScoreSlider";
+
 export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
@@ -223,17 +225,7 @@ export default async function PotentialPage({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="ds-label">Minimum score · {minScore}</span>
-          <input
-            type="range"
-            name="min"
-            min={0}
-            max={100}
-            defaultValue={minScore}
-            className="w-44"
-          />
-        </label>
+        <MinScoreSlider defaultValue={minScore} />
         <label className="flex items-center gap-1.5">
           <input type="checkbox" name="all" value="1" defaultChecked={showAll} />
           Show all stories
