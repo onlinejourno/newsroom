@@ -23,6 +23,14 @@ cd "$REPO" || exit 1
   uv run --package onlinejourno-agents onlinejourno-agents enrich --tenant "$TENANT" --since-hours 24 --limit 24 2>&1 | tail -1
   uv run --package onlinejourno-agents onlinejourno-agents frame --tenant "$TENANT" --since-hours 24 --limit 8 2>&1 | tail -1
   uv run --package onlinejourno-agents onlinejourno-agents trends --tenant "$TENANT" --window-hours 24 2>&1 | tail -1
+  # Demo own-corpus freshness: promote the demo masthead's new signals into
+  # stories and audit them (OJ_DEMO_HOST empty = skip).
+  if [ -n "${OJ_DEMO_HOST:-}" ]; then
+    uv run --package onlinejourno-agents onlinejourno-agents stories-from-signals --tenant "$TENANT" --host "$OJ_DEMO_HOST" --limit 20 2>&1 | tail -1
+    uv run --package onlinejourno-agents onlinejourno-agents score-stories --tenant "$TENANT" 2>&1 | tail -1
+    uv run --package onlinejourno-agents onlinejourno-agents enrich --tenant "$TENANT" --stories --limit 20 2>&1 | tail -1
+    uv run --package onlinejourno-agents onlinejourno-agents frame --tenant "$TENANT" --stories --limit 20 2>&1 | tail -1
+  fi
   if [ -n "${NTFY_TOPIC:-}" ]; then
     uv run --package onlinejourno-agents onlinejourno-agents alert --tenant "$TENANT" --threshold 80 2>&1 | tail -1
   else

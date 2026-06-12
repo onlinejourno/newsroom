@@ -1,5 +1,54 @@
+import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
+
+import {
+  entityWindows,
+  journalistBySlug,
+  storiesWithScores,
+  tenantIdForSlug,
+} from "@/lib/db";
+import { clearSession, roomForRole, sessionSlug } from "@/lib/session";
+import { topicMomentum } from "@/lib/trends";
+
+const TENANT_SLUG = "self";
+const SNAPSHOT_HOURS = 12;
+
+function composite(scores: Record<string, { score: number }>): number {
+  const vals = Object.values(scores).map((s) => s.score);
+  return vals.length
+    ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+    : 0;
+}
+
+// The newsroom situation at a glance (founder spec): published in the window,
+// made the grade (>=75, no embellishment needed), riding a moving topic,
+// needs tweaking (50-74), needs serious intervention (<50).
+async function orgSnapshot(tenantId: string) {
+  const [stories, recent, prior] = await Promise.all([
+    storiesWithScores(tenantId, 500, SNAPSHOT_HOURS),
+    entityWindows(tenantId, 48, 0),
+    entityWindows(tenantId, 96, 48),
+  ]);
+  const hot = new Set(
+    topicMomentum(recent, prior)
+      .filter((t) => t.momentum >= 45)
+      .map((t) => t.topic.toLowerCase()),
+  );
+  let grade = 0;
+  let tweak = 0;
+  let intervene = 0;
+  let trending = 0;
+  for (const st of stories) {
+    const c = composite(st.scores);
+    if (c >= 75) grade++;
+    else if (c >= 50) tweak++;
+    else intervene++;
+    const hl = (st.headline ?? "").toLowerCase();
+    if ([...hot].some((t) => t.length >= 3 && hl.includes(t))) trending++;
+  }
+  return { total: stories.length, grade, tweak, intervene, trending };
+}
 
 // The five rooms of the story lifecycle (ADR 0053), each with who stands in
 // it and what question it answers. The front door routes by role, not tool.
@@ -59,6 +108,17 @@ export default async function Home({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const slug = await sessionSlug();
+  const user =
+    tenantId && slug ? await journalistBySlug(tenantId, slug) : null;
+  const snapshot = tenantId && user ? await orgSnapshot(tenantId) : null;
+
+  async function signOut() {
+    "use server";
+    await clearSession();
+  }
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 py-16">
       <div className="max-w-3xl w-full text-center">
@@ -94,6 +154,84 @@ export default async function Home({
           the story&rsquo;s fair chance out. About journalism, by journalists,
           for journalists. Open source.
         </p>
+
+        {user && snapshot ? (
+          <section
+            className="rounded-sm border p-5 text-left mb-2"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg-card)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
+              <p className="ds-label">
+                The newsroom right now · last {SNAPSHOT_HOURS}h of published
+                output
+              </p>
+              <span className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
+                Signed in as <strong>{user.name}</strong> ({user.role ?? "reporter"})
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+              {[
+                { n: snapshot.total, l: "published", c: "var(--color-fg-primary)" },
+                { n: snapshot.grade, l: "made the grade", c: "#16a34a" },
+                { n: snapshot.trending, l: "riding a trend", c: "#2563eb" },
+                { n: snapshot.tweak, l: "need tweaking", c: "#d97706" },
+                { n: snapshot.intervene, l: "need intervention", c: "#dc2626" },
+              ].map((k) => (
+                <div key={k.l}>
+                  <p className="text-3xl font-extrabold" style={{ color: k.c, fontFamily: "var(--font-display)" }}>
+                    {k.n}
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--color-fg-secondary)" }}>
+                    {k.l}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-3 flex-wrap mt-4">
+              <Link
+                href={`/${locale}/${roomForRole(user.role, user.slug)}` as Route}
+                className="px-4 py-2 rounded-sm text-sm font-semibold no-underline"
+                style={{ background: "var(--color-brand)", color: "white" }}
+              >
+                Go to my room →
+              </Link>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="text-xs underline"
+                  style={{ color: "var(--color-fg-tertiary)" }}
+                >
+                  Sign out
+                </button>
+              </form>
+            </div>
+          </section>
+        ) : (
+          <section
+            className="rounded-sm border p-5 mb-2"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg-card)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            <p className="text-base mb-3">
+              Sign in to see your newsroom&rsquo;s situation — or join in
+              under two minutes.
+            </p>
+            <Link
+              href={`/${locale}/onboarding`}
+              className="px-4 py-2 rounded-sm text-sm font-semibold no-underline"
+              style={{ background: "var(--color-brand)", color: "white" }}
+            >
+              Sign in / Join →
+            </Link>
+          </section>
+        )}
 
         <hr className="ds-rule my-10" />
 

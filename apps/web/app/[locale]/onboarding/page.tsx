@@ -1,10 +1,14 @@
+import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import {
   createJournalist,
   distinctSignalRegions,
+  journalistBySlug,
+  listJournalists,
   tenantIdForSlug,
 } from "@/lib/db";
+import { roomForRole, setSessionSlug } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +45,12 @@ export default async function OnboardingPage({
 }) {
   const { locale } = await params;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
-  const regions = tenantId ? await distinctSignalRegions(tenantId) : [];
+  const [regions, existing] = tenantId
+    ? await Promise.all([
+        distinctSignalRegions(tenantId),
+        listJournalists(tenantId),
+      ])
+    : [[], []];
 
   async function join(formData: FormData) {
     "use server";
@@ -62,7 +71,19 @@ export default async function OnboardingPage({
       role,
       language,
     });
-    redirect(`/${locale}/feed/${slug}`);
+    await setSessionSlug(slug);
+    redirect(`/${locale}/${roomForRole(role, slug)}` as Route);
+  }
+
+  async function signIn(formData: FormData) {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    if (!tenantId) return;
+    const slug = String(formData.get("who") ?? "");
+    const j = slug ? await journalistBySlug(tenantId, slug) : null;
+    if (!j) return;
+    await setSessionSlug(j.slug);
+    redirect(`/${locale}/${roomForRole(j.role, j.slug)}` as Route);
   }
 
   const chip =
@@ -91,6 +112,46 @@ export default async function OnboardingPage({
           feed from the next collection run, and alerts follow.
         </p>
       </header>
+
+      <section
+        className="rounded-sm border p-4 mb-10"
+        style={{
+          borderColor: "var(--color-border)",
+          background: "var(--color-bg-card)",
+          fontFamily: "var(--font-ui)",
+        }}
+      >
+        <p className="ds-label mb-2">Already joined? Sign in</p>
+        <form action={signIn} className="flex gap-2 flex-wrap items-center">
+          <select
+            name="who"
+            required
+            className="border rounded-sm px-3 py-2 min-w-56"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg)",
+            }}
+          >
+            <option value="">— pick your name —</option>
+            {existing.map((j) => (
+              <option key={j.slug} value={j.slug}>
+                {j.name} · {j.role ?? "reporter"}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-sm text-sm font-semibold border"
+            style={{ borderColor: "var(--color-border)" }}
+          >
+            Sign in →
+          </button>
+        </form>
+        <p className="text-xs mt-2" style={{ color: "var(--color-fg-tertiary)" }}>
+          Demo sign-in (no password). Real authentication lands with the
+          multi-user release.
+        </p>
+      </section>
 
       <form action={join} className="space-y-8" style={{ fontFamily: "var(--font-ui)" }}>
         <div>

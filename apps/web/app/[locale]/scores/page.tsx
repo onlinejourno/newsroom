@@ -177,15 +177,17 @@ export default async function ScoresPage({
     sort?: string;
     url?: string;
     need?: string;
+    hours?: string;
   }>;
 }) {
   await params;
-  const { section, sort, url, need } = await searchParams;
+  const { section, sort, url, need, hours } = await searchParams;
+  const sinceHours = hours && Number(hours) > 0 ? Number(hours) : null;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
 
   const [all, classes, total] = tenantId
     ? await Promise.all([
-        storiesWithScores(tenantId),
+        storiesWithScores(tenantId, 200, sinceHours),
         storyClassifications(tenantId),
         storyCount(tenantId),
       ])
@@ -313,6 +315,25 @@ export default async function ScoresPage({
           </select>
         </label>
         <label>
+          Published:{" "}
+          <select
+            name="hours"
+            defaultValue={hours ?? ""}
+            className="border rounded-sm px-2 py-1"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg)",
+            }}
+          >
+            <option value="">all time</option>
+            {[2, 3, 6, 12, 24, 48].map((h) => (
+              <option key={h} value={h}>
+                last {h}h
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           Sort:{" "}
           <select
             name="sort"
@@ -391,27 +412,91 @@ export default async function ScoresPage({
                   </span>
                   <details className="mt-1 text-xs">
                     <summary
-                      className="cursor-pointer"
+                      className="cursor-pointer font-semibold"
                       style={{ color: "var(--color-brand)" }}
                     >
-                      Audit
+                      Audit ▾
                     </summary>
-                    <ul
-                      className="mt-1 space-y-0.5"
-                      style={{
-                        fontFamily: "var(--font-ui)",
-                        color: "var(--color-fg-secondary)",
-                      }}
+                    <div
+                      className="mt-3 grid gap-3 md:grid-cols-3"
+                      style={{ fontFamily: "var(--font-ui)" }}
                     >
-                      {SURFACE_ORDER.filter((k) => story.scores[k]).map(
-                        (k) => (
-                          <li key={k}>
-                            <strong>{SURFACE_SHORT[k]}</strong>:{" "}
-                            {story.scores[k].top_fix ?? "no fix needed"}
-                          </li>
-                        ),
-                      )}
-                    </ul>
+                      {Object.keys(story.scores).map((k) => {
+                        const ch = story.scores[k];
+                        const checks = ch.signals ?? [];
+                        const sev = (c: { value: number; max: number }) =>
+                          c.value >= c.max
+                            ? { icon: "✓", color: "#16a34a", bg: "transparent" }
+                            : c.value === 0
+                              ? { icon: "✗", color: "#dc2626", bg: "#dc262611" }
+                              : { icon: "⚠", color: "#b45309", bg: "#d9770611" };
+                        const label = k
+                          .split("_")
+                          .pop()!
+                          .replace(/^./, (c) => c.toUpperCase());
+                        return (
+                          <div
+                            key={k}
+                            className="rounded-sm border"
+                            style={{ borderColor: "var(--color-border)" }}
+                          >
+                            <div
+                              className="flex items-baseline justify-between px-3 py-2 border-b"
+                              style={{ borderColor: "var(--color-border)" }}
+                            >
+                              <strong className="text-sm">{label}</strong>
+                              <span
+                                className="text-xs font-bold px-1.5 py-0.5 rounded-sm"
+                                style={{
+                                  background: `${cellColor(ch.score)}22`,
+                                  color: cellColor(ch.score),
+                                }}
+                              >
+                                {ch.score}/100 · {ch.grade}
+                              </span>
+                            </div>
+                            <ul>
+                              {checks.map((c) => {
+                                const v = sev(c);
+                                return (
+                                  <li
+                                    key={c.name}
+                                    className="px-3 py-2 border-b last:border-b-0"
+                                    style={{
+                                      borderColor: "var(--color-border)",
+                                      background: v.bg,
+                                    }}
+                                  >
+                                    <span
+                                      className="font-bold mr-1"
+                                      style={{ color: v.color }}
+                                    >
+                                      {v.icon}
+                                    </span>
+                                    <strong>{c.name}</strong>{" "}
+                                    <span
+                                      style={{
+                                        color: "var(--color-fg-secondary)",
+                                      }}
+                                    >
+                                      ({c.value}/{c.max})
+                                    </span>
+                                    <div
+                                      className="mt-0.5"
+                                      style={{
+                                        color: "var(--color-fg-secondary)",
+                                      }}
+                                    >
+                                      {c.note}
+                                    </div>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </details>
                 </span>
                 <span style={{ fontFamily: "var(--font-ui)" }}>
