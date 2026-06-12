@@ -1,179 +1,366 @@
-import { entityWindows, storiesWithScores, tenantIdForSlug } from "@/lib/db";
-import { topicMomentum, type TopicTrend } from "@/lib/trends";
+import {
+  entityWindows,
+  storiesWithScores,
+  tenantIdForSlug,
+} from "@/lib/db";
+import {
+  AGE_BUCKETS,
+  SIGNAL_META,
+  ageBucketOf,
+  scoreGem,
+  type Gem,
+} from "@/lib/gems";
+import { topicMomentum } from "@/lib/trends";
 
 export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
 const TREND_WINDOW_HOURS = 48;
+const SHOW = 60;
 
-// A hidden gem (prototype tab 6): a published story aligned with a moving
-// topic whose audit says it is not yet built for its chance — high momentum,
-// low composite = unrealised potential.
-type Gem = {
-  id: string;
-  headline: string | null;
-  url: string | null;
-  section: string | null;
-  composite: number;
-  topic: string;
-  momentum: number;
-  gemScore: number;
-  label: "💎 HIGH" | "✨ MEDIUM" | "📄 LOW";
-  action: "promote" | "optimise";
-  fixes: string[];
+const BAND_COLOR: Record<Gem["band"], string> = {
+  HIGH: "#1d4ed8",
+  MEDIUM: "#b45309",
+  LOW: "#6b7280",
 };
 
-function composite(scores: Record<string, { score: number }>): number {
-  const vals = Object.values(scores).map((s) => s.score);
-  return vals.length
-    ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
-    : 0;
-}
+const BUCKET_COLOR: Record<string, string> = {
+  "<6h": "#16a34a",
+  "6-12h": "#1d4ed8",
+  "12-24h": "#d97706",
+  "24-48h": "#92400e",
+  ">48h": "#dc2626",
+};
 
-function labelFor(score: number): Gem["label"] {
-  if (score >= 45) return "💎 HIGH";
-  if (score >= 20) return "✨ MEDIUM";
-  return "📄 LOW";
-}
-
-export default async function GemsPage() {
+export default async function GemsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string; band?: string; sort?: string }>;
+}) {
+  const { filter, band, sort } = await searchParams;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   if (!tenantId) return null;
 
   const [stories, recent, prior] = await Promise.all([
-    storiesWithScores(tenantId),
+    storiesWithScores(tenantId, 500),
     entityWindows(tenantId, TREND_WINDOW_HOURS, 0),
     entityWindows(tenantId, TREND_WINDOW_HOURS * 2, TREND_WINDOW_HOURS),
   ]);
-  const topics = topicMomentum(recent, prior).slice(0, 60);
+  const topics = topicMomentum(recent, prior).slice(0, 80);
+  const now = new Date();
 
-  const gems: Gem[] = [];
-  for (const story of stories) {
-    const text = (story.headline ?? "").toLowerCase();
-    if (!text) continue;
-    let best: TopicTrend | null = null;
-    for (const t of topics) {
-      if (t.topic.length < 3) continue;
-      if (text.includes(t.topic.toLowerCase())) {
-        if (!best || t.momentum > best.momentum) best = t;
-      }
+  const all = stories.map((story) => ({
+    story,
+    gem: scoreGem(story, topics, now),
+  }));
+
+  // Stat-card counts over the full scan (the cards are clickable filters).
+  const stats = {
+    scanned: all.length,
+    high: all.filter((g) => g.gem.band === "HIGH").length,
+    atRisk: all.filter((g) => g.gem.ageBucket === "12-24h").length,
+    missingImage: all.filter((g) => g.gem.missingImage).length,
+  };
+  const bucketCounts = Object.fromEntries(
+    AGE_BUCKETS.map((b) => [b, all.filter((g) => g.gem.ageBucket === b).length]),
+  );
+  const bandCounts = {
+    HIGH: stats.high,
+    MEDIUM: all.filter((g) => g.gem.band === "MEDIUM").length,
+  };
+
+  let rows = all;
+  if (filter === "at-risk") rows = rows.filter((g) => g.gem.ageBucket === "12-24h");
+  if (filter === "missing-image") rows = rows.filter((g) => g.gem.missingImage);
+  if (filter && AGE_BUCKETS.includes(filter as never))
+    rows = rows.filter((g) => g.gem.ageBucket === filter);
+  if (band) rows = rows.filter((g) => g.gem.band === band);
+
+  rows = [...rows].sort((a, b) => {
+    if (sort === "recent") {
+      return (
+        new Date(b.story.published_at ?? 0).getTime() -
+        new Date(a.story.published_at ?? 0).getTime()
+      );
     }
-    if (!best) continue;
-    const comp = composite(story.scores);
-    const gemScore = Math.round((best.momentum * (100 - comp)) / 100);
-    gems.push({
-      id: story.id,
-      headline: story.headline,
-      url: story.url,
-      section: story.section,
-      composite: comp,
-      topic: best.topic,
-      momentum: best.momentum,
-      gemScore,
-      label: labelFor(gemScore),
-      action: comp >= 65 ? "promote" : "optimise",
-      fixes: Object.values(story.scores)
-        .map((s) => s.top_fix)
-        .filter((f): f is string => Boolean(f))
-        .slice(0, 3),
-    });
-  }
-  gems.sort((a, b) => b.gemScore - a.gemScore);
+    if (sort === "urgency") return b.gem.signals.urgency - a.gem.signals.urgency;
+    return b.gem.score - a.gem.score;
+  });
+  rows = rows.slice(0, SHOW);
+
+  const qs = (params: Record<string, string | undefined>) => {
+    const merged = { filter, band, sort, ...params };
+    const parts = Object.entries(merged)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${k}=${encodeURIComponent(v!)}`);
+    return parts.length ? `?${parts.join("&")}` : "?";
+  };
+
+  const card =
+    "rounded-sm border p-3 text-center block no-underline";
 
   return (
-    <main className="min-h-screen max-w-4xl mx-auto p-6 md:p-10">
-      <header className="mb-8">
+    <main className="min-h-screen max-w-5xl mx-auto p-6 md:p-10">
+      <header className="mb-6">
         <p className="ds-label mb-2">OnlineJourno · Hidden Gems</p>
         <h1
           className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-3"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Hidden gems
+          Hidden gems · stories worth promoting
         </h1>
         <p
-          className="text-base max-w-2xl"
+          className="text-base max-w-3xl"
           style={{
             fontFamily: "var(--font-body)",
             color: "var(--color-fg-secondary)",
           }}
         >
-          Published stories aligned with a topic that is moving in the signal
-          inflow, whose audit says they are not yet built for their chance —
-          unrealised potential, with the fix list. Trend window: last{" "}
-          {TREND_WINDOW_HOURS}h.
+          Published stories scored on five signals — trend alignment, image,
+          depth, <strong>age urgency (12–24h is the at-risk Discover
+          window)</strong>, freshness. Stat cards are clickable filters;
+          action chips are prompts the digital desk can act on now. Placement
+          signals (only-in-sub-section, on-homepage) arrive with the
+          site-structure crawl — not yet computed.
         </p>
       </header>
 
-      {gems.length === 0 ? (
-        <p style={{ color: "var(--color-fg-secondary)" }}>
-          No gems right now — no scored story overlaps a moving topic in the
-          window. Pull more own stories (<code>cms-pull</code>) or widen the
-          trend window.
-        </p>
-      ) : (
-        <ol className="space-y-4 list-none">
-          {gems.map((g) => (
-            <li
-              key={g.id}
-              className="rounded-sm border p-4"
+      <div
+        className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"
+        style={{ fontFamily: "var(--font-ui)" }}
+      >
+        {[
+          { label: "STORIES SCANNED", n: stats.scanned, f: undefined, c: "var(--color-fg-primary)" },
+          { label: "💎 HIGH-POTENTIAL", n: stats.high, f: undefined, b: "HIGH", c: "#1d4ed8" },
+          { label: "⏰ AT-RISK (12–24 H)", n: stats.atRisk, f: "at-risk", c: "#d97706" },
+          { label: "🖼 MISSING IMAGE", n: stats.missingImage, f: "missing-image", c: "#dc2626" },
+        ].map((s) => {
+          const active =
+            (s.f && filter === s.f) || (s.b && band === s.b);
+          return (
+            <a
+              key={s.label}
+              href={qs({
+                filter: s.f,
+                band: (s as { b?: string }).b,
+              })}
+              className={card}
               style={{
-                borderColor: "var(--color-border)",
+                borderColor: active ? s.c : "var(--color-border)",
+                borderWidth: active ? 2 : 1,
                 background: "var(--color-bg-card)",
               }}
             >
-              <div
-                className="flex items-baseline justify-between gap-3 flex-wrap"
-                style={{ fontFamily: "var(--font-ui)" }}
-              >
-                <span className="text-sm font-bold">{g.label}</span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-sm font-bold uppercase"
-                  style={{
-                    background:
-                      g.action === "promote" ? "#16a34a22" : "#b4530922",
-                    color: g.action === "promote" ? "#16a34a" : "#b45309",
-                  }}
-                >
-                  {g.action}
-                </span>
-              </div>
-              <a
-                href={g.url ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-lg leading-snug block mt-1"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {g.headline}
-              </a>
-              <p
-                className="text-xs mt-1"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  color: "var(--color-fg-secondary)",
-                }}
-              >
-                {g.section ? `${g.section} · ` : ""}gem {g.gemScore} · topic{" "}
-                <strong>{g.topic}</strong> (momentum {g.momentum}) · audit
-                composite {g.composite}
+              <p className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
+                {s.label}
               </p>
-              {g.action === "optimise" && g.fixes.length > 0 ? (
-                <ul
-                  className="mt-2 text-xs space-y-0.5"
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    color: "var(--color-fg-secondary)",
-                  }}
+              <p
+                className="text-3xl font-extrabold"
+                style={{ color: s.c, fontFamily: "var(--font-display)" }}
+              >
+                {s.n}
+              </p>
+            </a>
+          );
+        })}
+      </div>
+
+      <div
+        className="flex flex-wrap items-center gap-2 mb-3 text-xs"
+        style={{ fontFamily: "var(--font-ui)" }}
+      >
+        {AGE_BUCKETS.map((b) => (
+          <a
+            key={b}
+            href={qs({ filter: filter === b ? undefined : b })}
+            className="px-3 py-1 rounded-full font-bold no-underline"
+            style={{
+              background: BUCKET_COLOR[b],
+              color: "white",
+              opacity: filter && filter !== b ? 0.45 : 1,
+            }}
+          >
+            {b} {bucketCounts[b]}
+          </a>
+        ))}
+        <span className="mx-2" style={{ color: "var(--color-fg-tertiary)" }}>
+          ·
+        </span>
+        <a
+          href={qs({ band: undefined })}
+          className="px-3 py-1 rounded-full border no-underline font-semibold"
+          style={{ borderColor: "var(--color-border)" }}
+        >
+          All
+        </a>
+        <a
+          href={qs({ band: "HIGH" })}
+          className="px-3 py-1 rounded-full border no-underline font-semibold"
+          style={{ borderColor: "#1d4ed8", color: "#1d4ed8" }}
+        >
+          💎 HIGH ({bandCounts.HIGH})
+        </a>
+        <a
+          href={qs({ band: "MEDIUM" })}
+          className="px-3 py-1 rounded-full border no-underline font-semibold"
+          style={{ borderColor: "#b45309", color: "#b45309" }}
+        >
+          ✨ MEDIUM ({bandCounts.MEDIUM})
+        </a>
+        <span className="mx-2" style={{ color: "var(--color-fg-tertiary)" }}>
+          ·
+        </span>
+        <form method="get" className="inline-flex items-center gap-1">
+          {filter ? <input type="hidden" name="filter" value={filter} /> : null}
+          {band ? <input type="hidden" name="band" value={band} /> : null}
+          <label>
+            Sort:{" "}
+            <select
+              name="sort"
+              defaultValue={sort ?? "score"}
+              className="border rounded-sm px-2 py-1"
+              style={{
+                borderColor: "var(--color-border)",
+                background: "var(--color-bg)",
+              }}
+            >
+              <option value="score">Gem score (highest)</option>
+              <option value="urgency">Most at-risk</option>
+              <option value="recent">Most recent</option>
+            </select>
+          </label>
+          <button
+            type="submit"
+            className="px-2 py-1 rounded-sm border font-semibold"
+            style={{ borderColor: "var(--color-border)" }}
+          >
+            Apply
+          </button>
+        </form>
+      </div>
+
+      <p
+        className="text-sm mb-4"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+      >
+        Showing <strong>{rows.length}</strong> stories
+        {filter || band ? " · filtered" : ""}
+      </p>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {rows.map(({ story, gem }, i) => (
+          <div
+            key={story.id}
+            className="rounded-sm border p-4"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg-card)",
+            }}
+          >
+            <div
+              className="flex items-center justify-between gap-2 flex-wrap mb-1 text-xs"
+              style={{ fontFamily: "var(--font-ui)" }}
+            >
+              <span>
+                <strong className="text-xl" style={{ fontFamily: "var(--font-display)" }}>
+                  #{i + 1} {gem.score}
+                </strong>
+                <span style={{ color: "var(--color-fg-tertiary)" }}>/100</span>
+              </span>
+              <span className="flex gap-1.5 flex-wrap">
+                <span
+                  className="px-2 py-0.5 rounded-full font-bold"
+                  style={{ background: `${BAND_COLOR[gem.band]}22`, color: BAND_COLOR[gem.band] }}
                 >
-                  {g.fixes.map((f) => (
-                    <li key={f}>· {f}</li>
-                  ))}
-                </ul>
+                  {gem.band === "HIGH" ? "💎" : gem.band === "MEDIUM" ? "✨" : "📄"}{" "}
+                  {gem.band}
+                </span>
+                {gem.ageBucket === "12-24h" ? (
+                  <span
+                    className="px-2 py-0.5 rounded-full font-bold"
+                    style={{ background: "#d9770622", color: "#92400e" }}
+                  >
+                    ⏰ AT-RISK WINDOW
+                  </span>
+                ) : null}
+              </span>
+            </div>
+
+            <a
+              href={story.url ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-base leading-snug block"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {story.headline}
+            </a>
+            <p
+              className="text-xs mt-1"
+              style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+            >
+              {[story.section, story.beat].filter(Boolean).join(" · ")}
+              {gem.ageHours != null ? ` · ${gem.ageHours}h old` : ""}
+              {gem.matchedTopic ? (
+                <>
+                  {" · "}
+                  <span
+                    className="px-1.5 py-0.5 rounded-full"
+                    style={{ background: "#dc262615", color: "#dc2626" }}
+                  >
+                    🔥 {gem.matchedTopic} ({gem.momentum})
+                  </span>
+                </>
               ) : null}
-            </li>
-          ))}
-        </ol>
-      )}
+            </p>
+
+            <div
+              className="grid grid-cols-5 gap-2 mt-3 text-xs"
+              style={{ fontFamily: "var(--font-ui)" }}
+            >
+              {SIGNAL_META.map((m) => (
+                <div key={m.key}>
+                  <p style={{ color: "var(--color-fg-tertiary)" }}>{m.label}</p>
+                  <div
+                    className="h-2 rounded-full overflow-hidden my-1"
+                    style={{ background: "var(--color-border)" }}
+                  >
+                    <div
+                      style={{
+                        width: `${(gem.signals[m.key] / m.max) * 100}%`,
+                        height: "100%",
+                        background: m.color,
+                      }}
+                    />
+                  </div>
+                  <p>
+                    <strong>{gem.signals[m.key]}</strong>
+                    <span style={{ color: "var(--color-fg-tertiary)" }}>/{m.max}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {gem.actions.length ? (
+              <p
+                className="flex flex-wrap gap-1.5 mt-3 text-xs"
+                style={{ fontFamily: "var(--font-ui)" }}
+                title="Desk prompts — concrete next actions for this story"
+              >
+                {gem.actions.map((a) => (
+                  <span
+                    key={a}
+                    className="px-2 py-1 rounded-sm"
+                    style={{ background: "#1d4ed815", color: "#1d4ed8" }}
+                  >
+                    {a}
+                  </span>
+                ))}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
