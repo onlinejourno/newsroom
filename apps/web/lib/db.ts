@@ -452,19 +452,33 @@ export type BriefRow = {
 
 export async function fetchLatestBrief(
   tenantId: string,
+  beatSlug?: string | null,
 ): Promise<BriefRow | null> {
   const pool = getPool();
   const { rows } = await pool.query<BriefRow>(
     `
-    select id, beat_id, edition_date, composed_at, content
-      from briefs
-     where tenant_id = $1
-     order by composed_at desc
+    select b.id, b.beat_id, b.edition_date, b.composed_at, b.content
+      from briefs b
+      left join beats bt on bt.id = b.beat_id
+     where b.tenant_id = $1
+       and ($2::text is null or bt.slug = $2)
+     order by b.composed_at desc
      limit 1
     `,
-    [tenantId],
+    [tenantId, beatSlug ?? null],
   );
   return rows[0] ?? null;
+}
+
+export async function listBeats(
+  tenantId: string,
+): Promise<{ slug: string; name: string }[]> {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    "select slug, name from beats where tenant_id = $1 order by name",
+    [tenantId],
+  );
+  return rows;
 }
 
 export async function fetchSignalUrls(

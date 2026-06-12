@@ -2,8 +2,11 @@ import {
   type BriefSection,
   fetchLatestBrief,
   fetchSignalUrls,
+  journalistBySlug,
+  listBeats,
   tenantIdForSlug,
 } from "@/lib/db";
+import { sessionSlug } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -35,14 +38,76 @@ function SearchFit({ fit }: { fit: BriefSection["search_fit"] }) {
   );
 }
 
-export default async function BriefPage() {
+export default async function BriefPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ beat?: string }>;
+}) {
+  const { beat: beatParam } = await searchParams;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
-  const brief = tenantId ? await fetchLatestBrief(tenantId) : null;
+  const beats = tenantId ? await listBeats(tenantId) : [];
+  // Default: the signed-in journalist's first beat, if a brief desk exists
+  // for it; else the explicit ?beat=; else the latest brief of any desk.
+  const slug = await sessionSlug();
+  const user = tenantId && slug ? await journalistBySlug(tenantId, slug) : null;
+  const userBeatSlug = user?.beats?.[0]
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-");
+  const pick =
+    beatParam ??
+    (userBeatSlug && beats.some((b) => b.slug === userBeatSlug)
+      ? userBeatSlug
+      : null);
+  const brief = tenantId ? await fetchLatestBrief(tenantId, pick) : null;
+
+  const beatPicker = beats.length ? (
+    <form
+      method="get"
+      className="mb-6 flex items-center gap-2 text-sm"
+      style={{ fontFamily: "var(--font-ui)" }}
+    >
+      <label>
+        Desk:{" "}
+        <select
+          name="beat"
+          defaultValue={pick ?? ""}
+          className="border rounded-sm px-2 py-1"
+          style={{
+            borderColor: "var(--color-border)",
+            background: "var(--color-bg)",
+          }}
+        >
+          <option value="">latest (any desk)</option>
+          {beats.map((b) => (
+            <option key={b.slug} value={b.slug}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="submit"
+        className="px-3 py-1 rounded-sm border font-semibold"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        Apply
+      </button>
+      {user ? (
+        <span style={{ color: "var(--color-fg-tertiary)" }}>
+          signed in: {user.name}
+          {userBeatSlug && !beats.some((b) => b.slug === userBeatSlug)
+            ? ` (no brief desk for ${user.beats?.[0]} yet)`
+            : ""}
+        </span>
+      ) : null}
+    </form>
+  ) : null;
 
   if (!brief) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
         <div className="max-w-xl text-center">
+          {beatPicker}
           <p className="ds-label mb-2">OnlineJourno · Brief</p>
           <h1 className="text-3xl font-bold mb-4" style={{ fontFamily: "var(--font-display)" }}>
             No brief yet.
@@ -62,6 +127,7 @@ export default async function BriefPage() {
 
   return (
     <main className="min-h-screen max-w-3xl mx-auto p-6 md:p-10">
+      {beatPicker}
       <header className="mb-8">
         <p className="ds-label mb-2">OnlineJourno · Morning Brief</p>
         <h1
