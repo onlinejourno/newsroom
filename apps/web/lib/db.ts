@@ -583,13 +583,19 @@ export type ScoredStoryRow = {
   published_at: Date | null;
   scores: Record<
     string,
-    { score: number; grade: string; top_fix: string | null }
+    {
+      score: number;
+      grade: string;
+      top_fix: string | null;
+      signals?: { name: string; value: number; max: number; note: string }[];
+    }
   >;
 };
 
 export async function storiesWithScores(
   tenantId: string,
   limit = 200,
+  sinceHours?: number | null,
 ): Promise<ScoredStoryRow[]> {
   const pool = getPool();
   const { rows } = await pool.query<ScoredStoryRow>(
@@ -598,17 +604,20 @@ export async function storiesWithScores(
            jsonb_object_agg(
              d.surface,
              jsonb_build_object('score', d.score, 'grade', d.grade,
-                                'top_fix', d.top_fix)
+                                'top_fix', d.top_fix, 'signals', d.signals)
            ) as scores
       from stories st
       join distribution_fit_scores d
         on d.tenant_id = st.tenant_id and d.story_id = st.id
      where st.tenant_id = $1
+       and ($3::int is null or
+            coalesce(st.published_at, st.created_at)
+              >= now() - make_interval(hours => $3))
      group by st.id
      order by max(d.scored_at) desc
      limit $2
     `,
-    [tenantId, limit],
+    [tenantId, limit, sinceHours ?? null],
   );
   return rows;
 }
