@@ -286,10 +286,13 @@ def build_frame_prompt(
     return ScorePromptParts(system=system, user=user)
 
 
+# The Hindu's section/desk map (single-publisher demo coherence): site
+# sections plus the desks the paper actually staffs (Legal, Defence, Data).
 ENRICH_BEATS = (
-    "National", "Politics", "Governance", "Courts", "Crime", "Business",
-    "Economy", "Markets", "Agriculture", "World", "Defence", "Science & Tech",
-    "Climate", "Health", "Education", "Sport", "Culture", "Investigations",
+    "National", "International", "States", "Cities", "Politics", "Legal",
+    "Defence", "Business", "Economy", "Markets", "Agri-Business", "Sport",
+    "Entertainment", "Science", "Technology", "Health", "Education",
+    "Environment", "Data", "Opinion", "Investigations", "Life & Style",
     "Other",
 )
 

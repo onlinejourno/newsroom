@@ -17,9 +17,10 @@ const TENANT_SLUG = "self";
 // Mirrors ENRICH_BEATS (packages/agents-py prompts.py) — the routing
 // vocabulary; keep in sync.
 const BEATS = [
-  "National", "Politics", "Governance", "Courts", "Crime", "Business",
-  "Economy", "Markets", "Agriculture", "World", "Defence", "Science & Tech",
-  "Climate", "Health", "Education", "Sport", "Culture", "Investigations",
+  "National", "International", "States", "Cities", "Politics", "Legal",
+  "Defence", "Business", "Economy", "Markets", "Agri-Business", "Sport",
+  "Entertainment", "Science", "Technology", "Health", "Education",
+  "Environment", "Data", "Opinion", "Investigations", "Life & Style",
 ];
 
 // EIP's six newsroom roles.
