@@ -237,6 +237,13 @@ export default async function PotentialPage({
         >
           Apply
         </button>
+        <a
+          href="?"
+          className="px-4 py-1.5 rounded-sm text-sm font-semibold border no-underline"
+          style={{ borderColor: "var(--color-border)", color: "var(--color-fg-secondary)" }}
+        >
+          Reset
+        </a>
         <span style={{ color: "var(--color-fg-tertiary)" }}>
           {ranked.length} of {allRanked.length} shown
         </span>
