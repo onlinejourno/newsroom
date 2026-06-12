@@ -26,21 +26,22 @@ SOURCE_NAME = "TEST · Sample public-record wire"
 # Beats use the ENRICH_BEATS vocabulary (prompts.py) so enriched signals
 # actually route to these journalists.
 JOURNALISTS = [
-    ("Asha Verma", "National", ["Governance", "Courts"], "Capital", "reporter"),
-    ("Diego Mensah", "World", ["World", "Economy"], "West Coast", "reporter"),
-    ("Lena Park", "Markets", ["Business", "Economy"], "India", "reporter"),
-    ("Tunde Okafor", "Investigations", ["Investigations", "Governance"], "Northern", "reporter"),
-    ("Mariana Silva", "Business", ["Business", "Economy"], "Delta", "reporter"),
-    ("Ravi Nair", "Science & Tech", ["Climate", "Science & Tech"], "Coastal", "reporter"),
-    ("Sofia Haddad", "Culture", ["Culture"], "Old City", "reporter"),
-    ("Wei Chen", "Markets", ["Markets", "Business"], "Financial", "reporter"),
-    ("Nadia Petrova", "World", ["World"], "Capital", "editor"),
-    ("Kofi Addo", "Sport", ["Sport"], "Stadium", "reporter"),
-    ("Ines Costa", "Education", ["Education"], "Inland", "reporter"),
-    ("Yuki Tanaka", "Science & Tech", ["Science & Tech"], "Tech Park", "reporter"),
-    ("Omar Khalid", "National", ["Courts", "National"], "Capital", "editor"),
-    ("Grace Mwangi", "Business", ["Agriculture", "Business"], "Rift", "reporter"),
-    ("Pablo Ruiz", "National", ["Governance", "National"], "Riverside", "chief"),
+    # Synthetic names; bureaus/beats are The Hindu's real map (demo coherence).
+    ("Asha Verma", "Delhi Bureau", ["Politics", "National"], "Delhi", "reporter"),
+    ("Diego Mensah", "Delhi Bureau", ["International", "Economy"], "Delhi", "reporter"),
+    ("Lena Park", "Mumbai Bureau", ["Business", "Economy"], "India", "reporter"),
+    ("Tunde Okafor", "Investigations", ["Investigations", "National"], "Chennai", "reporter"),
+    ("Mariana Silva", "Mumbai Bureau", ["Markets", "Business"], "Mumbai", "reporter"),
+    ("Ravi Nair", "Science Desk", ["Environment", "Science"], "Chennai", "reporter"),
+    ("Sofia Haddad", "Entertainment", ["Entertainment"], "Chennai", "reporter"),
+    ("Wei Chen", "Mumbai Bureau", ["Markets", "Business"], "Mumbai", "reporter"),
+    ("Nadia Petrova", "Delhi Bureau", ["International"], "Delhi", "editor"),
+    ("Kofi Addo", "Sport Desk", ["Sport"], "Chennai", "reporter"),
+    ("Ines Costa", "Education", ["Education"], "Coimbatore", "reporter"),
+    ("Yuki Tanaka", "Technology", ["Technology", "Science"], "Bengaluru", "reporter"),
+    ("Omar Khalid", "Legal Desk", ["Legal", "National"], "Delhi", "editor"),
+    ("Grace Mwangi", "Agri Desk", ["Agri-Business", "Business"], "Hyderabad", "reporter"),
+    ("Pablo Ruiz", "Tamil Nadu Bureau", ["States", "Cities"], "Madurai", "chief"),
 ]
 
 # 12 invented signals with the front-engine enrichment (geo / beat / entities).

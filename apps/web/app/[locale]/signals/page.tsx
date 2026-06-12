@@ -226,7 +226,7 @@ export default async function SignalsPage({
             value="1"
             defaultChecked={!primaryOnly}
           />
-          Include test feeds (MSM)
+          Include own-site + competitor feeds
         </label>
         <button
           type="submit"
