@@ -30,6 +30,7 @@ cd "$REPO" || exit 1
     uv run --package onlinejourno-agents onlinejourno-agents score-stories --tenant "$TENANT" 2>&1 | tail -1
     uv run --package onlinejourno-agents onlinejourno-agents enrich --tenant "$TENANT" --stories --limit 20 2>&1 | tail -1
     uv run --package onlinejourno-agents onlinejourno-agents frame --tenant "$TENANT" --stories --limit 20 2>&1 | tail -1
+    uv run --package onlinejourno-agents onlinejourno-agents site-crawl --tenant "$TENANT" --host "$OJ_DEMO_HOST" 2>&1 | tail -1
   fi
   if [ -n "${NTFY_TOPIC:-}" ]; then
     uv run --package onlinejourno-agents onlinejourno-agents alert --tenant "$TENANT" --threshold 80 2>&1 | tail -1

@@ -184,6 +184,18 @@ def cmd_stories_from_signals(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_site_crawl(args: argparse.Namespace) -> int:
+    """Placement crawl: where is each own story actually listed (Hidden Gems)."""
+    from onlinejourno_agents.site_crawl import run_site_crawl
+
+    res = run_site_crawl(tenant_slug=args.tenant, host=args.host)
+    print(
+        f"site-crawl: {res['fronts']} fronts crawled · "
+        f"{res['updated']} of {res['stories']} stories placement-checked"
+    )
+    return 0
+
+
 def cmd_alert(args: argparse.Namespace) -> int:
     """m-alerts — push high-trend signals to the newsroom over ntfy."""
     from onlinejourno_agents.alerts import run_alerts
@@ -729,6 +741,13 @@ def main(argv: list[str] | None = None) -> int:
     p_sf.add_argument("--host", required=True, help="e.g. thehindu.com")
     p_sf.add_argument("--limit", type=int, default=30)
     p_sf.set_defaults(func=cmd_stories_from_signals)
+
+    p_sc = sub.add_parser(
+        "site-crawl", help="placement crawl - homepage/section listing per story"
+    )
+    p_sc.add_argument("--tenant", required=True)
+    p_sc.add_argument("--host", required=True)
+    p_sc.set_defaults(func=cmd_site_crawl)
 
     p_al = sub.add_parser("alert", help="push high-trend signals over ntfy (m-alerts)")
     p_al.add_argument("--tenant", required=True)
