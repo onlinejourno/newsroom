@@ -19,6 +19,8 @@ export type GemSignals = {
   fresh: number;
 };
 
+export type DeskAction = { label: string; reason: string };
+
 export type Gem = {
   score: number;
   band: "HIGH" | "MEDIUM" | "LOW";
@@ -28,7 +30,11 @@ export type Gem = {
   ageHours: number | null;
   ageBucket: AgeBucket;
   missingImage: boolean;
-  actions: string[];
+  onHomepage: boolean;
+  buried: boolean;
+  listedIn: string[];
+  placementChecked: boolean;
+  actions: DeskAction[];
 };
 
 export type AgeBucket = "<6h" | "6-12h" | "12-24h" | "24-48h" | ">48h" | "unknown";
@@ -80,6 +86,11 @@ export function scoreGem(
     headline: string | null;
     published_at: Date | null;
     scores: Record<string, SurfaceAudit>;
+    placement?: {
+      homepage?: boolean;
+      listed_in?: string[];
+      only_in_subsection?: boolean;
+    } | null;
   },
   topics: TopicTrend[],
   now = new Date(),
@@ -110,12 +121,44 @@ export function scoreGem(
   const score = trend + image + depth + urgency + fresh;
   const band: Gem["band"] = score >= 70 ? "HIGH" : score >= 40 ? "MEDIUM" : "LOW";
 
-  const actions: string[] = [];
-  if (matched && score >= 40) actions.push("Push to main section");
-  if (matched) actions.push("Social post");
-  if (image >= 15 && fresh >= 6) actions.push("Discover-ready");
-  if (depth >= 10) actions.push("Google News boost");
-  if (missingImage) actions.push("Add ≥1200px image");
+  const pl = story.placement ?? null;
+  const onHomepage = pl?.homepage === true;
+  const buried = pl?.only_in_subsection === true;
+  const listedIn = pl?.listed_in ?? [];
+  const placementChecked = pl != null;
+
+  // The original's reasoned desk prompts — each action says WHY.
+  const actions: DeskAction[] = [];
+  if (score >= 70 && image >= 15 && !onHomepage)
+    actions.push({
+      label: "🏠 Homepage / app push",
+      reason: "High score + image — strong candidate for homepage feature or app push notification",
+    });
+  if (matched)
+    actions.push({
+      label: "📱 Social post",
+      reason: `Aligns with trending '${matched.topic}' — tweet, thread, or Reel opportunity`,
+    });
+  if (image >= 15 && ageHours != null && ageHours < 18)
+    actions.push({
+      label: "📡 Discover-ready",
+      reason: "Image present + published < 18 h — eligible for Google Discover card",
+    });
+  if (buried)
+    actions.push({
+      label: "📰 Google News boost",
+      reason: "Buried in sub-section — manually submit to Google News top-stories or share link with editors",
+    });
+  if (buried && score >= 55)
+    actions.push({
+      label: "📧 Newsletter / digest pick",
+      reason: "Strong story buried in section — ideal for morning newsletter curation",
+    });
+  if (missingImage)
+    actions.push({
+      label: "🖼 Add ≥1200px image",
+      reason: "No Discover-card image detected — the single biggest Discover lever",
+    });
 
   return {
     score,
@@ -126,6 +169,10 @@ export function scoreGem(
     ageHours: ageHours == null ? null : Math.round(ageHours),
     ageBucket: ageBucketOf(ageHours),
     missingImage,
+    onHomepage,
+    buried,
+    listedIn,
+    placementChecked,
     actions,
   };
 }

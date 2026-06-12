@@ -1055,3 +1055,38 @@ def stories_from_signals(
             (tenant_id, f"%{host_like}%", limit),
         )
         return cur.rowcount
+
+
+def stories_for_host(
+    conn: psycopg.Connection, tenant_id: UUID, *, host_like: str
+) -> list[dict[str, Any]]:
+    """Recent own stories from one host (the placement crawl's targets)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, url from stories
+             where tenant_id = %s and url ilike %s
+               and coalesce(published_at, created_at) >= now() - interval '7 days'
+            """,
+            (tenant_id, f"%{host_like}%"),
+        )
+        return list(cur.fetchall())
+
+
+def update_story_placement(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    story_id: UUID,
+    placement: dict[str, Any],
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            update stories
+               set enrichment = coalesce(enrichment, '{}'::jsonb)
+                   || jsonb_build_object('placement', %s::jsonb)
+             where tenant_id = %s and id = %s
+            """,
+            (Json(placement), tenant_id, story_id),
+        )

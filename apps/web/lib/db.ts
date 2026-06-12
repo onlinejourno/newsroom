@@ -581,6 +581,12 @@ export type ScoredStoryRow = {
   section: string | null;
   beat: string | null;
   published_at: Date | null;
+  placement: {
+    homepage?: boolean;
+    listed_in?: string[];
+    only_in_subsection?: boolean;
+    checked_at?: string;
+  } | null;
   scores: Record<
     string,
     {
@@ -601,6 +607,7 @@ export async function storiesWithScores(
   const { rows } = await pool.query<ScoredStoryRow>(
     `
     select st.id, st.headline, st.url, st.section, st.beat, st.published_at,
+           st.enrichment->'placement' as placement,
            jsonb_object_agg(
              d.surface,
              jsonb_build_object('score', d.score, 'grade', d.grade,

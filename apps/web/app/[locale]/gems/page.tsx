@@ -60,7 +60,19 @@ export default async function GemsPage({
     high: all.filter((g) => g.gem.band === "HIGH").length,
     atRisk: all.filter((g) => g.gem.ageBucket === "12-24h").length,
     missingImage: all.filter((g) => g.gem.missingImage).length,
+    buried: all.filter((g) => g.gem.buried).length,
+    onHomepage: all.filter((g) => g.gem.onHomepage).length,
   };
+  // Section coverage heatmap: published per section, last 24h.
+  const sectionCounts = new Map<string, number>();
+  for (const { story, gem } of all) {
+    if (gem.ageHours != null && gem.ageHours <= 24) {
+      const k = story.section || story.beat || "(unsectioned)";
+      sectionCounts.set(k, (sectionCounts.get(k) ?? 0) + 1);
+    }
+  }
+  const heat = [...sectionCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
+  const heatMax = Math.max(1, ...heat.map(([, n]) => n));
   const bucketCounts = Object.fromEntries(
     AGE_BUCKETS.map((b) => [b, all.filter((g) => g.gem.ageBucket === b).length]),
   );
@@ -72,6 +84,8 @@ export default async function GemsPage({
   let rows = all;
   if (filter === "at-risk") rows = rows.filter((g) => g.gem.ageBucket === "12-24h");
   if (filter === "missing-image") rows = rows.filter((g) => g.gem.missingImage);
+  if (filter === "buried") rows = rows.filter((g) => g.gem.buried);
+  if (filter === "homepage") rows = rows.filter((g) => g.gem.onHomepage);
   if (filter && AGE_BUCKETS.includes(filter as never))
     rows = rows.filter((g) => g.gem.ageBucket === filter);
   if (band) rows = rows.filter((g) => g.gem.band === band);
@@ -126,14 +140,16 @@ export default async function GemsPage({
       </header>
 
       <div
-        className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"
+        className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4"
         style={{ fontFamily: "var(--font-ui)" }}
       >
         {[
           { label: "STORIES SCANNED", n: stats.scanned, f: undefined, c: "var(--color-fg-primary)" },
           { label: "💎 HIGH-POTENTIAL", n: stats.high, f: undefined, b: "HIGH", c: "#1d4ed8" },
           { label: "⏰ AT-RISK (12–24 H)", n: stats.atRisk, f: "at-risk", c: "#d97706" },
+          { label: "🔍 BURIED (SUB-SECTION)", n: stats.buried, f: "buried", c: "#92400e" },
           { label: "🖼 MISSING IMAGE", n: stats.missingImage, f: "missing-image", c: "#dc2626" },
+          { label: "🏠 ON HOMEPAGE", n: stats.onHomepage, f: "homepage", c: "#16a34a" },
         ].map((s) => {
           const active =
             (s.f && filter === s.f) || (s.b && band === s.b);
@@ -239,6 +255,46 @@ export default async function GemsPage({
         </form>
       </div>
 
+      <details
+        className="rounded-sm border p-4 mb-4 text-sm"
+        style={{
+          borderColor: "var(--color-border)",
+          background: "var(--color-bg-card)",
+          fontFamily: "var(--font-ui)",
+        }}
+      >
+        <summary className="cursor-pointer font-semibold" style={{ color: "var(--color-brand)" }}>
+          📊 Section coverage heatmap — which parts of the site have been updated?
+        </summary>
+        <p className="ds-label mt-3 mb-2">Stories published per section — last 24 h</p>
+        {heat.length === 0 ? (
+          <p style={{ color: "var(--color-fg-tertiary)" }}>
+            Nothing published in the last 24 h in the connected corpus.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {heat.map(([sec, n], i) => (
+              <div key={sec} className="flex items-center gap-2 text-xs">
+                <span className="w-48 text-right" style={{ color: "var(--color-fg-secondary)" }}>
+                  {sec}
+                </span>
+                <div className="flex-1 h-4 rounded-sm overflow-hidden" style={{ background: "var(--color-border)" }}>
+                  <div
+                    style={{
+                      width: `${(n / heatMax) * 100}%`,
+                      height: "100%",
+                      background: i < 4 ? "#15803d" : i < 9 ? "#1d4ed8" : "#6d28d9",
+                      opacity: 0.85,
+                    }}
+                  />
+                </div>
+                <span className="w-6">{n}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </details>
+
       <p
         className="text-sm mb-4"
         style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
@@ -301,6 +357,16 @@ export default async function GemsPage({
             >
               {[story.section, story.beat].filter(Boolean).join(" · ")}
               {gem.ageHours != null ? ` · ${gem.ageHours}h old` : ""}
+              {gem.onHomepage ? (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full" style={{ background: "#16a34a22", color: "#16a34a" }}>
+                  🏠 on homepage
+                </span>
+              ) : null}
+              {gem.buried ? (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full" style={{ background: "#92400e22", color: "#92400e" }}>
+                  🔍 only in sub-section
+                </span>
+              ) : null}
               {gem.matchedTopic ? (
                 <>
                   {" · "}
@@ -341,23 +407,40 @@ export default async function GemsPage({
               ))}
             </div>
 
-            {gem.actions.length ? (
-              <p
-                className="flex flex-wrap gap-1.5 mt-3 text-xs"
-                style={{ fontFamily: "var(--font-ui)" }}
-                title="Desk prompts — concrete next actions for this story"
-              >
-                {gem.actions.map((a) => (
-                  <span
-                    key={a}
-                    className="px-2 py-1 rounded-sm"
-                    style={{ background: "#1d4ed815", color: "#1d4ed8" }}
-                  >
-                    {a}
-                  </span>
-                ))}
+            {gem.placementChecked ? (
+              <p className="text-xs mt-2" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-tertiary)" }}>
+                📍 Listed in:{" "}
+                {gem.listedIn.length
+                  ? gem.listedIn.join(" · ")
+                  : "no crawled front (rotated off / aged out)"}
               </p>
             ) : null}
+
+            {gem.actions.length ? (
+              <div className="mt-3 text-xs" style={{ fontFamily: "var(--font-ui)" }}>
+                <p className="font-bold mb-1">Digital desk actions:</p>
+                <ul className="space-y-1">
+                  {gem.actions.map((a) => (
+                    <li
+                      key={a.label}
+                      className="border rounded-sm px-2 py-1.5"
+                      style={{ borderColor: "var(--color-border)" }}
+                    >
+                      <strong style={{ color: "#1d4ed8" }}>{a.label}</strong>{" "}
+                      <span style={{ color: "var(--color-fg-secondary)" }}>— {a.reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="mt-2 text-xs" style={{ fontFamily: "var(--font-ui)" }}>
+              <a
+                className="underline"
+                href={`./scores?url=${encodeURIComponent(story.url ?? "")}`}
+              >
+                Run full surface audit →
+              </a>
+            </p>
           </div>
         ))}
       </div>
