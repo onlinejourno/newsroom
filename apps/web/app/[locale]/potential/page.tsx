@@ -33,7 +33,21 @@ function formatDate(value: Date | null): string {
   }).format(new Date(value));
 }
 
-export default async function PotentialPage() {
+export default async function PotentialPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    band?: string | string[];
+    section?: string | string[];
+    min?: string;
+    all?: string;
+  }>;
+}) {
+  const sp = await searchParams;
+  const bands = ([] as string[]).concat(sp.band ?? []);
+  const sections = ([] as string[]).concat(sp.section ?? []);
+  const minScore = Math.max(0, Number(sp.min) || 0);
+  const showAll = sp.all === "1";
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   if (!tenantId) return null;
 
@@ -59,7 +73,7 @@ export default async function PotentialPage() {
   }
 
   const now = new Date();
-  const ranked = signals
+  const allRanked = signals
     .map((s) => ({
       signal: s,
       score: scorePotential(
@@ -74,8 +88,21 @@ export default async function PotentialPage() {
         now,
       ),
     }))
-    .sort((a, b) => b.score.potential - a.score.potential)
-    .slice(0, SHOW);
+    .sort((a, b) => b.score.potential - a.score.potential);
+
+  const sectionOptions = [...new Set(
+    allRanked.map((r) => r.signal.beat).filter((b): b is string => !!b),
+  )].sort();
+  const bandCounts: Record<string, number> = {};
+  for (const r of allRanked)
+    bandCounts[r.score.label] = (bandCounts[r.score.label] ?? 0) + 1;
+
+  let ranked = allRanked;
+  if (bands.length) ranked = ranked.filter((r) => bands.includes(r.score.label));
+  if (sections.length)
+    ranked = ranked.filter((r) => r.signal.beat && sections.includes(r.signal.beat));
+  if (minScore > 0) ranked = ranked.filter((r) => r.score.potential >= minScore);
+  if (!showAll) ranked = ranked.slice(0, SHOW);
 
   return (
     <main className="min-h-screen max-w-4xl mx-auto p-6 md:p-10">
@@ -144,6 +171,84 @@ export default async function PotentialPage() {
           value).
         </p>
       </details>
+
+      <form
+        method="get"
+        className="rounded-sm border p-4 mb-6 text-sm flex flex-wrap gap-x-6 gap-y-3 items-end"
+        style={{
+          borderColor: "var(--color-border)",
+          background: "var(--color-bg-card)",
+          fontFamily: "var(--font-ui)",
+        }}
+      >
+        <fieldset>
+          <legend className="ds-label mb-1">Filter by score level</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {(["HIGH", "MEDIUM", "LOW", "VERY LOW"] as const).map((b) => (
+              <label
+                key={b}
+                className="px-2.5 py-1 rounded-sm border cursor-pointer font-semibold"
+                style={{
+                  borderColor: LABEL_COLOR[b],
+                  color: LABEL_COLOR[b],
+                  background: bands.includes(b) ? `${LABEL_COLOR[b]}22` : "transparent",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  name="band"
+                  value={b}
+                  defaultChecked={bands.includes(b)}
+                  className="mr-1 accent-current"
+                />
+                {b} ({bandCounts[b] ?? 0})
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <label className="flex flex-col gap-1">
+          <span className="ds-label">Filter by section</span>
+          <select
+            name="section"
+            multiple
+            size={3}
+            defaultValue={sections}
+            className="border rounded-sm px-2 py-1 min-w-44"
+            style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}
+          >
+            {sectionOptions.map((sec) => (
+              <option key={sec} value={sec}>
+                {sec}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="ds-label">Minimum score · {minScore}</span>
+          <input
+            type="range"
+            name="min"
+            min={0}
+            max={100}
+            defaultValue={minScore}
+            className="w-44"
+          />
+        </label>
+        <label className="flex items-center gap-1.5">
+          <input type="checkbox" name="all" value="1" defaultChecked={showAll} />
+          Show all stories
+        </label>
+        <button
+          type="submit"
+          className="px-4 py-1.5 rounded-sm text-sm font-semibold"
+          style={{ background: "var(--color-brand)", color: "white" }}
+        >
+          Apply
+        </button>
+        <span style={{ color: "var(--color-fg-tertiary)" }}>
+          {ranked.length} of {allRanked.length} shown
+        </span>
+      </form>
 
       <ol className="space-y-3 list-none">
         {ranked.map(({ signal, score }) => (
