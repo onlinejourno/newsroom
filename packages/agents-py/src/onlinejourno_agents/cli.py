@@ -235,6 +235,27 @@ def cmd_frame(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_claim_extract(args: argparse.Namespace) -> int:
+    """m-calendar — extract time-bound promises into the Predictive Editorial Calendar (ADR 0057)."""
+    from onlinejourno_agents.claim_extract import run_claim_extraction
+
+    completer = make_completer(_resolve_provider())
+    res = run_claim_extraction(
+        tenant_slug=args.tenant,
+        completer=completer,
+        since_hours=args.since_hours,
+        limit=args.limit,
+    )
+    if res.status == "empty":
+        print("No signals need calendar extraction.", file=sys.stderr)
+        return 1
+    print(
+        f"scanned {res.scanned} signals · {res.events} calendar events · "
+        f"{res.failed} failed · spent ${res.spent_usd:.4f} of ${res.cap_usd:.2f} cap"
+    )
+    return 0
+
+
 def cmd_need_mix(args: argparse.Namespace) -> int:
     """Need-mix view (ADR 0049) — reader-need distribution overall + per beat."""
     from onlinejourno_agents.need_mix import build_mix, render_mix
@@ -732,6 +753,14 @@ def main(argv: list[str] | None = None) -> int:
         help="frame OWN stories instead of signals (ADR 0054-B)",
     )
     p_fr.set_defaults(func=cmd_frame)
+
+    p_ce = sub.add_parser(
+        "claim-extract", help="extract time-bound promises → editorial calendar (m-calendar)"
+    )
+    p_ce.add_argument("--tenant", required=True)
+    p_ce.add_argument("--since-hours", type=int, default=336)
+    p_ce.add_argument("--limit", type=int, default=60)
+    p_ce.set_defaults(func=cmd_claim_extract)
 
     p_sf = sub.add_parser(
         "stories-from-signals",

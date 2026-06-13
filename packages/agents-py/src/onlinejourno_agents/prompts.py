@@ -411,3 +411,40 @@ def build_framing_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
             lines.append(f"    {body}")
         lines.append("")
     return ScorePromptParts(system=system, user="\n".join(lines))
+
+
+def build_claim_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
+    """Batch Claim Extractor prompt (m-calendar, ADR 0057): per signal pull out
+    concrete time-bound public promises. Pure; one entry per 1-based index, each
+    carrying zero or more claims (most items have none)."""
+    system = (
+        "You extract FORWARD-LOOKING, TIME-BOUND public commitments from news "
+        "items — the raw material of a predictive editorial calendar. A claim "
+        "qualifies ONLY if it has (a) an identifiable actor making it, (b) a "
+        "concrete thing promised or scheduled, and (c) a future deadline or date, "
+        "however fuzzy ('by June', 'within 90 days', 'next financial year', "
+        "'in Q2 2026', 'by 2027-03-31').\n\n"
+        "EXTRACT: government/official promises, scheduled hearings/sessions/"
+        "verdicts, project completion dates, launch/rollout dates, deadlines set "
+        "for someone.\n"
+        "IGNORE: things that already happened, vague aspirations with no date "
+        "('soon', 'in due course'), opinion, and analysis. When in doubt, omit.\n\n"
+        "Copy the deadline EXACTLY as written into `deadline_text` (do not resolve "
+        "it to a date — that is done downstream). Quote the source sentence into "
+        "`original_claim_text`. Respond with ONLY a JSON object, exactly:\n"
+        '{"results": [{"index": <item number>, "claims": [{"who": <actor>, '
+        '"what": <what is promised>, "deadline_text": <the deadline phrase, '
+        'verbatim>, "original_claim_text": <the sentence>, "topic": <short topic>, '
+        '"confidence": <0.0-1.0>}]}, ...]}\n'
+        "Use an empty `claims` array for items with no qualifying promise. "
+        "One object per item, using the item's number as `index`."
+    )
+    lines = [f"ITEMS ({len(signals)}):", ""]
+    for idx, signal in enumerate(signals, start=1):
+        headline = signal.get("headline") or "(no headline)"
+        body = _truncate(signal.get("body_text"), 1500)
+        lines.append(f"[{idx}] {headline}")
+        if body:
+            lines.append(f"    {body}")
+        lines.append("")
+    return ScorePromptParts(system=system, user="\n".join(lines))

@@ -1090,3 +1090,75 @@ def update_story_placement(
             """,
             (Json(placement), tenant_id, story_id),
         )
+
+
+# ----------------------------------------------------------------------
+# Predictive Editorial Calendar — Claim Extractor store (m-calendar, ADR 0057)
+# ----------------------------------------------------------------------
+
+
+def signals_needing_claims(
+    conn: psycopg.Connection, tenant_id: UUID, *, since_hours: int = 336, limit: int = 60
+) -> list[dict[str, Any]]:
+    """Enriched signals not yet scanned for calendar claims, newest first. Returns
+    the fields the extractor needs: headline/body for the LLM, url as source_link,
+    and the publish date as the normalisation reference (`claimed_date`)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, headline, body_text, url,
+                   coalesce(published_at, fetched_at)::date as claimed_date
+              from signals
+             where tenant_id = %s
+               and enrichment is not null
+               and enrichment->'calendar_scanned' is null
+               and coalesce(published_at, fetched_at) >= now() - make_interval(hours => %s)
+             order by coalesce(published_at, fetched_at) desc
+             limit %s
+            """,
+            (tenant_id, since_hours, limit),
+        )
+        return list(cur.fetchall())
+
+
+def mark_signal_calendar_scanned(
+    conn: psycopg.Connection, *, tenant_id: UUID, signal_id: UUID, n: int
+) -> None:
+    """Mark a signal scanned (even with zero claims) so it is never re-sent."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            update signals
+               set enrichment = coalesce(enrichment, '{}'::jsonb)
+                   || jsonb_build_object('calendar_scanned', jsonb_build_object('n', %s))
+             where tenant_id = %s and id = %s
+            """,
+            (n, tenant_id, signal_id),
+        )
+
+
+_CALENDAR_EVENT_COLS = (
+    "who", "what", "deadline_text", "date_claimed", "target_date", "precision",
+    "source_link", "original_claim_text", "confidence", "topic", "signal_id",
+    "claim_key", "extractor_version",
+)
+
+
+def upsert_calendar_event(
+    conn: psycopg.Connection, *, tenant_id: UUID, event: dict[str, Any]
+) -> None:
+    """Insert a calendar event, or refresh the resolved fields on re-extraction.
+    Keyed on (tenant_id, claim_key); leaves human-set `outcome`/`lead_id` alone."""
+    cols = ["tenant_id", *_CALENDAR_EVENT_COLS]
+    placeholders = ", ".join(["%s"] * len(cols))
+    updates = ", ".join(
+        f"{c} = excluded.{c}"
+        for c in ("who", "what", "deadline_text", "target_date", "precision",
+                  "original_claim_text", "confidence", "topic", "extractor_version")
+    )
+    with conn.cursor() as cur:
+        cur.execute(
+            f"insert into calendar_event ({', '.join(cols)}) values ({placeholders}) "
+            f"on conflict (tenant_id, claim_key) do update set {updates}",
+            (tenant_id, *(event.get(c) for c in _CALENDAR_EVENT_COLS)),
+        )
