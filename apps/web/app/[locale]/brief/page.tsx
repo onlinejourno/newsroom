@@ -2,11 +2,10 @@ import {
   type BriefSection,
   fetchLatestBrief,
   fetchSignalUrls,
-  journalistBySlug,
   listBeats,
   tenantIdForSlug,
 } from "@/lib/db";
-import { sessionSlug } from "@/lib/session";
+import { getAccount } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +47,10 @@ export default async function BriefPage({
   const beats = tenantId ? await listBeats(tenantId) : [];
   // Default: the signed-in journalist's first beat, if a brief desk exists
   // for it; else the explicit ?beat=; else the latest brief of any desk.
-  const slug = await sessionSlug();
-  const user = tenantId && slug ? await journalistBySlug(tenantId, slug) : null;
+  const account = await getAccount();
+  const user = account
+    ? { name: account.display_name ?? account.email, beats: account.beats }
+    : null;
   const userBeatSlug = user?.beats?.[0]
     ?.toLowerCase()
     .replace(/[^a-z0-9]+/g, "-");

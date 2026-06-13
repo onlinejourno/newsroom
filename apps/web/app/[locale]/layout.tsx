@@ -16,6 +16,7 @@ import {
 } from "next/font/google";
 import "../globals.css";
 import Masthead from "@/components/Masthead";
+import { getAccount } from "@/lib/auth";
 import { locales, dirOf, isLocale, defaultLocale, meta } from "@/lib/locale";
 
 // Chrome fonts — always loaded (headings + UI, Latin).
@@ -149,6 +150,7 @@ export default async function RootLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
+  const account = await getAccount();
   const body = scriptFont[locale] ?? notoSerif;
   const display = scriptFont[locale] ?? playfair;
 
@@ -167,7 +169,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
-        <Masthead locale={locale} />
+        <Masthead
+          locale={locale}
+          role={account?.role ?? null}
+          userName={account?.display_name ?? null}
+        />
         {children}
       </body>
     </html>

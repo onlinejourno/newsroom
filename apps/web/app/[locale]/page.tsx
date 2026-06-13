@@ -2,13 +2,8 @@ import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-import {
-  entityWindows,
-  journalistBySlug,
-  storiesWithScores,
-  tenantIdForSlug,
-} from "@/lib/db";
-import { clearSession, roomForRole, sessionSlug } from "@/lib/session";
+import { entityWindows, storiesWithScores, tenantIdForSlug } from "@/lib/db";
+import { endSession, getAccount, roomForRole } from "@/lib/auth";
 import { topicMomentum } from "@/lib/trends";
 
 const TENANT_SLUG = "self";
@@ -109,14 +104,20 @@ export default async function Home({
 }) {
   const { locale } = await params;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
-  const slug = await sessionSlug();
-  const user =
-    tenantId && slug ? await journalistBySlug(tenantId, slug) : null;
+  const account = await getAccount();
+  const user = account
+    ? {
+        name: account.display_name ?? account.email,
+        role: account.role,
+        slug: account.profile_slug,
+        beats: account.beats,
+      }
+    : null;
   const snapshot = tenantId && user ? await orgSnapshot(tenantId) : null;
 
   async function signOut() {
     "use server";
-    await clearSession();
+    await endSession();
   }
 
   return (
