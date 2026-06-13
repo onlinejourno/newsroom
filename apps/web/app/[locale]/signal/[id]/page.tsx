@@ -1,12 +1,16 @@
+import type { Route } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { SignalChips } from "@/components/SignalChips";
+import { getAccount } from "@/lib/auth";
 import {
   archiveMatches,
   journalistsForSignal,
   signalById,
   tenantIdForSlug,
 } from "@/lib/db";
+import { createLead } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +76,31 @@ export default async function SignalDetailPage({
   }
 
   const e = signal.enrichment ?? {};
+  const me = await getAccount();
+  const canCommission = !!me && ["admin", "editor", "desk"].includes(me.role);
+
+  async function commission() {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const me = await getAccount();
+    const sig = tenantId ? await signalById(tenantId, id) : null;
+    if (!tenantId || !me || !sig) return;
+    if (!["admin", "editor", "desk"].includes(me.role)) return;
+    await createLead({
+      tenantId,
+      actor: me,
+      title: sig.headline ?? sig.url,
+      origin: "requested",
+      beat: sig.beat,
+      bureau: me.bureau ?? null,
+      signalId: id,
+      trendScore: sig.trend_score,
+      keywords: sig.enrichment?.analyse?.entities ?? [],
+      topic: sig.enrichment?.classify?.topic ?? null,
+    });
+    redirect(`/${locale}/newslist` as Route);
+  }
+
   const [routed, archive] = await Promise.all([
     journalistsForSignal(tenantId!, id),
     archiveMatches(tenantId!, e.analyse?.entities ?? []),
@@ -116,6 +145,18 @@ export default async function SignalDetailPage({
       >
         Provenance — what each layer added
       </p>
+
+      {canCommission ? (
+        <form action={commission} className="mb-4">
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-sm text-sm font-semibold"
+            style={{ background: "var(--color-brand)", color: "white" }}
+          >
+            Commission this story → Newslist
+          </button>
+        </form>
+      ) : null}
       <div className="space-y-3">
         <Stage label="① Source portal" by={signal.source_kind ?? "collector"}>
           <strong>{signal.source_name}</strong>
