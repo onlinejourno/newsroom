@@ -1,0 +1,146 @@
+import type { Route } from "next";
+import { redirect } from "next/navigation";
+
+import {
+  accountIdByEmail,
+  createPendingAccount,
+  tenantEmailDomain,
+} from "@/lib/auth";
+import { tenantIdForSlug } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+const TENANT_SLUG = "self";
+const ROLES = ["reporter", "desk", "editor", "viewer"];
+
+export default async function RegisterPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { locale } = await params;
+  const { error } = await searchParams;
+  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const domain = tenantId ? await tenantEmailDomain(tenantId) : null;
+
+  async function register(formData: FormData) {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    if (!tenantId) return;
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+    const name = String(formData.get("name") ?? "").trim();
+    const pw = String(formData.get("password") ?? "");
+    const role = String(formData.get("role") ?? "reporter");
+    const bureau = String(formData.get("bureau") ?? "").trim() || null;
+    const domain = await tenantEmailDomain(tenantId);
+
+    if (!email || !name || pw.length < 8)
+      redirect(`/${locale}/register?error=fields` as Route);
+    if (domain && !email.endsWith(`@${domain}`))
+      redirect(`/${locale}/register?error=domain` as Route);
+    if (await accountIdByEmail(tenantId, email))
+      redirect(`/${locale}/register?error=exists` as Route);
+
+    await createPendingAccount({
+      tenantId,
+      email,
+      displayName: name,
+      password: pw,
+      role,
+      bureau,
+    });
+    redirect(`/${locale}/pending` as Route);
+  }
+
+  const field = "w-full border rounded-sm px-3 py-2 text-base mb-3";
+  const fieldStyle = {
+    borderColor: "var(--color-border)",
+    background: "var(--color-bg)",
+  };
+  const messages: Record<string, string> = {
+    fields: "Fill every field; password ≥ 8 characters.",
+    domain: `Use your newsroom email${domain ? ` (@${domain})` : ""}.`,
+    exists: "An account with that email already exists — sign in instead.",
+  };
+
+  return (
+    <main className="min-h-screen flex items-center justify-center p-6">
+      <div className="max-w-md w-full" style={{ fontFamily: "var(--font-ui)" }}>
+        <p className="ds-label mb-2">OnlineJourno</p>
+        <h1
+          className="text-3xl font-extrabold tracking-tight mb-1"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Request access
+        </h1>
+        <p
+          className="text-sm mb-6"
+          style={{ color: "var(--color-fg-secondary)" }}
+        >
+          Register with your newsroom email
+          {domain ? ` (@${domain})` : ""}. An editor approves new accounts
+          before first sign-in.
+        </p>
+
+        {error ? (
+          <p
+            className="text-sm mb-3 px-3 py-2 rounded-sm"
+            style={{ background: "#dc262615", color: "#b91c1c" }}
+          >
+            {messages[error] ?? "Please check the form."}
+          </p>
+        ) : null}
+
+        <form action={register}>
+          <input name="name" required placeholder="Full name" className={field} style={fieldStyle} />
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder={domain ? `you@${domain}` : "you@newsroom.com"}
+            className={field}
+            style={fieldStyle}
+          />
+          <input
+            name="password"
+            type="password"
+            required
+            minLength={8}
+            placeholder="Password (≥ 8 chars)"
+            className={field}
+            style={fieldStyle}
+          />
+          <div className="flex gap-3 mb-3">
+            <select name="role" className="flex-1 border rounded-sm px-3 py-2" style={fieldStyle}>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+            <input name="bureau" placeholder="Bureau / desk (optional)" className="flex-1 border rounded-sm px-3 py-2" style={fieldStyle} />
+          </div>
+          <button
+            type="submit"
+            className="w-full px-4 py-2.5 rounded-sm text-base font-semibold"
+            style={{ background: "var(--color-brand)", color: "white" }}
+          >
+            Request access
+          </button>
+        </form>
+
+        <p className="text-sm mt-6" style={{ color: "var(--color-fg-secondary)" }}>
+          Already approved?{" "}
+          <a className="underline" href={`/${locale}/login`}>
+            Sign in
+          </a>
+          .
+        </p>
+      </div>
+    </main>
+  );
+}
