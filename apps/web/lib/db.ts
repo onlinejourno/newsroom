@@ -977,3 +977,30 @@ export async function archiveMatches(
   );
   return rows.filter((r: { overlap: number }) => r.overlap > 0);
 }
+
+// Stories published per day over the last N days (oldest→newest) — the home
+// snapshot sparkline.
+export async function publishedPerDay(
+  tenantId: string,
+  days = 7,
+): Promise<number[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ d: string; n: number }>(
+    `
+    with span as (
+      select generate_series(
+        (now() at time zone 'utc')::date - ($2::int - 1),
+        (now() at time zone 'utc')::date, interval '1 day')::date as d
+    )
+    select to_char(span.d,'YYYY-MM-DD') as d,
+           count(st.id)::int as n
+      from span
+      left join stories st
+        on st.tenant_id = $1
+       and coalesce(st.published_at, st.created_at)::date = span.d
+     group by span.d order by span.d
+    `,
+    [tenantId, days],
+  );
+  return rows.map((r) => r.n);
+}

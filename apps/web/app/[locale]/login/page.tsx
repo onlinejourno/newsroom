@@ -92,7 +92,7 @@ export default async function LoginPage({
             name="email"
             type="email"
             required
-            placeholder="you@thehindu.co.in"
+            placeholder="you@onlinejourno.com"
             className={field}
             style={fieldStyle}
           />
@@ -150,7 +150,7 @@ export default async function LoginPage({
               >
                 <option value="">— pick a person —</option>
                 {demoAccounts.map((j) => (
-                  <option key={j.slug} value={`${j.slug}@thehindu.co.in`}>
+                  <option key={j.slug} value={`${j.slug}@onlinejourno.com`}>
                     {j.name} · {j.role ?? "reporter"}
                   </option>
                 ))}
