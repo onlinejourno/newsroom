@@ -2,8 +2,14 @@ import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-import { entityWindows, storiesWithScores, tenantIdForSlug } from "@/lib/db";
+import {
+  entityWindows,
+  publishedPerDay,
+  storiesWithScores,
+  tenantIdForSlug,
+} from "@/lib/db";
 import { endSession, getAccount, roomForRole } from "@/lib/auth";
+import { Sparkline } from "@/components/Sparkline";
 import { topicMomentum } from "@/lib/trends";
 
 const TENANT_SLUG = "self";
@@ -42,7 +48,8 @@ async function orgSnapshot(tenantId: string) {
     const hl = (st.headline ?? "").toLowerCase();
     if ([...hot].some((t) => t.length >= 3 && hl.includes(t))) trending++;
   }
-  return { total: stories.length, grade, tweak, intervene, trending };
+  const trend = await publishedPerDay(tenantId, 7);
+  return { total: stories.length, grade, tweak, intervene, trending, trend };
 }
 
 // The five rooms of the story lifecycle (ADR 0053), each with who stands in
@@ -191,6 +198,12 @@ export default async function Home({
                   </p>
                 </div>
               ))}
+            </div>
+            <div className="flex items-center gap-3 mt-4 pt-3 border-t" style={{ borderColor: "var(--color-border)" }}>
+              <span className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
+                Published · last 7 days
+              </span>
+              <Sparkline points={snapshot.trend} color="#2563eb" />
             </div>
             <div className="flex items-center justify-between gap-3 flex-wrap mt-4">
               <Link
