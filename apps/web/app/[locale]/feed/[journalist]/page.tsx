@@ -1,9 +1,14 @@
+import type { Route } from "next";
+import { redirect } from "next/navigation";
+
 import { SignalChips } from "@/components/SignalChips";
+import { getAccount } from "@/lib/auth";
 import {
   journalistBySlug,
   signalsForJournalist,
   tenantIdForSlug,
 } from "@/lib/db";
+import { createLead } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +33,23 @@ export default async function FeedPage({
   const { locale, journalist: slug } = await params;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   const journalist = tenantId ? await journalistBySlug(tenantId, slug) : null;
+
+  async function pitch(formData: FormData) {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const me = await getAccount();
+    if (!tenantId || !me) return;
+    await createLead({
+      tenantId,
+      actor: me,
+      title: String(formData.get("title") ?? "").slice(0, 300),
+      origin: "pitched",
+      beat: String(formData.get("beat") ?? "") || null,
+      bureau: me.bureau ?? null,
+      signalId: String(formData.get("signalId")) || null,
+    });
+    redirect(`/${locale}/newslist` as Route);
+  }
 
   if (!tenantId || !journalist) {
     return (
@@ -114,7 +136,7 @@ export default async function FeedPage({
               </a>
               <SignalChips signal={signal} />
               <p
-                className="mt-2 text-xs"
+                className="mt-2 text-xs flex items-center gap-3"
                 style={{ fontFamily: "var(--font-ui)" }}
               >
                 <a
@@ -124,6 +146,19 @@ export default async function FeedPage({
                 >
                   detail
                 </a>
+                <form action={pitch}>
+                  <input type="hidden" name="signalId" value={signal.id} />
+                  <input type="hidden" name="title" value={signal.headline ?? signal.url} />
+                  <input type="hidden" name="beat" value={signal.beat ?? ""} />
+                  <button
+                    type="submit"
+                    className="underline font-semibold"
+                    style={{ color: "var(--color-brand)" }}
+                    title="Pitch this to the bureau chief — it lands on the Newslist as a pitched lead"
+                  >
+                    Pitch to desk →
+                  </button>
+                </form>
               </p>
             </li>
           ))}

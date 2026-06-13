@@ -50,6 +50,10 @@ export default async function CoveragePage() {
           no flow.{gaps > 0 ? ` ${gaps} beat${gaps === 1 ? "" : "s"} in gap.` : ""}
         </p>
       </header>
+      <nav className="flex gap-4 text-sm mb-6" style={{ fontFamily: "var(--font-ui)" }}>
+        <a className="underline" style={{ color: "var(--color-fg-secondary)" }} href="./gaps">Regional gaps</a>
+        <span className="font-bold">Coverage gaps</span>
+      </nav>
 
       <table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
         <thead>

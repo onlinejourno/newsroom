@@ -38,8 +38,7 @@ const ROOMS: Room[] = [
     label: "Newsroom",
     items: [
       { path: "journalists", label: "Journalists" },
-      { path: "gaps", label: "Regional gaps" },
-      { path: "coverage", label: "Coverage gaps" },
+      { path: "gaps", label: "Gaps — regional & coverage" },
     ],
   },
   {

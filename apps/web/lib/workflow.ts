@@ -178,12 +178,17 @@ export async function transition(
   if (!deskMove && !fileMove) return false;
 
   const stamp = STAMP[to] ? `, ${STAMP[to]} = now()` : "";
-  const setCommish =
-    to === "assigned" ? ", commissioner_id = $3" : "";
+  // $1 tenant, $2 lead, $3 new status; $4 commissioner only when assigning.
+  const params: unknown[] = [tenantId, leadId, to];
+  let setCommish = "";
+  if (to === "assigned") {
+    setCommish = ", commissioner_id = $4";
+    params.push(actor.id);
+  }
   await pool().query(
-    `update story_leads set status = $4${stamp}${setCommish}
+    `update story_leads set status = $3${stamp}${setCommish}
       where tenant_id = $1 and id = $2`,
-    setCommish ? [tenantId, leadId, actor.id, to] : [tenantId, leadId, "", to],
+    params,
   );
   return true;
 }

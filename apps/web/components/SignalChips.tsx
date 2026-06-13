@@ -1,11 +1,32 @@
 import type { SignalRow } from "@/lib/db";
 
-// User Needs Model (ADR 0049) — the reader need a signal serves, colour-coded.
-const NEED_META: Record<string, { label: string; color: string }> = {
-  know: { label: "Know", color: "#2563eb" },
-  understand: { label: "Understand", color: "#7c3aed" },
-  feel: { label: "Feel", color: "#ea580c" },
-  do: { label: "Do", color: "#16a34a" },
+// User Needs Model (ADR 0049) — the reader need a signal serves. Each chip
+// shows a plain-language label and explains itself on hover so the desk
+// knows exactly what it means. `gloss` is the explicit definition.
+export const NEED_META: Record<
+  string,
+  { label: string; color: string; gloss: string }
+> = {
+  know: {
+    label: "Know · the facts",
+    color: "#2563eb",
+    gloss: "Know — the reader wants the facts, fast: what happened, who, when. Breaking news and updates.",
+  },
+  understand: {
+    label: "Understand · the why",
+    color: "#7c3aed",
+    gloss: "Understand — the reader wants context and explanation: why it matters, how it works, what's behind it.",
+  },
+  feel: {
+    label: "Feel · the human story",
+    color: "#ea580c",
+    gloss: "Feel — the reader wants emotional connection: human stories, voices, the lived experience.",
+  },
+  do: {
+    label: "Do · act on it",
+    color: "#16a34a",
+    gloss: "Do — the reader wants to act: a service, a how-to, something useful they can use or decide on.",
+  },
 };
 
 const CHIP = "text-xs px-2 py-0.5 rounded-full whitespace-nowrap";
@@ -48,7 +69,7 @@ export function SignalChips({ signal }: { signal: SignalRow }) {
       {nm ? (
         <span
           className={`${CHIP} font-semibold`}
-          title={`Reader need: ${nm.label}`}
+          title={nm.gloss}
           style={{ color: nm.color, border: `1px solid ${nm.color}` }}
         >
           {nm.label}
@@ -95,5 +116,49 @@ export function SignalChips({ signal }: { signal: SignalRow }) {
         </span>
       ))}
     </div>
+  );
+}
+
+// A persistent, collapsible glossary so the desk knows exactly what every tag
+// means — the reader-need model and the PEJ frame families.
+export function TagLegend() {
+  return (
+    <details
+      className="rounded-sm border p-3 mb-6 text-sm"
+      style={{
+        borderColor: "var(--color-border)",
+        background: "var(--color-bg-card)",
+        fontFamily: "var(--font-ui)",
+      }}
+    >
+      <summary className="cursor-pointer font-semibold" style={{ color: "var(--color-brand)" }}>
+        What the tags mean
+      </summary>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div>
+          <p className="ds-label mb-1">Reader need (why someone reads it)</p>
+          <ul className="space-y-1 text-xs" style={{ color: "var(--color-fg-secondary)" }}>
+            {Object.values(NEED_META).map((n) => (
+              <li key={n.label}>
+                <span className="font-semibold" style={{ color: n.color }}>
+                  {n.label.split(" · ")[0]}
+                </span>{" "}
+                — {n.gloss.split(" — ")[1]}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="ds-label mb-1">Narrative frame (how it's told · PEJ)</p>
+          <ul className="space-y-1 text-xs" style={{ color: "var(--color-fg-secondary)" }}>
+            <li><span className="font-semibold" style={{ color: "#dc2626" }}>Combative</span> — conflict, standings, wrongdoing, scrutiny of an institution.</li>
+            <li><span className="font-semibold" style={{ color: "#0d9488" }}>Explanatory</span> — process, trends, historical context.</li>
+            <li><span className="font-semibold" style={{ color: "#6b7280" }}>Straight</span> — just the facts, no interpretive lens.</li>
+            <li><span className="font-semibold" style={{ color: "#4f46e5" }}>Policy</span> — the substance of a policy examined.</li>
+            <li><span className="font-semibold" style={{ color: "#a16207" }}>Other</span> — reaction, consensus, conjecture, profile.</li>
+          </ul>
+        </div>
+      </div>
+    </details>
   );
 }

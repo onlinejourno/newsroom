@@ -51,6 +51,10 @@ export default async function GapsPage() {
             : ""}
         </p>
       </header>
+      <nav className="flex gap-4 text-sm mb-6" style={{ fontFamily: "var(--font-ui)" }}>
+        <span className="font-bold">Regional gaps</span>
+        <a className="underline" style={{ color: "var(--color-fg-secondary)" }} href="./coverage">Coverage gaps</a>
+      </nav>
 
       <table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
         <thead>

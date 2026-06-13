@@ -1,4 +1,4 @@
-import { SignalChips } from "@/components/SignalChips";
+import { SignalChips, TagLegend } from "@/components/SignalChips";
 import {
   distinctSignalBeats,
   fetchLatestSignals,
@@ -194,6 +194,8 @@ export default async function SignalsPage({
       </header>
 
       <hr className="ds-rule mb-10" />
+
+      <TagLegend />
 
       <form
         method="get"
