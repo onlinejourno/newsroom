@@ -25,6 +25,13 @@ const IMPORTANCE_COLOR: Record<string, string> = {
   normal: "#6b7280",
   low: "#9ca3af",
 };
+// How a lead entered the board (origin), in plain words.
+const ORIGIN_LABEL: Record<string, string> = {
+  self: "self-started",
+  pitched: "pitched",
+  requested: "commissioned",
+  assigned: "assigned",
+};
 
 function eta(d: Date | null): string {
   if (!d) return "no ETA";
@@ -140,7 +147,7 @@ export default async function NewslistPage({
             </span>
           ) : null}
           <span className="text-xs ml-auto" style={{ color: "var(--color-fg-tertiary)" }}>
-            {l.origin}
+            {ORIGIN_LABEL[l.origin] ?? l.origin}
           </span>
         </div>
         <p className="font-semibold leading-snug" style={{ fontFamily: "var(--font-display)" }}>

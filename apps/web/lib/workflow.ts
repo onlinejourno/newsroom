@@ -136,7 +136,7 @@ export async function createLead(args: {
   tenantId: string;
   actor: Account;
   title: string;
-  origin: "assigned" | "pitched" | "requested";
+  origin: "assigned" | "pitched" | "requested" | "self";
   beat?: string | null;
   bureau?: string | null;
   importance?: string;
@@ -149,8 +149,8 @@ export async function createLead(args: {
   note?: string | null;
 }): Promise<string | null> {
   const isDesk = ["admin", "editor", "desk"].includes(args.actor.role);
-  if (args.origin === "pitched") {
-    // anyone signed in may pitch
+  if (args.origin === "pitched" || args.origin === "self") {
+    // anyone signed in may pitch a story to the desk, or take one up themselves
   } else if (!isDesk) {
     return null; // only desk/editor commission
   }
@@ -172,7 +172,7 @@ export async function createLead(args: {
       args.importance ?? "normal",
       args.signalId ?? null,
       args.assigneeId ?? null, // a reporter is chosen at assign time, not here
-      args.origin === "pitched" ? null : args.actor.id, // commissioner
+      args.origin === "pitched" || args.origin === "self" ? null : args.actor.id, // commissioner
       args.actor.id, // created_by — who pitched/commissioned it
       args.eta || null,
       args.trendScore == null ? null : Math.round(args.trendScore), // trend_score is integer

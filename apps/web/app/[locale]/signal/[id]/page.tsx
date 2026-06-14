@@ -95,6 +95,30 @@ export default async function SignalDetailPage({
     redirect(`/${locale}/newslist` as Route);
   }
 
+  // Reporter agency (ADR 0056): take a story up yourself — no commission needed.
+  // It lands as an assigned-to-you lead; write it, then file.
+  async function takeUp() {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const me = await getAccount();
+    const sig = tenantId ? await signalById(tenantId, id) : null;
+    if (!tenantId || !me || !sig) return;
+    await createLead({
+      tenantId,
+      actor: me,
+      title: sig.headline ?? sig.url,
+      origin: "self",
+      assigneeId: me.id,
+      beat: sig.beat,
+      bureau: me.bureau ?? null,
+      signalId: id,
+      trendScore: sig.trend_score,
+      keywords: sig.enrichment?.analyse?.entities ?? [],
+      topic: sig.enrichment?.classify?.topic ?? null,
+    });
+    redirect(`/${locale}/newslist` as Route);
+  }
+
   const [routed, archive, lead] = await Promise.all([
     journalistsForSignal(tenantId!, id),
     archiveMatches(tenantId!, e.analyse?.entities ?? []),
@@ -169,16 +193,35 @@ export default async function SignalDetailPage({
             View on the Newslist →
           </Link>
         </div>
-      ) : canCommission ? (
-        <form action={commission} className="mb-4">
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm font-semibold"
-            style={{ background: "var(--color-brand)", color: "white" }}
-          >
-            Commission this story → Newslist
-          </button>
-        </form>
+      ) : me ? (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <form action={takeUp}>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-semibold"
+              style={{ background: "var(--color-brand)", color: "white" }}
+              title="Assign this to yourself and write it — no commission needed"
+            >
+              Take it up → I’ll write this
+            </button>
+          </form>
+          {canCommission ? (
+            <form action={commission}>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm font-semibold border"
+                style={{
+                  borderColor: "var(--color-frame)",
+                  color: "var(--color-fg-primary)",
+                  background: "var(--color-bg-card)",
+                }}
+                title="Send it to the Newslist for the desk to assign someone"
+              >
+                Commission to someone → Newslist
+              </button>
+            </form>
+          ) : null}
+        </div>
       ) : null}
       <div className="space-y-3">
         <Stage label="① Source portal" by={signal.source_kind ?? "collector"}>

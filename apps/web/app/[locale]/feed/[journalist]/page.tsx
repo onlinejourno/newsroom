@@ -51,6 +51,25 @@ export default async function FeedPage({
     redirect(`/${locale}/newslist` as Route);
   }
 
+  // Take it up yourself — no commission needed; lands assigned to you.
+  async function takeUp(formData: FormData) {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const me = await getAccount();
+    if (!tenantId || !me) return;
+    await createLead({
+      tenantId,
+      actor: me,
+      title: String(formData.get("title") ?? "").slice(0, 300),
+      origin: "self",
+      assigneeId: me.id,
+      beat: String(formData.get("beat") ?? "") || null,
+      bureau: me.bureau ?? null,
+      signalId: String(formData.get("signalId")) || null,
+    });
+    redirect(`/${locale}/newslist` as Route);
+  }
+
   if (!tenantId || !journalist) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
@@ -146,7 +165,7 @@ export default async function FeedPage({
                 >
                   detail
                 </a>
-                <form action={pitch}>
+                <form action={takeUp}>
                   <input type="hidden" name="signalId" value={signal.id} />
                   <input type="hidden" name="title" value={signal.headline ?? signal.url} />
                   <input type="hidden" name="beat" value={signal.beat ?? ""} />
@@ -154,9 +173,22 @@ export default async function FeedPage({
                     type="submit"
                     className="underline font-semibold"
                     style={{ color: "var(--color-brand)" }}
-                    title="Pitch this to the bureau chief — it lands on the Newslist as a pitched lead"
+                    title="Take it up yourself — lands on the Newslist assigned to you"
                   >
-                    Pitch to desk →
+                    Take it up →
+                  </button>
+                </form>
+                <form action={pitch}>
+                  <input type="hidden" name="signalId" value={signal.id} />
+                  <input type="hidden" name="title" value={signal.headline ?? signal.url} />
+                  <input type="hidden" name="beat" value={signal.beat ?? ""} />
+                  <button
+                    type="submit"
+                    className="underline"
+                    style={{ color: "var(--color-fg-tertiary)" }}
+                    title="Pitch this to the desk instead — lands as a pitched lead for them to assign"
+                  >
+                    or pitch to desk
                   </button>
                 </form>
               </p>
