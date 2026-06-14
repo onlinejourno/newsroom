@@ -43,18 +43,42 @@ Beyond title/beat/assignee, a planned story carries:
 - **surface-potential** — projected performance per surface/platform (the
   surface-driven audit: Discover · News · Search · one AI-answer-engines surface
   · Direct · Subscription)
-- **format & desk** — text · interactive · **video / multimedia**, routed to the
-  right desk *in time to go live with the news story*
-- **multi-bureau** — one story, several bureaus
+- **production shape** — text · interactive · **video / multimedia** · graphic,
+  and **multi-bureau** — modelled as *child production tasks* (see §4), each
+  routed to its desk with its own ETA, all timed to land before the story goes live
 - **hierarchy approval** — the *plan* is signed off before execution
 
 → effective **planning → commissioning → execution-prep**, before a word is
 written. This is where the reporter sees a story, reads its potential and the
 outlet's authority on it, plans its multi-modal shape, and gets it approved.
 
+### 4. A plan is a parent of production tasks (decided — option b)
+A story is a small **production**, not a single task. The plan is a **parent**;
+its multi-modal / multi-bureau elements are **child production tasks** — text,
+video, interactive, graphic, or a bureau's slice — each **assignable to its desk
+with its own ETA**. The parent publishes only when the pieces land. A lone text
+story is just a plan with one task. (The cheaper "format tag on one lead" was
+rejected: it cannot coordinate "the video, done *in time* for the story to go
+live.")
+
+### 5. Ground-up — the planning surface teaches
+This platform is built **ground-up**: it does not merely route an editor's
+orders, it makes the **reporter** aware and, over time, capable. So every
+planning choice is also a **teaching moment** — going multi-modal or multi-bureau
+(vs a lone story) **shows its logistical and technical implications**: the extra
+desks pulled in, the added lead time, the coordination, the effect on the ETA.
+The decision inputs — trend trajectory, topic authority (EEAT), surface-potential
+— are shown **with explanation**, so a reporter learns to *read* them, not just
+obey them. Assistive for those new to digital; a workhorse for the cognoscenti
+(continuing the "explains itself" intent of the old Learn room). This is a
+**platform-wide value**; Planning is its sharpest expression.
+
 ## Build — phased, deferred
-- **A — the lead becomes a plan:** add `format · bureaus[] · target_surfaces[] ·
-  plan_approval` (schema + UI). The foundation everything else hangs on.
+- **A — the lead becomes a plan:** a `production_tasks` child table (kind ∈
+  text / video / interactive / graphic, desk, assignee, eta, status) +
+  `target_surfaces[]` + `plan_approval` on the lead. Each planning choice renders
+  its implications (the ground-up teaching surface, §5). The foundation
+  everything else hangs on.
 - **B — Calendar planning board:** time × beat, commission-ahead, set
   format/bureau there; calendar events + leads-with-deadlines on one timeline.
 - **C — decision inputs on the plan:** trend-potential, EEAT-on-topic,
