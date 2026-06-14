@@ -127,7 +127,7 @@ export default async function NewslistPage({
   const byStatus = (s: string) => leads.filter((l) => l.status === s);
 
   const card = (l: Lead) => {
-    const moves = nextMoves(l.status, isDesk, false);
+    const moves = nextMoves(l.status, isDesk, l.assignee_id === me!.id);
     return (
       <div key={l.id} className="ds-panel p-3 mb-2 text-sm">
         <div className="flex items-center gap-2 mb-1" style={{ fontFamily: "var(--font-ui)" }}>

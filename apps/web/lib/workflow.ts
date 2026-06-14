@@ -43,6 +43,7 @@ export type Lead = {
   importance: string;
   signal_id: string | null;
   story_id: string | null;
+  assignee_id: string | null;
   assignee: string | null;
   commissioner: string | null;
   pitcher: string | null;
@@ -59,7 +60,7 @@ export type Lead = {
 
 const SELECT = `
   select l.id, l.title, l.beat, l.bureau, l.origin, l.status, l.importance,
-         l.signal_id, l.story_id, l.eta, l.trend_score, l.keywords, l.topic,
+         l.signal_id, l.story_id, l.assignee_id, l.eta, l.trend_score, l.keywords, l.topic,
          l.note, l.created_at, l.published_at,
          a.display_name as assignee, c.display_name as commissioner,
          p.display_name as pitcher, s.url as story_url,
