@@ -18,7 +18,9 @@ import {
 export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
-const COLUMNS: Status[] = ["pitched", "assigned", "filed", "approved", "published"];
+const COLUMNS: Status[] = ["idea", "pitched", "assigned", "filed", "approved", "published"];
+// "idea" renders as the "Suggested" intake lane (calendar + commission origin).
+const COLUMN_LABEL: Record<string, string> = { idea: "Suggested" };
 const IMPORTANCE_COLOR: Record<string, string> = {
   urgent: "#dc2626",
   high: "#d97706",
@@ -200,9 +202,9 @@ export default async function NewslistPage({
             {l.keywords.slice(0, 4).join(" · ")}
           </p>
         ) : null}
-        {(l.status === "pitched" && isDesk) || moves.length ? (
+        {((l.status === "pitched" || l.status === "idea") && isDesk) || moves.length ? (
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {l.status === "pitched" && isDesk ? (
+            {(l.status === "pitched" || l.status === "idea") && isDesk ? (
               <form action={assign} className="flex items-center gap-1">
                 <input type="hidden" name="id" value={l.id} />
                 <select
@@ -353,7 +355,7 @@ export default async function NewslistPage({
         </span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-6">
         {COLUMNS.map((s) => (
           <div key={s}>
             <p
@@ -361,7 +363,7 @@ export default async function NewslistPage({
               style={{ color: STATUS_META[s].color, borderBottom: `2px solid ${STATUS_META[s].color}` }}
             >
               <span style={{ width: 8, height: 8, background: STATUS_META[s].color, display: "inline-block" }} />
-              {STATUS_META[s].label} · {byStatus(s).length}
+              {COLUMN_LABEL[s] ?? STATUS_META[s].label} · {byStatus(s).length}
             </p>
             {byStatus(s).map(card)}
           </div>

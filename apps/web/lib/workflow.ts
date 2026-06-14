@@ -155,8 +155,14 @@ export async function createLead(args: {
   } else if (!isDesk) {
     return null; // only desk/editor commission
   }
-  const status = args.origin === "pitched" ? "pitched" : "assigned";
-  const tsCol = args.origin === "pitched" ? "pitched_at" : "assigned_at";
+  const status =
+    args.origin === "pitched"
+      ? "pitched"
+      : args.origin === "requested"
+        ? "idea"
+        : "assigned";
+  const tsCol =
+    status === "pitched" ? "pitched_at" : status === "idea" ? "created_at" : "assigned_at";
   const { rows } = await pool().query<{ id: string }>(
     `insert into story_leads
        (tenant_id, title, beat, bureau, origin, status, importance, signal_id,
