@@ -2,6 +2,12 @@ import CalendarApp, { type CalEvent, type Beat } from "@/components/calendar/Cal
 import { istToday, toCalendarDate } from "@/lib/calendar";
 import { fetchCalendarEvents, tenantIdForSlug } from "@/lib/db";
 
+import type { Route } from "next";
+import { redirect } from "next/navigation";
+
+import { getAccount } from "@/lib/auth";
+import { commissionFromCalendarEvent } from "@/lib/workflow";
+
 export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
@@ -66,6 +72,18 @@ export default async function CalendarPage({
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   if (!tenantId) return <SetupNotice />;
 
+  const me = await getAccount();
+  const canCommission = !!me && ["admin", "editor", "desk"].includes(me.role);
+
+  async function commissionEvent(formData: FormData) {
+    "use server";
+    const tid = await tenantIdForSlug(TENANT_SLUG);
+    const who = await getAccount();
+    if (!tid || !who) return;
+    await commissionFromCalendarEvent(tid, who, String(formData.get("eventId")));
+    redirect(`/${locale}/newslist` as Route);
+  }
+
   const todayISO = ymd(istToday())!;
   const rows = await fetchCalendarEvents(tenantId);
 
@@ -83,6 +101,7 @@ export default async function CalendarPage({
     beatLabel: r.topic ?? "General",
     location: null,
     outcome: r.outcome as CalEvent["outcome"],
+    leadId: r.lead_id,
   }));
 
   // Beats present in the data, each with a colour — drives the beat dropdown.
@@ -103,6 +122,8 @@ export default async function CalendarPage({
       beats={[...beatMap.values()]}
       todayISO={todayISO}
       locale={locale}
+      canCommission={canCommission}
+      commission={commissionEvent}
     />
   );
 }

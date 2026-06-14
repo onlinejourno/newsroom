@@ -27,6 +27,7 @@ export type CalEvent = {
   beatLabel: string;
   location: string | null;
   outcome: "delivered" | "broken" | "dropped" | null;
+  leadId: string | null;
 };
 
 export type Beat = { id: string; label: string; color: string };
@@ -526,7 +527,7 @@ function PipelineView({ counts }: { counts: { total: number; forward: number; pa
 
 // ─────────────────────────── drawer ───────────────────────────
 
-function EventDrawer({ event, beats, todayISO, locale, onClose }: { event: CalEvent; beats: Beat[]; todayISO: string; locale: string; onClose: () => void }) {
+function EventDrawer({ event, beats, todayISO, locale, canCommission, commission, onClose }: { event: CalEvent; beats: Beat[]; todayISO: string; locale: string; canCommission: boolean; commission: (formData: FormData) => void; onClose: () => void }) {
   const dated = event.deadline !== null;
   const d = dated ? daysBetween(todayISO, event.deadline!) : 0;
   const isPast = dated && d < 0;
@@ -629,9 +630,22 @@ function EventDrawer({ event, beats, todayISO, locale, onClose }: { event: CalEv
             </div>
           )}
 
-          <a href={`/${locale}/newslist`} style={{ display: "block", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.ink, color: "#fff", textDecoration: "none", padding: "11px 0", cursor: "pointer", letterSpacing: ".04em" }}>
-            {isPast ? "Open the Newslist to commission an accountability story →" : "Open the Newslist to commission this →"}
-          </a>
+          {event.leadId ? (
+            <a href={`/${locale}/newslist`} style={{ display: "block", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.iojGreen, color: "#fff", textDecoration: "none", padding: "11px 0", letterSpacing: ".04em" }}>
+              On the Newslist →
+            </a>
+          ) : canCommission && dated ? (
+            <form action={commission}>
+              <input type="hidden" name="eventId" value={event.id} />
+              <button type="submit" style={{ display: "block", width: "100%", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.ink, color: "#fff", border: "none", padding: "11px 0", cursor: "pointer", letterSpacing: ".04em" }}>
+                {isPast ? "Commission an accountability story →" : "Commission this to the Newslist →"}
+              </button>
+            </form>
+          ) : (
+            <a href={`/${locale}/newslist`} style={{ display: "block", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.ink, color: "#fff", textDecoration: "none", padding: "11px 0", letterSpacing: ".04em" }}>
+              Open the Newslist →
+            </a>
+          )}
         </div>
       </aside>
     </>
@@ -654,7 +668,7 @@ function EmptyRow({ text = "No events match these filters." }: { text?: string }
 
 // ─────────────────────────── shell + app ───────────────────────────
 
-export default function CalendarApp({ events, beats, todayISO, locale }: { events: CalEvent[]; beats: Beat[]; todayISO: string; locale: string }) {
+export default function CalendarApp({ events, beats, todayISO, locale, canCommission, commission }: { events: CalEvent[]; beats: Beat[]; todayISO: string; locale: string; canCommission: boolean; commission: (formData: FormData) => void }) {
   const [tab, setTab] = useState<TabId>("calendar");
   const [beat, setBeat] = useState("all");
   const [horizon, setHorizon] = useState(90);
@@ -773,7 +787,7 @@ export default function CalendarApp({ events, beats, todayISO, locale }: { event
         {tab === "pipeline" && <PipelineView counts={{ total: events.length, forward: upcomingAll.length, pastdue: pastDueAll.length, undated: undated.length }} />}
       </div>
 
-      {selected && <EventDrawer event={selected} beats={beats} todayISO={todayISO} locale={locale} onClose={() => setSelected(null)} />}
+      {selected && <EventDrawer event={selected} beats={beats} todayISO={todayISO} locale={locale} canCommission={canCommission} commission={commission} onClose={() => setSelected(null)} />}
     </div>
   );
 }
