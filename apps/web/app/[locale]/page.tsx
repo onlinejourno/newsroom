@@ -54,53 +54,56 @@ async function orgSnapshot(tenantId: string) {
 
 // The five rooms of the story lifecycle (ADR 0053), each with who stands in
 // it and what question it answers. The front door routes by role, not tool.
+// The front door mirrors the four-job IA (ADR 0058): the same Plan · Produce ·
+// Check · Newsroom the masthead uses, so the door and the nav never disagree.
 const ROOMS = [
   {
     href: "signals",
-    room: "① Today",
+    room: "Plan",
     who: "Reporter · Bureau chief · Editor",
-    title: "What is going on",
-    desc: "The public record flowing in — governments, courts, tenders, wires — analysed, classified and routed to the reporter on the beat, with alerts. Potential tells her what to take up first: trending now, likely to trend today.",
+    title: "Decide what to cover",
+    desc: "The public record flowing in — governments, courts, tenders, wires — analysed, classified and routed to the reporter on the beat. Potential says what to take up first; the Calendar shows what's coming before it breaks.",
     links: [
+      { href: "signals", label: "Signals" },
       { href: "potential", label: "Potential" },
       { href: "trends", label: "Trends" },
-      { href: "journalists", label: "Reporter feeds" },
+      { href: "calendar", label: "Calendar" },
     ],
   },
   {
-    href: "scores",
-    room: "② Stories",
-    who: "Desk · Reporter",
-    title: "A fair chance on every surface",
-    desc: "Once published, is the story built for each surface — Discover, News, Search, and the AI surfaces each reading in their own way? Automatic audits, paste-a-URL checks, and the hidden gems the night desk buried.",
+    href: "newslist",
+    room: "Produce",
+    who: "Desk · Reporter · Editor",
+    title: "Move it — signal → published",
+    desc: "The spine: every story in flight on one board. Pitch or commission, assign a reporter with an ETA, file, approve, publish — the state visible to the whole desk, on-time tracked.",
     links: [
-      { href: "gems", label: "Hidden gems" },
-      { href: "scores", label: "Audit a URL" },
+      { href: "newslist", label: "Newslist" },
+      { href: "shortlist", label: "Shortlist" },
+      { href: "brief", label: "Morning brief" },
     ],
   },
   {
-    href: "probity",
-    room: "③ Standards",
-    who: "Everyone",
-    title: "Probity and verification",
-    desc: "What the page does to the reader — trackers, consent honesty, weight — seared into the workflow. Factcheck joins here. The conscience dashboards: reader-need mix and framing balance.",
-    links: [{ href: "signals", label: "Need mix" }],
-  },
-  {
-    href: "gaps",
-    room: "④ Newsroom",
-    who: "Editor · Vertical heads",
-    title: "People and strategy",
-    desc: "Who covers what, where the record moves with no reporter on it, and — coming — the masthead's strategic topics and what its subscribers actually read.",
-    links: [{ href: "journalists", label: "Directory" }],
-  },
-  {
     href: "scores",
-    room: "⑤ Learn",
-    who: "Everyone new to digital",
-    title: "The medium, explained inside the tool",
-    desc: "Assistive for those who don't know, a workhorse for the cognoscenti: every score, frame and surface explains itself. Start with the explainers on Potential and Scores; the full learning layer (m-learn) is being built.",
-    links: [{ href: "potential", label: "See an explainer" }],
+    room: "Check",
+    who: "Desk · Everyone",
+    title: "Fair, honest, good",
+    desc: "Once published, does the story get a fair chance on every surface — Discover, News, Search, the AI readers? Plus probity — what the page does to the reader — and compliance, seared into the workflow. And the hidden gems the night desk buried.",
+    links: [
+      { href: "scores", label: "Scores" },
+      { href: "probity", label: "Probity" },
+      { href: "gems", label: "Hidden gems" },
+    ],
+  },
+  {
+    href: "journalists",
+    room: "Newsroom",
+    who: "Editor · Vertical heads",
+    title: "People & strategy",
+    desc: "Who covers what, and where the record moves with no reporter on it. And every score, frame and surface explains itself inside the tool — assistive for those new to digital, a workhorse for the cognoscenti.",
+    links: [
+      { href: "journalists", label: "Journalists" },
+      { href: "gaps", label: "Gaps" },
+    ],
   },
 ] as const;
 
