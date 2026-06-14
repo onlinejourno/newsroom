@@ -2,6 +2,7 @@
 import { Pool } from "pg";
 
 import type { Account } from "@/lib/auth";
+import { calendarEventById, linkCalendarEventLead } from "@/lib/db";
 
 const globalForPool = globalThis as unknown as { __ojPool?: Pool };
 function pool(): Pool {
@@ -261,4 +262,31 @@ export async function assignLead(
     [tenantId, leadId, assigneeId, actor.id],
   );
   return (rowCount ?? 0) > 0;
+}
+
+// Commission a calendar event into a Suggested lead (ADR 0057 §2, manual path).
+// Mirrors the auto cron: requested→idea lead, then links the event. Desk only;
+// no-ops if the event is missing, undated, or already linked.
+export async function commissionFromCalendarEvent(
+  tenantId: string,
+  actor: Account,
+  eventId: string,
+): Promise<string | null> {
+  const ev = await calendarEventById(tenantId, eventId);
+  if (!ev || !ev.target_date || ev.lead_id) return null;
+  const pastDue = new Date(ev.target_date) < new Date();
+  const leadId = await createLead({
+    tenantId,
+    actor,
+    title: ev.what,
+    origin: "requested",
+    beat: ev.topic,
+    importance: pastDue ? "high" : "normal",
+    signalId: ev.signal_id,
+    eta: typeof ev.target_date === "string" ? ev.target_date : ev.target_date.toISOString(),
+    topic: ev.topic,
+    note: pastDue ? `Promised by ${ev.who ?? "—"} — delivered?` : null,
+  });
+  if (leadId) await linkCalendarEventLead(tenantId, eventId, leadId);
+  return leadId;
 }
