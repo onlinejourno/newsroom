@@ -39,6 +39,7 @@
   --color-paper-card: #ffffff;
   --color-rule: #d4cfc6;
   --color-rule-soft: #e6e0d4;
+  --color-frame: #111111; /* thick broadsheet frame (near-black) */
 
   /* Semantic role aliases */
   --color-brand: var(--color-ioj-green-600);
@@ -126,4 +127,137 @@ a:hover {
   height: 1px;
   background-color: var(--color-rule);
   border: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BROADSHEET KIT (ADR 0013, levelled up) — the single visual
+   vocabulary every page draws from. All values resolve to tokens so
+   the platform stays consistent and themeable. No hardcoded hex.
+───────────────────────────────────────────────────────────────── */
+
+/* Page wrapper: warm paper bg comes from <body>; this just sizes content. */
+.ds-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 28px 80px;
+}
+.ds-page-narrow {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 24px 28px 80px;
+}
+
+/* Display type roles (Playfair). */
+.ds-mast {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.7rem;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--color-fg-primary);
+}
+.ds-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--color-fg-primary);
+}
+.ds-h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--color-fg-primary);
+}
+.ds-deck {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--color-fg-secondary);
+}
+/* Uppercase meta / column label (smaller, tertiary). */
+.ds-meta {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-fg-tertiary);
+}
+
+/* Card: white surface, thick near-black frame, square corners. */
+.ds-frame {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-frame);
+  border-radius: 0;
+}
+/* Lighter inner panel (warm, soft rule) — for nested blocks. */
+.ds-panel {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 0;
+}
+
+/* Section header bar: Playfair title + colour swatch + uppercase sub. */
+.ds-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 0 6px;
+  border-bottom: 1px solid var(--color-rule);
+  margin-bottom: 12px;
+}
+.ds-bar-swatch {
+  width: 8px;
+  height: 8px;
+  background: var(--color-frame);
+  align-self: center;
+}
+
+/* Filter / category chip (square, fills black when active). */
+.ds-chip {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-bg-card);
+  color: var(--color-fg-secondary);
+  cursor: pointer;
+  border-radius: 0;
+}
+.ds-chip-on {
+  border-color: var(--color-frame);
+  background: var(--color-frame);
+  color: #fff;
+}
+
+/* Tab in a tab strip (underline-active). */
+.ds-tab {
+  font-family: var(--font-ui);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 0;
+  margin-right: 22px;
+  border-bottom: 3px solid transparent;
+  color: var(--color-fg-secondary);
+  font-weight: 700;
+  font-size: 14px;
+}
+.ds-tab-on {
+  color: var(--color-fg-primary);
+  border-bottom-color: var(--color-frame);
+}
+
+/* Big broadsheet stat number. */
+.ds-stat {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.9rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-fg-primary);
 }

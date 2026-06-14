@@ -31,22 +31,24 @@ export type CalEvent = {
 
 export type Beat = { id: string; label: string; color: string };
 
+// Palette + type resolve to the platform tokens (globals.css) — single source
+// of truth, so the calendar stays consistent with every other surface.
 const C = {
-  bg: "#f0ece4",
-  surface: "#ffffff",
-  ink: "#111111",
-  ink2: "#444444",
-  ink3: "#888888",
-  rule: "#d4cfc6",
-  ruleSoft: "#e6e0d4",
-  iojGreen: "#2D7A4F",
-  hinduRed: "#D32B2B",
-  amber: "#b35d00",
+  bg: "var(--color-paper)",
+  surface: "var(--color-paper-card)",
+  ink: "var(--color-frame)",
+  ink2: "var(--color-ink-700)",
+  ink3: "var(--color-ink-500)",
+  rule: "var(--color-rule)",
+  ruleSoft: "var(--color-rule-soft)",
+  iojGreen: "var(--color-brand)",
+  hinduRed: "var(--color-urgent)",
+  amber: "var(--color-amber-600)",
 } as const;
 
-const SERIF = "'Playfair Display', Georgia, serif";
-const BODY = "'Noto Serif', Georgia, serif";
-const UI = "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif";
+const SERIF = "var(--font-display)";
+const BODY = "var(--font-body)";
+const UI = "var(--font-ui)";
 
 const LEAD_TIMES = [90, 60, 30, 14, 7, 1];
 
@@ -387,8 +389,7 @@ function ListView({ events, beats, todayISO, onSelect, undated }: ViewProps & { 
               <BeatTag beats={beats} beat={e.beat} />
               <span style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 700, color: C.ink, marginLeft: 8 }}>{e.what}</span>
               <span style={{ fontFamily: UI, fontSize: 11, color: "#666", marginLeft: 8 }}>
-                {e.who} · &ldquo;{e.deadline === null ? "" : ""}
-                {(e.originalText ?? "").slice(0, 80)}…&rdquo;
+                {e.who} · &ldquo;{(e.originalText ?? "").slice(0, 80)}…&rdquo;
               </span>
             </button>
           ))}

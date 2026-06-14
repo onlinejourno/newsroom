@@ -105,11 +105,7 @@ export default async function NewslistPage({
   const card = (l: Lead) => {
     const moves = nextMoves(l.status, isDesk, false);
     return (
-      <div
-        key={l.id}
-        className="rounded-sm border p-3 mb-2 text-sm"
-        style={{ borderColor: "var(--color-border)", background: "var(--color-bg-card)" }}
-      >
+      <div key={l.id} className="ds-panel p-3 mb-2 text-sm">
         <div className="flex items-center gap-2 mb-1" style={{ fontFamily: "var(--font-ui)" }}>
           <span
             title={`importance: ${l.importance}`}
@@ -168,7 +164,7 @@ export default async function NewslistPage({
                 <input type="hidden" name="to" value={to} />
                 <button
                   type="submit"
-                  className="text-xs px-2 py-0.5 rounded-sm border font-semibold"
+                  className="text-xs px-2 py-0.5 border font-semibold"
                   style={{ borderColor: STATUS_META[to].color, color: STATUS_META[to].color }}
                 >
                   → {STATUS_META[to].label}
@@ -200,6 +196,27 @@ export default async function NewslistPage({
           desk (ADR 0056). {leads.length} leads.
         </p>
       </header>
+
+      {/* How to read a card — decode the markers so the board explains itself. */}
+      <div
+        className="ds-panel p-3 mb-5 text-xs flex flex-wrap items-center gap-x-6 gap-y-2"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+      >
+        <span className="ds-meta">How to read a card</span>
+        <span className="flex items-center gap-1.5">
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "#dc2626", display: "inline-block" }} /> urgent
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "#d97706", display: "inline-block", marginLeft: 6 }} /> high
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "#6b7280", display: "inline-block", marginLeft: 6 }} /> normal
+          <span style={{ color: "var(--color-fg-tertiary)" }}>— importance</span>
+        </span>
+        <span>🔥 <span style={{ color: "var(--color-fg-tertiary)" }}>trend score — riding a moving topic</span></span>
+        <span>
+          <strong>pitched / requested / assigned</strong>{" "}
+          <span style={{ color: "var(--color-fg-tertiary)" }}>— how it entered</span>
+        </span>
+        <span>✅ on time · ⚠ late <span style={{ color: "var(--color-fg-tertiary)" }}>vs its ETA</span></span>
+        <span style={{ color: "var(--color-fg-tertiary)" }}>columns = its stage, signal → published</span>
+      </div>
 
       <div className="flex flex-wrap items-end gap-4 mb-6" style={{ fontFamily: "var(--font-ui)" }}>
         <form action={addLead} className="flex flex-wrap gap-2 items-end">
@@ -249,9 +266,10 @@ export default async function NewslistPage({
         {COLUMNS.map((s) => (
           <div key={s}>
             <p
-              className="text-xs uppercase tracking-wide font-bold mb-2 pb-1 border-b"
-              style={{ color: STATUS_META[s].color, borderColor: STATUS_META[s].color }}
+              className="text-xs uppercase tracking-wide font-bold mb-2 pb-1 flex items-center gap-2"
+              style={{ color: STATUS_META[s].color, borderBottom: `2px solid ${STATUS_META[s].color}` }}
             >
+              <span style={{ width: 8, height: 8, background: STATUS_META[s].color, display: "inline-block" }} />
               {STATUS_META[s].label} · {byStatus(s).length}
             </p>
             {byStatus(s).map(card)}

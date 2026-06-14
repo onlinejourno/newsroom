@@ -165,12 +165,8 @@ export default async function Home({
 
         {user && snapshot ? (
           <section
-            className="rounded-sm border p-5 text-left mb-2"
-            style={{
-              borderColor: "var(--color-border)",
-              background: "var(--color-bg-card)",
-              fontFamily: "var(--font-ui)",
-            }}
+            className="ds-frame p-5 text-left mb-2"
+            style={{ fontFamily: "var(--font-ui)" }}
           >
             <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
               <p className="ds-label">
@@ -199,7 +195,7 @@ export default async function Home({
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-3 mt-4 pt-3 border-t" style={{ borderColor: "var(--color-border)" }}>
+            <div className="flex items-center gap-3 mt-4 pt-3 border-t" style={{ borderColor: "var(--color-rule)" }}>
               <span className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
                 Published · last 7 days
               </span>
@@ -226,12 +222,8 @@ export default async function Home({
           </section>
         ) : (
           <section
-            className="rounded-sm border p-5 mb-2"
-            style={{
-              borderColor: "var(--color-border)",
-              background: "var(--color-bg-card)",
-              fontFamily: "var(--font-ui)",
-            }}
+            className="ds-frame p-5 mb-2"
+            style={{ fontFamily: "var(--font-ui)" }}
           >
             <p className="text-base mb-3">
               Sign in to see your newsroom&rsquo;s situation — or join in
@@ -251,14 +243,7 @@ export default async function Home({
 
         <div className="grid grid-cols-1 gap-4 text-left">
           {ROOMS.map((r) => (
-            <div
-              key={r.room}
-              className="rounded-sm border p-5"
-              style={{
-                borderColor: "var(--color-border)",
-                background: "var(--color-bg-card)",
-              }}
-            >
+            <div key={r.room} className="ds-frame p-5">
               <div
                 className="flex items-baseline justify-between gap-3 flex-wrap mb-1"
                 style={{ fontFamily: "var(--font-ui)" }}
@@ -309,38 +294,79 @@ export default async function Home({
 
         <hr className="ds-rule my-10" />
 
-        <div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left"
-          style={{ fontFamily: "var(--font-ui)" }}
-        >
-          <div>
-            <p className="ds-label mb-2">The loop</p>
-            <p
-              className="font-semibold text-sm"
-              style={{ color: "var(--color-fg-primary)" }}
-            >
+        {/* Grounded in journalism scholarship — the platform's intellectual
+            spine, made explicit (not a footnote). Three tested lenses. */}
+        <section className="ds-frame p-6 text-left">
+          <p className="ds-label mb-1">Grounded in journalism scholarship</p>
+          <h2 className="ds-h2 mb-1">Not vibes — three tested lenses, built in.</h2>
+          <p
+            className="text-sm mb-5"
+            style={{ fontFamily: "var(--font-body)", color: "var(--color-fg-secondary)" }}
+          >
+            Every score and tag on this platform traces back to established
+            journalism scholarship. Here is what each one means and why it
+            grounds the work.
+          </p>
+          <div
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            style={{ fontFamily: "var(--font-ui)" }}
+          >
+            {[
+              {
+                k: "PEJ framing",
+                s: "Project for Excellence in Journalism",
+                d: "Every story is coded for its dominant narrative frame — combative, explanatory, straight, policy. A desk sees its own framing balance, not just one story at a time.",
+              },
+              {
+                k: "Deuze typology",
+                s: "Mark Deuze · First Monday, 2001",
+                d: "What kind of journalism a source or newsroom practises. It types the record flowing in and anchors how the platform reasons about craft.",
+              },
+              {
+                k: "User Needs",
+                s: "BBC / smartocto model",
+                d: "Know · Understand · Feel · Do — why a reader comes to a story. Every signal is classified by it, and coverage is audited for balance across the four.",
+              },
+            ].map((g) => (
+              <div key={g.k}>
+                <p
+                  className="font-bold text-lg"
+                  style={{ fontFamily: "var(--font-display)", color: "var(--color-fg-primary)" }}
+                >
+                  {g.k}
+                </p>
+                <p className="ds-meta mb-2">{g.s}</p>
+                <p
+                  className="text-sm"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    color: "var(--color-fg-secondary)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {g.d}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p
+            className="text-xs mt-6 pt-4 border-t flex gap-x-6 gap-y-1 flex-wrap"
+            style={{
+              borderColor: "var(--color-rule)",
+              fontFamily: "var(--font-ui)",
+              color: "var(--color-fg-tertiary)",
+            }}
+          >
+            <span>
+              <strong style={{ color: "var(--color-fg-secondary)" }}>The loop:</strong>{" "}
               Sources → Analyse → Classify → Route → Alert → Publish → Audit
-            </p>
-          </div>
-          <div>
-            <p className="ds-label mb-2">Grounding</p>
-            <p
-              className="font-semibold text-sm"
-              style={{ color: "var(--color-fg-primary)" }}
-            >
-              PEJ framing · Deuze · User Needs
-            </p>
-          </div>
-          <div>
-            <p className="ds-label mb-2">Licence</p>
-            <p
-              className="font-semibold text-sm"
-              style={{ color: "var(--color-fg-primary)" }}
-            >
+            </span>
+            <span>
+              <strong style={{ color: "var(--color-fg-secondary)" }}>Licence:</strong>{" "}
               Apache 2.0 — run it in your newsroom
-            </p>
-          </div>
-        </div>
+            </span>
+          </p>
+        </section>
       </div>
     </main>
   );
