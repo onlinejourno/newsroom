@@ -75,7 +75,7 @@ export default async function GapsPage() {
               <tr
                 key={r.region}
                 className="border-t align-top"
-                style={{ borderColor: "var(--color-border)" }}
+                style={{ borderColor: "var(--color-rule)" }}
               >
                 <td className="py-2 pr-3 font-semibold">{r.region}</td>
                 <td className="py-2 pr-3">

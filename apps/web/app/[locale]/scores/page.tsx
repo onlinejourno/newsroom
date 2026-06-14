@@ -42,10 +42,8 @@ function DifferentiationPanel({
   ];
   return (
     <section
-      className="rounded-sm border p-4 mb-8"
+      className="ds-frame p-4 mb-8"
       style={{
-        borderColor: "var(--color-border)",
-        background: "var(--color-bg-card)",
         fontFamily: "var(--font-ui)",
       }}
     >
@@ -234,13 +232,7 @@ export default async function ScoresPage({
 
       <DifferentiationPanel classes={classes} total={total} />
 
-      <section
-        className="rounded-sm border p-4 mb-8"
-        style={{
-          borderColor: "var(--color-border)",
-          background: "var(--color-bg-card)",
-        }}
-      >
+      <section className="ds-frame p-4 mb-8">
         <p className="ds-label mb-2">Analyze a URL on demand</p>
         <form method="get" className="flex flex-wrap gap-2 items-center">
           <input
@@ -249,9 +241,9 @@ export default async function ScoresPage({
             required
             defaultValue={url ?? ""}
             placeholder="https://www.thehindu.com/…/article…ece"
-            className="flex-1 min-w-64 border rounded-sm px-3 py-2 text-sm"
+            className="flex-1 min-w-64 border px-3 py-2 text-sm"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               fontFamily: "var(--font-ui)",
               background: "var(--color-bg)",
             }}
@@ -259,9 +251,9 @@ export default async function ScoresPage({
           <select
             name="need"
             defaultValue={need ?? ""}
-            className="border rounded-sm px-2 py-2 text-sm"
+            className="border px-2 py-2 text-sm"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               fontFamily: "var(--font-ui)",
               background: "var(--color-bg)",
             }}
@@ -274,7 +266,7 @@ export default async function ScoresPage({
           </select>
           <button
             type="submit"
-            className="px-4 py-2 rounded-sm text-sm font-semibold"
+            className="px-4 py-2 text-sm font-semibold"
             style={{ background: "var(--color-brand)", color: "white" }}
           >
             Analyze
@@ -300,9 +292,9 @@ export default async function ScoresPage({
           <select
             name="section"
             defaultValue={section ?? ""}
-            className="border rounded-sm px-2 py-1"
+            className="border px-2 py-1"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               background: "var(--color-bg)",
             }}
           >
@@ -319,9 +311,9 @@ export default async function ScoresPage({
           <select
             name="hours"
             defaultValue={hours ?? ""}
-            className="border rounded-sm px-2 py-1"
+            className="border px-2 py-1"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               background: "var(--color-bg)",
             }}
           >
@@ -338,9 +330,9 @@ export default async function ScoresPage({
           <select
             name="sort"
             defaultValue={sort ?? "composite"}
-            className="border rounded-sm px-2 py-1"
+            className="border px-2 py-1"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               background: "var(--color-bg)",
             }}
           >
@@ -350,8 +342,8 @@ export default async function ScoresPage({
         </label>
         <button
           type="submit"
-          className="px-3 py-1 rounded-sm border font-semibold"
-          style={{ borderColor: "var(--color-border)" }}
+          className="px-3 py-1 border font-semibold"
+          style={{ borderColor: "var(--color-rule)" }}
         >
           Apply
         </button>
@@ -383,7 +375,7 @@ export default async function ScoresPage({
               <li
                 key={story.id}
                 className="grid grid-cols-[2rem_1fr_7rem_9rem] gap-2 px-3 py-3 border-t items-start"
-                style={{ borderColor: "var(--color-border)" }}
+                style={{ borderColor: "var(--color-rule)" }}
               >
                 <span
                   className="text-sm"
@@ -435,14 +427,10 @@ export default async function ScoresPage({
                           .pop()!
                           .replace(/^./, (c) => c.toUpperCase());
                         return (
-                          <div
-                            key={k}
-                            className="rounded-sm border"
-                            style={{ borderColor: "var(--color-border)" }}
-                          >
+                          <div key={k} className="ds-panel">
                             <div
                               className="flex items-baseline justify-between px-3 py-2 border-b"
-                              style={{ borderColor: "var(--color-border)" }}
+                              style={{ borderColor: "var(--color-rule)" }}
                             >
                               <strong className="text-sm">{label}</strong>
                               <span
@@ -463,7 +451,7 @@ export default async function ScoresPage({
                                     key={c.name}
                                     className="px-3 py-2 border-b last:border-b-0"
                                     style={{
-                                      borderColor: "var(--color-border)",
+                                      borderColor: "var(--color-rule)",
                                       background: v.bg,
                                     }}
                                   >

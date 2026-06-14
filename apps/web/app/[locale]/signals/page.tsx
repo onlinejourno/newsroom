@@ -44,10 +44,8 @@ function NeedMixPanel({ rows }: { rows: { user_need: string; n: number }[] }) {
   }
   return (
     <section
-      className="mb-10 rounded-sm border p-4"
+      className="mb-10 ds-panel p-4"
       style={{
-        borderColor: "var(--color-border)",
-        background: "var(--color-bg-card)",
         fontFamily: "var(--font-ui)",
       }}
     >
@@ -207,9 +205,9 @@ export default async function SignalsPage({
           <select
             name="beat"
             defaultValue={beat ?? ""}
-            className="border rounded-sm px-2 py-1"
+            className="border px-2 py-1"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               background: "var(--color-bg)",
             }}
           >
@@ -232,8 +230,8 @@ export default async function SignalsPage({
         </label>
         <button
           type="submit"
-          className="px-3 py-1 rounded-sm border font-semibold"
-          style={{ borderColor: "var(--color-border)" }}
+          className="px-3 py-1 border font-semibold"
+          style={{ borderColor: "var(--color-rule)" }}
         >
           Apply
         </button>

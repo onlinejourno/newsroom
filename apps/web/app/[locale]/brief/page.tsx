@@ -72,9 +72,9 @@ export default async function BriefPage({
         <select
           name="beat"
           defaultValue={pick ?? ""}
-          className="border rounded-sm px-2 py-1"
+          className="border px-2 py-1"
           style={{
-            borderColor: "var(--color-border)",
+            borderColor: "var(--color-rule)",
             background: "var(--color-bg)",
           }}
         >
@@ -88,8 +88,8 @@ export default async function BriefPage({
       </label>
       <button
         type="submit"
-        className="px-3 py-1 rounded-sm border font-semibold"
-        style={{ borderColor: "var(--color-border)" }}
+        className="px-3 py-1 border font-semibold"
+        style={{ borderColor: "var(--color-rule)" }}
       >
         Apply
       </button>

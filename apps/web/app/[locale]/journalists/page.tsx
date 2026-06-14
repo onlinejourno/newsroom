@@ -41,11 +41,7 @@ export default async function JournalistsPage({
           {journalists.map((j) => (
             <div
               key={j.id}
-              className="rounded-sm border p-4"
-              style={{
-                borderColor: "var(--color-border)",
-                background: "var(--color-bg-card)",
-              }}
+              className="ds-panel p-4"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <Link
@@ -67,7 +63,7 @@ export default async function JournalistsPage({
                   {j.beats.map((b) => (
                     <span
                       key={b}
-                      className="text-xs px-2 py-0.5 rounded-sm"
+                      className="text-xs px-2 py-0.5"
                       style={{
                         background: "var(--color-brand-bg)",
                         color: "var(--color-brand)",

@@ -68,10 +68,9 @@ export default async function ShortlistPage({
               className="px-3 py-1.5 text-sm font-semibold"
               style={{
                 fontFamily: "var(--font-ui)",
-                borderRadius: "var(--radius-pill)",
                 background: active ? "var(--ioj-green-600)" : "var(--color-bg-card)",
                 color: active ? "var(--color-fg-inv)" : "var(--color-fg-1)",
-                border: `1px solid ${active ? "var(--ioj-green-600)" : "var(--color-border)"}`,
+                border: `1px solid ${active ? "var(--ioj-green-600)" : "var(--color-rule)"}`,
               }}
             >
               {s.label}

@@ -55,15 +55,15 @@ export default async function LoginPage({
   }
 
   const field =
-    "w-full border rounded-sm px-3 py-2 text-base mb-3";
+    "w-full border px-3 py-2 text-base mb-3";
   const fieldStyle = {
-    borderColor: "var(--color-border)",
+    borderColor: "var(--color-rule)",
     background: "var(--color-bg)",
   };
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="max-w-md w-full" style={{ fontFamily: "var(--font-ui)" }}>
+      <div className="ds-frame max-w-md w-full p-8" style={{ fontFamily: "var(--font-ui)" }}>
         <p className="ds-label mb-2">OnlineJourno</p>
         <h1
           className="text-3xl font-extrabold tracking-tight mb-1"
@@ -80,8 +80,8 @@ export default async function LoginPage({
 
         {error ? (
           <p
-            className="text-sm mb-3 px-3 py-2 rounded-sm"
-            style={{ background: "#dc262615", color: "#b91c1c" }}
+            className="text-sm mb-3 px-3 py-2"
+            style={{ background: "var(--color-urgent-bg)", color: "var(--color-urgent)" }}
           >
             Wrong email or password.
           </p>
@@ -106,7 +106,7 @@ export default async function LoginPage({
           />
           <button
             type="submit"
-            className="w-full px-4 py-2.5 rounded-sm text-base font-semibold"
+            className="w-full px-4 py-2.5 text-base font-semibold"
             style={{ background: "var(--color-brand)", color: "white" }}
           >
             Sign in
@@ -118,8 +118,8 @@ export default async function LoginPage({
           type="button"
           disabled
           title="Single sign-on activates when the deployment is configured with an identity provider"
-          className="w-full mt-3 px-4 py-2.5 rounded-sm text-sm font-semibold border opacity-50 cursor-not-allowed"
-          style={{ borderColor: "var(--color-border)" }}
+          className="w-full mt-3 px-4 py-2.5 text-sm font-semibold border opacity-50 cursor-not-allowed"
+          style={{ borderColor: "var(--color-rule)" }}
         >
           Sign in with corporate SSO (coming with deployment)
         </button>
@@ -138,14 +138,14 @@ export default async function LoginPage({
         {DEMO && demoAccounts.length ? (
           <section
             className="mt-8 pt-6 border-t"
-            style={{ borderColor: "var(--color-border)" }}
+            style={{ borderColor: "var(--color-rule)" }}
           >
             <p className="ds-label mb-2">Demo sign-in (no password)</p>
             <form action={demoLogin} className="flex gap-2 flex-wrap">
               <select
                 name="who"
                 required
-                className="flex-1 min-w-48 border rounded-sm px-3 py-2 text-sm"
+                className="flex-1 min-w-48 border px-3 py-2 text-sm"
                 style={fieldStyle}
               >
                 <option value="">— pick a person —</option>
@@ -157,8 +157,8 @@ export default async function LoginPage({
               </select>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-sm text-sm font-semibold border"
-                style={{ borderColor: "var(--color-border)" }}
+                className="px-4 py-2 text-sm font-semibold border"
+                style={{ borderColor: "var(--color-rule)" }}
               >
                 Enter →
               </button>

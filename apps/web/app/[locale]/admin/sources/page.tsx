@@ -36,10 +36,7 @@ export default async function SourcesAdminPage({
       </header>
 
       {/* ── list ── */}
-      <section
-        className="mb-10 rounded-sm border overflow-x-auto"
-        style={{ borderColor: "var(--color-border)" }}
-      >
+      <section className="ds-frame mb-10 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr
@@ -71,7 +68,7 @@ export default async function SourcesAdminPage({
               <tr
                 key={s.id}
                 className="border-t"
-                style={{ borderColor: "var(--color-border)" }}
+                style={{ borderColor: "var(--color-rule)" }}
               >
                 <td className="px-3 py-2 font-medium">{s.name}</td>
                 <td className="px-3 py-2" style={{ color: "var(--color-fg-secondary)" }}>
@@ -140,13 +137,7 @@ export default async function SourcesAdminPage({
       </section>
 
       {/* ── add ── */}
-      <section
-        className="rounded-sm border p-5"
-        style={{
-          borderColor: "var(--color-border)",
-          background: "var(--color-bg-card)",
-        }}
-      >
+      <section className="ds-frame p-5">
         <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "var(--font-display)" }}>
           Add a source
         </h2>

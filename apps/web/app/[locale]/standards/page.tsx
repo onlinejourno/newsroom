@@ -72,7 +72,7 @@ export default async function StandardsPage({
         </thead>
         <tbody>
           {POINTS.map((p) => (
-            <tr key={p.law} className="border-t align-top" style={{ borderColor: "var(--color-border)" }}>
+            <tr key={p.law} className="border-t align-top" style={{ borderColor: "var(--color-rule)" }}>
               <td className="py-2 pr-3 font-semibold whitespace-nowrap">{p.law}</td>
               <td className="py-2 pr-3" style={{ color: "var(--color-fg-secondary)" }}>
                 {p.rule}
@@ -87,7 +87,7 @@ export default async function StandardsPage({
 
       <a
         href={`/${locale}/probity`}
-        className="inline-block mt-6 px-4 py-2 rounded-sm text-sm font-semibold no-underline"
+        className="inline-block mt-6 px-4 py-2 text-sm font-semibold no-underline"
         style={{ background: "var(--color-brand)", color: "white" }}
       >
         Run a probity audit →

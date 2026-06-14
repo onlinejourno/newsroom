@@ -84,9 +84,9 @@ export default async function TrendsPage({
           <select
             name="window"
             defaultValue={String(windowHours)}
-            className="border rounded-sm px-2 py-1"
+            className="border px-2 py-1"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               background: "var(--color-bg)",
             }}
           >
@@ -102,9 +102,9 @@ export default async function TrendsPage({
           <select
             name="region"
             defaultValue={regionPick ?? ""}
-            className="border rounded-sm px-2 py-1"
+            className="border px-2 py-1"
             style={{
-              borderColor: "var(--color-border)",
+              borderColor: "var(--color-rule)",
               background: "var(--color-bg)",
             }}
           >
@@ -118,8 +118,8 @@ export default async function TrendsPage({
         </label>
         <button
           type="submit"
-          className="px-3 py-1 rounded-sm border font-semibold"
-          style={{ borderColor: "var(--color-border)" }}
+          className="px-3 py-1 border font-semibold"
+          style={{ borderColor: "var(--color-rule)" }}
         >
           Apply
         </button>
@@ -138,11 +138,9 @@ export default async function TrendsPage({
             return (
               <div
                 key={t.topic}
-                className="rounded-sm border p-4"
+                className="ds-panel p-4"
                 style={{
-                  borderColor: "var(--color-border)",
                   borderLeft: `4px solid ${color}`,
-                  background: "var(--color-bg-card)",
                 }}
               >
                 <p

@@ -56,9 +56,9 @@ export default async function RegisterPage({
     redirect(`/${locale}/pending` as Route);
   }
 
-  const field = "w-full border rounded-sm px-3 py-2 text-base mb-3";
+  const field = "w-full border px-3 py-2 text-base mb-3";
   const fieldStyle = {
-    borderColor: "var(--color-border)",
+    borderColor: "var(--color-rule)",
     background: "var(--color-bg)",
   };
   const messages: Record<string, string> = {
@@ -69,7 +69,7 @@ export default async function RegisterPage({
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="max-w-md w-full" style={{ fontFamily: "var(--font-ui)" }}>
+      <div className="ds-frame max-w-md w-full p-8" style={{ fontFamily: "var(--font-ui)" }}>
         <p className="ds-label mb-2">OnlineJourno</p>
         <h1
           className="text-3xl font-extrabold tracking-tight mb-1"
@@ -88,8 +88,8 @@ export default async function RegisterPage({
 
         {error ? (
           <p
-            className="text-sm mb-3 px-3 py-2 rounded-sm"
-            style={{ background: "#dc262615", color: "#b91c1c" }}
+            className="text-sm mb-3 px-3 py-2"
+            style={{ background: "var(--color-urgent-bg)", color: "var(--color-urgent)" }}
           >
             {messages[error] ?? "Please check the form."}
           </p>
@@ -115,18 +115,18 @@ export default async function RegisterPage({
             style={fieldStyle}
           />
           <div className="flex gap-3 mb-3">
-            <select name="role" className="flex-1 border rounded-sm px-3 py-2" style={fieldStyle}>
+            <select name="role" className="flex-1 border px-3 py-2" style={fieldStyle}>
               {ROLES.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
               ))}
             </select>
-            <input name="bureau" placeholder="Bureau / desk (optional)" className="flex-1 border rounded-sm px-3 py-2" style={fieldStyle} />
+            <input name="bureau" placeholder="Bureau / desk (optional)" className="flex-1 border px-3 py-2" style={fieldStyle} />
           </div>
           <button
             type="submit"
-            className="w-full px-4 py-2.5 rounded-sm text-base font-semibold"
+            className="w-full px-4 py-2.5 text-base font-semibold"
             style={{ background: "var(--color-brand)", color: "white" }}
           >
             Request access

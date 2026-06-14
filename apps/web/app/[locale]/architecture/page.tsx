@@ -26,13 +26,7 @@ export default function ArchitecturePage() {
         </p>
       </header>
 
-      <div
-        className="rounded-sm border p-2 overflow-auto"
-        style={{
-          borderColor: "var(--color-border)",
-          background: "white",
-        }}
-      >
+      <div className="ds-frame p-2 overflow-auto">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/architecture.svg"

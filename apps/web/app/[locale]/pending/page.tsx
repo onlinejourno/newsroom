@@ -9,7 +9,7 @@ export default async function PendingPage({
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div
-        className="max-w-md w-full text-center"
+        className="ds-frame max-w-md w-full p-8 text-center"
         style={{ fontFamily: "var(--font-ui)" }}
       >
         <p className="ds-label mb-2">OnlineJourno</p>

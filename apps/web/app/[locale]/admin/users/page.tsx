@@ -52,7 +52,7 @@ export default async function AdminUsersPage({
       <input type="hidden" name="status" value={status} />
       <button
         type="submit"
-        className="text-xs px-2 py-1 rounded-sm border font-semibold mr-1"
+        className="text-xs px-2 py-1 border font-semibold mr-1"
         style={{ borderColor: color, color }}
       >
         {label}
@@ -81,6 +81,7 @@ export default async function AdminUsersPage({
         </p>
       </header>
 
+      <div className="ds-frame overflow-x-auto p-4">
       <table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
         <thead>
           <tr
@@ -99,7 +100,7 @@ export default async function AdminUsersPage({
             <tr
               key={a.id}
               className="border-t align-top"
-              style={{ borderColor: "var(--color-border)" }}
+              style={{ borderColor: "var(--color-rule)" }}
             >
               <td className="py-2 pr-3">
                 <div className="font-semibold">{a.display_name}</div>
@@ -138,6 +139,7 @@ export default async function AdminUsersPage({
           ))}
         </tbody>
       </table>
+      </div>
     </main>
   );
 }

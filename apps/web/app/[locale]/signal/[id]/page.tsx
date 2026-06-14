@@ -35,13 +35,7 @@ function Stage({
   children: React.ReactNode;
 }) {
   return (
-    <section
-      className="rounded-sm border p-4"
-      style={{
-        borderColor: "var(--color-border)",
-        background: "var(--color-bg-card)",
-      }}
-    >
+    <section className="ds-frame p-4">
       <div
         className="flex items-baseline justify-between gap-2 mb-2"
         style={{ fontFamily: "var(--font-ui)" }}

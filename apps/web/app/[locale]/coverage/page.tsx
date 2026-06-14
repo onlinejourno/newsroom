@@ -74,7 +74,7 @@ export default async function CoveragePage() {
               <tr
                 key={r.beat}
                 className="border-t align-top"
-                style={{ borderColor: "var(--color-border)" }}
+                style={{ borderColor: "var(--color-rule)" }}
               >
                 <td className="py-2 pr-3 font-semibold">{r.beat}</td>
                 <td className="py-2 pr-3" title={r.src_names ?? ""}>

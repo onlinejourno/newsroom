@@ -65,15 +65,15 @@ export default async function ProbityPage({
           required
           defaultValue={url ?? ""}
           placeholder="https://…  (a story or a homepage)"
-          className="flex-1 min-w-64 border rounded-sm px-3 py-2 text-sm"
+          className="flex-1 min-w-64 border px-3 py-2 text-sm"
           style={{
-            borderColor: "var(--color-border)",
+            borderColor: "var(--color-rule)",
             background: "var(--color-bg)",
           }}
         />
         <button
           type="submit"
-          className="px-4 py-2 rounded-sm text-sm font-semibold"
+          className="px-4 py-2 text-sm font-semibold"
           style={{ background: "var(--color-brand)", color: "white" }}
         >
           Scan
@@ -89,11 +89,7 @@ export default async function ProbityPage({
       {result && !result.error ? (
         <div className="space-y-4">
           <section
-            className="rounded-sm border p-5 flex items-center justify-between gap-4 flex-wrap"
-            style={{
-              borderColor: "var(--color-border)",
-              background: "var(--color-bg-card)",
-            }}
+            className="ds-frame p-5 flex items-center justify-between gap-4 flex-wrap"
           >
             <div>
               <p className="ds-label mb-1">Democratic Infrastructure Score</p>
@@ -124,12 +120,8 @@ export default async function ProbityPage({
           </section>
 
           <section
-            className="rounded-sm border p-5"
-            style={{
-              borderColor: "var(--color-border)",
-              background: "var(--color-bg-card)",
-              fontFamily: "var(--font-ui)",
-            }}
+            className="ds-frame p-5"
+            style={{ fontFamily: "var(--font-ui)" }}
           >
             <p className="ds-label mb-3">Five dimensions</p>
             {Object.entries(result.dimensions).map(([key, score]) => (
@@ -161,12 +153,8 @@ export default async function ProbityPage({
 
           {result.flags.length > 0 ? (
             <section
-              className="rounded-sm border p-5"
-              style={{
-                borderColor: "var(--color-border)",
-                background: "var(--color-bg-card)",
-                fontFamily: "var(--font-ui)",
-              }}
+              className="ds-frame p-5"
+              style={{ fontFamily: "var(--font-ui)" }}
             >
               <p className="ds-label mb-3">Findings at a glance</p>
               <div className="flex flex-wrap gap-2">
@@ -188,12 +176,8 @@ export default async function ProbityPage({
           ) : null}
 
           <section
-            className="rounded-sm border p-5 text-sm flex flex-wrap gap-6"
-            style={{
-              borderColor: "var(--color-border)",
-              background: "var(--color-bg-card)",
-              fontFamily: "var(--font-ui)",
-            }}
+            className="ds-frame p-5 text-sm flex flex-wrap gap-6"
+            style={{ fontFamily: "var(--font-ui)" }}
           >
             <span>
               <strong>{result.summary?.totalRequests ?? "—"}</strong> requests

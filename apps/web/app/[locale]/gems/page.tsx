@@ -111,7 +111,7 @@ export default async function GemsPage({
   };
 
   const card =
-    "rounded-sm border p-3 text-center block no-underline";
+    "ds-panel p-3 text-center block no-underline";
 
   return (
     <main className="min-h-screen max-w-5xl mx-auto p-6 md:p-10">
@@ -162,9 +162,8 @@ export default async function GemsPage({
               })}
               className={card}
               style={{
-                borderColor: active ? s.c : "var(--color-border)",
+                borderColor: active ? s.c : "var(--color-rule)",
                 borderWidth: active ? 2 : 1,
-                background: "var(--color-bg-card)",
               }}
             >
               <p className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
@@ -205,7 +204,7 @@ export default async function GemsPage({
         <a
           href={qs({ band: undefined })}
           className="px-3 py-1 rounded-full border no-underline font-semibold"
-          style={{ borderColor: "var(--color-border)" }}
+          style={{ borderColor: "var(--color-rule)" }}
         >
           All
         </a>
@@ -234,9 +233,9 @@ export default async function GemsPage({
             <select
               name="sort"
               defaultValue={sort ?? "score"}
-              className="border rounded-sm px-2 py-1"
+              className="border px-2 py-1"
               style={{
-                borderColor: "var(--color-border)",
+                borderColor: "var(--color-rule)",
                 background: "var(--color-bg)",
               }}
             >
@@ -247,8 +246,8 @@ export default async function GemsPage({
           </label>
           <button
             type="submit"
-            className="px-2 py-1 rounded-sm border font-semibold"
-            style={{ borderColor: "var(--color-border)" }}
+            className="px-2 py-1 border font-semibold"
+            style={{ borderColor: "var(--color-rule)" }}
           >
             Apply
           </button>
@@ -256,10 +255,8 @@ export default async function GemsPage({
       </div>
 
       <details
-        className="rounded-sm border p-4 mb-4 text-sm"
+        className="ds-frame p-4 mb-4 text-sm"
         style={{
-          borderColor: "var(--color-border)",
-          background: "var(--color-bg-card)",
           fontFamily: "var(--font-ui)",
         }}
       >
@@ -307,11 +304,7 @@ export default async function GemsPage({
         {rows.map(({ story, gem }, i) => (
           <div
             key={story.id}
-            className="rounded-sm border p-4"
-            style={{
-              borderColor: "var(--color-border)",
-              background: "var(--color-bg-card)",
-            }}
+            className="ds-panel p-4"
           >
             <div
               className="flex items-center justify-between gap-2 flex-wrap mb-1 text-xs"
@@ -423,8 +416,8 @@ export default async function GemsPage({
                   {gem.actions.map((a) => (
                     <li
                       key={a.label}
-                      className="border rounded-sm px-2 py-1.5"
-                      style={{ borderColor: "var(--color-border)" }}
+                      className="border px-2 py-1.5"
+                      style={{ borderColor: "var(--color-rule)" }}
                     >
                       <strong style={{ color: "#1d4ed8" }}>{a.label}</strong>{" "}
                       <span style={{ color: "var(--color-fg-secondary)" }}>— {a.reason}</span>

@@ -130,10 +130,8 @@ export default async function PotentialPage({
       </header>
 
       <details
-        className="rounded-sm border p-4 mb-8 text-sm"
+        className="ds-frame p-4 mb-8 text-sm"
         style={{
-          borderColor: "var(--color-border)",
-          background: "var(--color-bg-card)",
           fontFamily: "var(--font-ui)",
         }}
       >
@@ -176,10 +174,8 @@ export default async function PotentialPage({
 
       <form
         method="get"
-        className="rounded-sm border p-4 mb-6 text-sm flex flex-wrap gap-x-6 gap-y-3 items-end"
+        className="ds-frame p-4 mb-6 text-sm flex flex-wrap gap-x-6 gap-y-3 items-end"
         style={{
-          borderColor: "var(--color-border)",
-          background: "var(--color-bg-card)",
           fontFamily: "var(--font-ui)",
         }}
       >
@@ -189,7 +185,7 @@ export default async function PotentialPage({
             {(["HIGH", "MEDIUM", "LOW", "VERY LOW"] as const).map((b) => (
               <label
                 key={b}
-                className="px-2.5 py-1 rounded-sm border cursor-pointer font-semibold"
+                className="px-2.5 py-1 border cursor-pointer font-semibold"
                 style={{
                   borderColor: LABEL_COLOR[b],
                   color: LABEL_COLOR[b],
@@ -215,8 +211,8 @@ export default async function PotentialPage({
             multiple
             size={3}
             defaultValue={sections}
-            className="border rounded-sm px-2 py-1 min-w-44"
-            style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}
+            className="border px-2 py-1 min-w-44"
+            style={{ borderColor: "var(--color-rule)", background: "var(--color-bg)" }}
           >
             {sectionOptions.map((sec) => (
               <option key={sec} value={sec}>
@@ -232,15 +228,15 @@ export default async function PotentialPage({
         </label>
         <button
           type="submit"
-          className="px-4 py-1.5 rounded-sm text-sm font-semibold"
+          className="px-4 py-1.5 text-sm font-semibold"
           style={{ background: "var(--color-brand)", color: "white" }}
         >
           Apply
         </button>
         <a
           href="?"
-          className="px-4 py-1.5 rounded-sm text-sm font-semibold border no-underline"
-          style={{ borderColor: "var(--color-border)", color: "var(--color-fg-secondary)" }}
+          className="px-4 py-1.5 text-sm font-semibold border no-underline"
+          style={{ borderColor: "var(--color-rule)", color: "var(--color-fg-secondary)" }}
         >
           Reset
         </a>
@@ -253,11 +249,9 @@ export default async function PotentialPage({
         {ranked.map(({ signal, score }) => (
           <li
             key={signal.id}
-            className="rounded-sm border p-4"
+            className="ds-panel p-4"
             style={{
-              borderColor: "var(--color-border)",
               borderLeft: `4px solid ${LABEL_COLOR[score.label]}`,
-              background: "var(--color-bg-card)",
             }}
           >
             <div
