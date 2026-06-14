@@ -431,6 +431,43 @@ export async function fetchLatestSignals(
   return rows;
 }
 
+// Predictive Editorial Calendar events (ADR 0057). target_date/date_claimed
+// come back from pg as Date (local midnight); lib/calendar.ts normalises them.
+export type CalendarEventRow = {
+  id: string;
+  who: string | null;
+  what: string;
+  deadline_text: string | null;
+  date_claimed: Date | string | null;
+  target_date: Date | string | null;
+  precision: string;
+  source_link: string | null;
+  original_claim_text: string | null;
+  confidence: number | null;
+  topic: string | null;
+  signal_id: string | null;
+  lead_id: string | null;
+  outcome: string | null;
+};
+
+export async function fetchCalendarEvents(
+  tenantId: string,
+  limit = 500,
+): Promise<CalendarEventRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<CalendarEventRow>(
+    `select id, who, what, deadline_text, date_claimed, target_date, precision,
+            source_link, original_claim_text, confidence, topic, signal_id,
+            lead_id, outcome
+       from calendar_event
+      where tenant_id = $1
+      order by (target_date is null), target_date asc
+      limit $2`,
+    [tenantId, limit],
+  );
+  return rows;
+}
+
 export type BriefSection = {
   heading: string;
   lede_one_liner?: string;

@@ -16,6 +16,7 @@ const ROOMS: Room[] = [
       { path: "signals", label: "Signals — the inflow" },
       { path: "potential", label: "Potential — take up first" },
       { path: "trends", label: "Trends — moving topics" },
+      { path: "calendar", label: "Calendar — promises ahead" },
       { path: "shortlist", label: "Shortlist" },
       { path: "brief", label: "Morning brief" },
     ],
