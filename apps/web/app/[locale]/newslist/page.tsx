@@ -186,61 +186,68 @@ export default async function NewslistPage({
             {l.keywords.slice(0, 4).join(" · ")}
           </p>
         ) : null}
-        {l.status === "pitched" && isDesk ? (
-          <div className="mt-2 flex flex-wrap items-center gap-1">
-            <form action={assign} className="flex items-center gap-1">
-              <input type="hidden" name="id" value={l.id} />
-              <select
-                name="assigneeId"
-                required
-                defaultValue=""
-                className="text-xs border px-1 py-0.5"
-                style={{ borderColor: "var(--color-rule)", background: "var(--color-bg)" }}
-              >
-                <option value="" disabled>
-                  assign to…
-                </option>
-                {reporters.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="submit"
-                className="text-xs px-2 py-0.5 border font-semibold"
-                style={{ borderColor: STATUS_META.assigned.color, color: STATUS_META.assigned.color }}
-              >
-                → Assign
-              </button>
-            </form>
-            <form action={move}>
-              <input type="hidden" name="id" value={l.id} />
-              <input type="hidden" name="to" value="killed" />
-              <button
-                type="submit"
-                className="text-xs px-2 py-0.5 border font-semibold"
-                style={{ borderColor: STATUS_META.killed.color, color: STATUS_META.killed.color }}
-              >
-                → Kill
-              </button>
-            </form>
-          </div>
-        ) : moves.length ? (
-          <div className="flex gap-1 mt-2 flex-wrap">
-            {moves.map((to) => (
-              <form action={move} key={to}>
+        {(l.status === "pitched" && isDesk) || moves.length ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {l.status === "pitched" && isDesk ? (
+              <form action={assign} className="flex items-center gap-1">
                 <input type="hidden" name="id" value={l.id} />
-                <input type="hidden" name="to" value={to} />
+                <select
+                  name="assigneeId"
+                  required
+                  defaultValue=""
+                  className="text-xs border px-1 py-0.5"
+                  style={{ borderColor: "var(--color-rule)", background: "var(--color-bg)" }}
+                >
+                  <option value="" disabled>
+                    assign to…
+                  </option>
+                  {reporters.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="submit"
                   className="text-xs px-2 py-0.5 border font-semibold"
-                  style={{ borderColor: STATUS_META[to].color, color: STATUS_META[to].color }}
+                  style={{ borderColor: STATUS_META.assigned.color, color: STATUS_META.assigned.color }}
                 >
-                  → {STATUS_META[to].label}
+                  → Assign
                 </button>
               </form>
-            ))}
+            ) : (
+              // Forward move is the primary action — one per stage.
+              moves
+                .filter((to) => to !== "killed")
+                .map((to) => (
+                  <form action={move} key={to}>
+                    <input type="hidden" name="id" value={l.id} />
+                    <input type="hidden" name="to" value={to} />
+                    <button
+                      type="submit"
+                      className="text-xs px-2 py-0.5 border font-semibold"
+                      style={{ borderColor: STATUS_META[to].color, color: STATUS_META[to].color }}
+                    >
+                      → {STATUS_META[to].label}
+                    </button>
+                  </form>
+                ))
+            )}
+            {/* Kill is a quiet escape hatch, not a twin of the forward move. */}
+            {isDesk && l.status !== "published" ? (
+              <form action={move} className="ml-auto">
+                <input type="hidden" name="id" value={l.id} />
+                <input type="hidden" name="to" value="killed" />
+                <button
+                  type="submit"
+                  className="text-xs underline"
+                  style={{ color: "var(--color-urgent)", opacity: 0.55 }}
+                  title="Spike this story — removes it from the board"
+                >
+                  kill
+                </button>
+              </form>
+            ) : null}
           </div>
         ) : null}
       </div>

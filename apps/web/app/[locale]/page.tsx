@@ -62,12 +62,13 @@ const ROOMS = [
     room: "Plan",
     who: "Reporter · Bureau chief · Editor",
     title: "Decide what to cover",
-    desc: "The public record flowing in — governments, courts, tenders, wires — analysed, classified and routed to the reporter on the beat. Potential says what to take up first; the Calendar shows what's coming before it breaks.",
+    desc: "The public record flowing in — governments, courts, tenders, wires — analysed, classified and routed to the reporter on the beat. Potential says what to take up first; the Calendar shows what's coming before it breaks; Hidden gems resurfaces your own buried stories.",
     links: [
       { href: "signals", label: "Signals" },
       { href: "potential", label: "Potential" },
       { href: "trends", label: "Trends" },
       { href: "calendar", label: "Calendar" },
+      { href: "gems", label: "Hidden gems" },
     ],
   },
   {
@@ -87,11 +88,11 @@ const ROOMS = [
     room: "Check",
     who: "Desk · Everyone",
     title: "Fair, honest, good",
-    desc: "Once published, does the story get a fair chance on every surface — Discover, News, Search, the AI readers? Plus probity — what the page does to the reader — and compliance, seared into the workflow. And the hidden gems the night desk buried.",
+    desc: "Once published, does the story get a fair chance on every surface — Discover, News, Search, the AI readers? Plus probity — what the page does to the reader — and compliance, both seared into the workflow.",
     links: [
       { href: "scores", label: "Scores" },
       { href: "probity", label: "Probity" },
-      { href: "gems", label: "Hidden gems" },
+      { href: "standards", label: "Compliance" },
     ],
   },
   {

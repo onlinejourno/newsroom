@@ -19,6 +19,7 @@ const ROOMS: Room[] = [
       { path: "potential", label: "Potential — take up first" },
       { path: "trends", label: "Trends — moving topics" },
       { path: "calendar", label: "Calendar — promises ahead" },
+      { path: "gems", label: "Hidden gems — resurface buried stories" },
     ],
   },
   {
@@ -35,7 +36,6 @@ const ROOMS: Room[] = [
       { path: "scores", label: "Scores — surface audit" },
       { path: "probity", label: "Probity audit" },
       { path: "standards", label: "Compliance — GDPR / DPDPA" },
-      { path: "gems", label: "Hidden gems" },
     ],
   },
   {
