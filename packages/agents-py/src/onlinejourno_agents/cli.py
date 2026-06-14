@@ -256,6 +256,18 @@ def cmd_claim_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_calendar_fuse(args: argparse.Namespace) -> int:
+    """Turn due/past-due calendar events into Newslist leads (ADR 0057 §2)."""
+    from onlinejourno_agents.calendar_fuse import run_calendar_fusion
+
+    res = run_calendar_fusion(tenant_slug=args.tenant)
+    print(
+        f"scanned {res.scanned} events · {res.commissioned} commissioned · "
+        f"{res.accountability} accountability · {res.skipped} skipped"
+    )
+    return 0
+
+
 def cmd_need_mix(args: argparse.Namespace) -> int:
     """Need-mix view (ADR 0049) — reader-need distribution overall + per beat."""
     from onlinejourno_agents.need_mix import build_mix, render_mix
@@ -761,6 +773,13 @@ def main(argv: list[str] | None = None) -> int:
     p_ce.add_argument("--since-hours", type=int, default=336)
     p_ce.add_argument("--limit", type=int, default=60)
     p_ce.set_defaults(func=cmd_claim_extract)
+
+    p_fuse = sub.add_parser(
+        "calendar-fuse",
+        help="turn due/past-due calendar events into Newslist leads (ADR 0057 §2)",
+    )
+    p_fuse.add_argument("--tenant", required=True)
+    p_fuse.set_defaults(func=cmd_calendar_fuse)
 
     p_sf = sub.add_parser(
         "stories-from-signals",
