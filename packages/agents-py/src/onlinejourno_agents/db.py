@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -1162,3 +1162,74 @@ def upsert_calendar_event(
             f"on conflict (tenant_id, claim_key) do update set {updates}",
             (tenant_id, *(event.get(c) for c in _CALENDAR_EVENT_COLS)),
         )
+
+
+def events_for_fusion(
+    conn: psycopg.Connection,
+    tenant_id: UUID,
+    *,
+    min_confidence: float,
+    cutoff: date,
+) -> list[dict[str, Any]]:
+    """Calendar events eligible for fusion: not yet linked to a lead, with a
+    resolvable date at/below `cutoff` (today + band — captures the commission
+    window AND all past-due), above the confidence floor. The pure `decide`
+    makes the final commission/accountability/skip call per row."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, who, what, target_date, outcome, confidence, topic,
+                   signal_id, source_link
+              from calendar_event
+             where tenant_id = %s
+               and lead_id is null
+               and target_date is not null
+               and confidence >= %s
+               and target_date <= %s
+             order by target_date asc
+            """,
+            (tenant_id, min_confidence, cutoff),
+        )
+        return list(cur.fetchall())
+
+
+def create_lead_from_event(
+    conn: psycopg.Connection, *, tenant_id: UUID, event: dict[str, Any], kind: str
+) -> UUID:
+    """Insert a Suggested lead (origin='requested', status='idea') from a calendar
+    event, then link the event to it. `kind` is 'commission' or 'accountability';
+    accountability leads carry a 'delivered?' note and higher importance."""
+    note = None
+    importance = "normal"
+    if kind == "accountability":
+        importance = "high"
+        who = event.get("who") or "—"
+        note = f"Promised by {who}, due {event['target_date']:%d %b %Y} — delivered?"
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            insert into story_leads
+              (tenant_id, title, beat, origin, status, importance,
+               signal_id, topic, eta, note)
+            values (%s, %s, %s, 'requested', 'idea', %s, %s, %s, %s, %s)
+            returning id
+            """,
+            (
+                tenant_id,
+                event["what"][:300],
+                event.get("topic"),  # beat = topic (calendar events use topic as the beat)
+                importance,
+                event.get("signal_id"),
+                event.get("topic"),
+                event["target_date"],
+                note,
+            ),
+        )
+        row = cur.fetchone()
+        assert row is not None, "INSERT INTO story_leads returned no id"
+        lead_id = row["id"]
+        cur.execute(
+            "update calendar_event set lead_id = %s where tenant_id = %s and id = %s",
+            (lead_id, tenant_id, event["id"]),
+        )
+    return lead_id
