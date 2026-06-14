@@ -10,7 +10,7 @@ import {
   signalById,
   tenantIdForSlug,
 } from "@/lib/db";
-import { createLead } from "@/lib/workflow";
+import { STATUS_META, createLead, leadForSignal } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -95,9 +95,10 @@ export default async function SignalDetailPage({
     redirect(`/${locale}/newslist` as Route);
   }
 
-  const [routed, archive] = await Promise.all([
+  const [routed, archive, lead] = await Promise.all([
     journalistsForSignal(tenantId!, id),
     archiveMatches(tenantId!, e.analyse?.entities ?? []),
+    leadForSignal(tenantId!, id),
   ]);
   const analyse = e.analyse ?? {};
   const classify = e.classify ?? {};
@@ -140,11 +141,39 @@ export default async function SignalDetailPage({
         Provenance — what each layer added
       </p>
 
-      {canCommission ? (
+      {lead ? (
+        <div
+          className="ds-panel p-3 mb-4 text-sm flex flex-wrap items-center gap-3"
+          style={{ fontFamily: "var(--font-ui)" }}
+        >
+          <span className="ds-meta">Became a story</span>
+          <span
+            className="text-xs px-2 py-0.5 border font-semibold"
+            style={{
+              borderColor: STATUS_META[lead.status]?.color,
+              color: STATUS_META[lead.status]?.color,
+            }}
+          >
+            {STATUS_META[lead.status]?.label ?? lead.status}
+          </span>
+          {lead.assignee ? (
+            <span style={{ color: "var(--color-fg-secondary)" }}>
+              assigned to {lead.assignee}
+            </span>
+          ) : null}
+          <Link
+            href={`/${locale}/newslist` as Route}
+            className="underline ml-auto"
+            style={{ color: "var(--color-brand)" }}
+          >
+            View on the Newslist →
+          </Link>
+        </div>
+      ) : canCommission ? (
         <form action={commission} className="mb-4">
           <button
             type="submit"
-            className="px-4 py-2 rounded-sm text-sm font-semibold"
+            className="px-4 py-2 text-sm font-semibold"
             style={{ background: "var(--color-brand)", color: "white" }}
           >
             Commission this story → Newslist

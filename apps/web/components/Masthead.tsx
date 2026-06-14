@@ -8,31 +8,34 @@ import { endSession } from "@/lib/auth";
 type Item = { path: string; label: string };
 type Room = { label: string; items: Item[]; adminOnly?: boolean };
 
+// Information architecture (ADR 0058): the masthead follows the story's life —
+// four jobs, in order — not a grab-bag of tools. Plan what to cover → Produce
+// it (the spine) → Check it's fair/honest/good → run the Newsroom.
 const ROOMS: Room[] = [
   {
-    label: "Today",
+    label: "Plan",
     items: [
-      { path: "newslist", label: "Newslist — signal → published" },
       { path: "signals", label: "Signals — the inflow" },
       { path: "potential", label: "Potential — take up first" },
       { path: "trends", label: "Trends — moving topics" },
       { path: "calendar", label: "Calendar — promises ahead" },
+    ],
+  },
+  {
+    label: "Produce",
+    items: [
+      { path: "newslist", label: "Newslist — every story in flight" },
       { path: "shortlist", label: "Shortlist" },
       { path: "brief", label: "Morning brief" },
     ],
   },
   {
-    label: "Stories",
+    label: "Check",
     items: [
       { path: "scores", label: "Scores — surface audit" },
-      { path: "gems", label: "Hidden gems" },
-    ],
-  },
-  {
-    label: "Standards",
-    items: [
       { path: "probity", label: "Probity audit" },
       { path: "standards", label: "Compliance — GDPR / DPDPA" },
+      { path: "gems", label: "Hidden gems" },
     ],
   },
   {

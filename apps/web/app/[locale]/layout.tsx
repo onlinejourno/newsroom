@@ -15,6 +15,7 @@ import {
   Noto_Serif_Ethiopic,
 } from "next/font/google";
 import "../globals.css";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Masthead from "@/components/Masthead";
 import { getAccount } from "@/lib/auth";
 import { locales, dirOf, isLocale, defaultLocale, meta } from "@/lib/locale";
@@ -174,6 +175,7 @@ export default async function RootLayout({
           role={account?.role ?? null}
           userName={account?.display_name ?? null}
         />
+        {account ? <Breadcrumbs /> : null}
         {children}
       </body>
     </html>

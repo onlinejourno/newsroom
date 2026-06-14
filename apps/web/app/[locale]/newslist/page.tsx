@@ -7,6 +7,8 @@ import {
   STATUS_META,
   type Lead,
   type Status,
+  assignLead,
+  assignableReporters,
   bureaus,
   createLead,
   listLeads,
@@ -58,12 +60,13 @@ export default async function NewslistPage({
   if (!tenantId || !me) redirect(`/${locale}/login` as Route);
 
   const isDesk = ["admin", "editor", "desk"].includes(me!.role);
-  const [leads, bureauList] = await Promise.all([
+  const [leads, bureauList, reporters] = await Promise.all([
     listLeads(tenantId!, {
       bureau: bureau || null,
       mineId: mine === "1" ? me!.id : null,
     }),
     bureaus(tenantId!),
+    assignableReporters(tenantId!),
   ]);
 
   async function addLead(formData: FormData) {
@@ -96,6 +99,20 @@ export default async function NewslistPage({
       me,
       String(formData.get("id")),
       String(formData.get("to")) as Status,
+    );
+    redirect(`/${locale}/newslist` as Route);
+  }
+
+  async function assign(formData: FormData) {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const me = await getAccount();
+    if (!tenantId || !me) return;
+    await assignLead(
+      tenantId,
+      me,
+      String(formData.get("id")),
+      String(formData.get("assigneeId")),
     );
     redirect(`/${locale}/newslist` as Route);
   }
@@ -136,8 +153,21 @@ export default async function NewslistPage({
           )}
         </p>
         <p className="text-xs mt-1" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}>
-          {[l.beat, l.bureau].filter(Boolean).join(" · ")}
-          {l.assignee ? ` · ${l.assignee}` : ""}
+          {[l.beat, l.bureau].filter(Boolean).join(" · ") || "—"}
+        </p>
+        <p className="text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-tertiary)" }}>
+          {l.assignee ? (
+            <>
+              assigned to <strong style={{ color: "var(--color-fg-secondary)" }}>{l.assignee}</strong>
+              {l.commissioner ? ` · by ${l.commissioner}` : ""}
+            </>
+          ) : l.pitcher ? (
+            <>
+              pitched by <strong style={{ color: "var(--color-fg-secondary)" }}>{l.pitcher}</strong>
+            </>
+          ) : (
+            "unassigned"
+          )}
         </p>
         <p className="text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-tertiary)" }}>
           ETA {eta(l.eta)}
@@ -156,7 +186,47 @@ export default async function NewslistPage({
             {l.keywords.slice(0, 4).join(" · ")}
           </p>
         ) : null}
-        {moves.length ? (
+        {l.status === "pitched" && isDesk ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1">
+            <form action={assign} className="flex items-center gap-1">
+              <input type="hidden" name="id" value={l.id} />
+              <select
+                name="assigneeId"
+                required
+                defaultValue=""
+                className="text-xs border px-1 py-0.5"
+                style={{ borderColor: "var(--color-rule)", background: "var(--color-bg)" }}
+              >
+                <option value="" disabled>
+                  assign to…
+                </option>
+                {reporters.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="text-xs px-2 py-0.5 border font-semibold"
+                style={{ borderColor: STATUS_META.assigned.color, color: STATUS_META.assigned.color }}
+              >
+                → Assign
+              </button>
+            </form>
+            <form action={move}>
+              <input type="hidden" name="id" value={l.id} />
+              <input type="hidden" name="to" value="killed" />
+              <button
+                type="submit"
+                className="text-xs px-2 py-0.5 border font-semibold"
+                style={{ borderColor: STATUS_META.killed.color, color: STATUS_META.killed.color }}
+              >
+                → Kill
+              </button>
+            </form>
+          </div>
+        ) : moves.length ? (
           <div className="flex gap-1 mt-2 flex-wrap">
             {moves.map((to) => (
               <form action={move} key={to}>

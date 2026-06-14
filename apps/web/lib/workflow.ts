@@ -45,6 +45,7 @@ export type Lead = {
   story_id: string | null;
   assignee: string | null;
   commissioner: string | null;
+  pitcher: string | null;
   eta: Date | null;
   trend_score: number | null;
   keywords: string[];
@@ -60,11 +61,13 @@ const SELECT = `
          l.signal_id, l.story_id, l.eta, l.trend_score, l.keywords, l.topic,
          l.note, l.created_at, l.published_at,
          a.display_name as assignee, c.display_name as commissioner,
+         p.display_name as pitcher,
          case when l.eta is null or l.published_at is null then null
               else l.published_at <= l.eta end as on_time
     from story_leads l
     left join users a on a.id = l.assignee_id
-    left join users c on c.id = l.commissioner_id`;
+    left join users c on c.id = l.commissioner_id
+    left join users p on p.id = l.created_by`;
 
 export async function listLeads(
   tenantId: string,
@@ -88,6 +91,42 @@ export async function bureaus(tenantId: string): Promise<string[]> {
     [tenantId],
   );
   return rows.map((r) => r.bureau);
+}
+
+// Reporters a lead can be assigned to (the people who file stories).
+export async function assignableReporters(
+  tenantId: string,
+): Promise<{ id: string; name: string }[]> {
+  const { rows } = await pool().query<{ id: string; name: string }>(
+    `select id, coalesce(display_name, email) as name
+       from users
+      where tenant_id = $1 and status = 'approved'
+        and role in ('reporter', 'desk')
+      order by name`,
+    [tenantId],
+  );
+  return rows;
+}
+
+// The live lead a signal became, if any (spine cross-link: signal → its lead).
+export async function leadForSignal(
+  tenantId: string,
+  signalId: string,
+): Promise<{ id: string; status: string; assignee: string | null } | null> {
+  const { rows } = await pool().query<{
+    id: string;
+    status: string;
+    assignee: string | null;
+  }>(
+    `select l.id, l.status, a.display_name as assignee
+       from story_leads l
+       left join users a on a.id = l.assignee_id
+      where l.tenant_id = $1 and l.signal_id = $2 and l.status <> 'killed'
+      order by l.created_at desc
+      limit 1`,
+    [tenantId, signalId],
+  );
+  return rows[0] ?? null;
 }
 
 // Create a lead. Editors/desk commission (assigned/requested); reporters pitch.
@@ -118,8 +157,8 @@ export async function createLead(args: {
   const { rows } = await pool().query<{ id: string }>(
     `insert into story_leads
        (tenant_id, title, beat, bureau, origin, status, importance, signal_id,
-        assignee_id, commissioner_id, eta, trend_score, keywords, topic, note, ${tsCol})
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15, now())
+        assignee_id, commissioner_id, created_by, eta, trend_score, keywords, topic, note, ${tsCol})
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, now())
      returning id`,
     [
       args.tenantId,
@@ -130,8 +169,9 @@ export async function createLead(args: {
       status,
       args.importance ?? "normal",
       args.signalId ?? null,
-      args.assigneeId ?? (args.origin === "pitched" ? args.actor.id : null),
-      args.origin === "pitched" ? null : args.actor.id,
+      args.assigneeId ?? null, // a reporter is chosen at assign time, not here
+      args.origin === "pitched" ? null : args.actor.id, // commissioner
+      args.actor.id, // created_by — who pitched/commissioned it
       args.eta || null,
       args.trendScore ?? null,
       args.keywords ?? [],
@@ -191,4 +231,25 @@ export async function transition(
     params,
   );
   return true;
+}
+
+// Assign a pitched/idea lead to a named reporter. Captures the reporter
+// (assignee) AND the commissioner (the desk actor doing the assigning), so the
+// lead reads "assigned to <reporter> by <commissioner>". Desk/editor only.
+export async function assignLead(
+  tenantId: string,
+  actor: Account,
+  leadId: string,
+  assigneeId: string,
+): Promise<boolean> {
+  const isDesk = ["admin", "editor", "desk"].includes(actor.role);
+  if (!isDesk || !assigneeId) return false;
+  const { rowCount } = await pool().query(
+    `update story_leads
+        set status = 'assigned', assignee_id = $3, commissioner_id = $4,
+            assigned_at = now()
+      where tenant_id = $1 and id = $2 and status in ('idea', 'pitched')`,
+    [tenantId, leadId, assigneeId, actor.id],
+  );
+  return (rowCount ?? 0) > 0;
 }
