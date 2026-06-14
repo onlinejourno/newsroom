@@ -19,9 +19,10 @@ const buttonVariants = cva(
         link: "text-[color:var(--color-link)] underline-offset-4 hover:underline focus-visible:ring-[color:var(--color-brand)]",
       },
       size: {
-        sm: "h-8 px-3 text-sm rounded-[var(--radius-md)]",
-        md: "h-10 px-4 text-base rounded-[var(--radius-md)]",
-        lg: "h-12 px-6 text-lg rounded-[var(--radius-md)]",
+        // Broadsheet: square corners (radius-none). Pill stays pill where chosen.
+        sm: "h-8 px-3 text-sm rounded-none",
+        md: "h-10 px-4 text-base rounded-none",
+        lg: "h-12 px-6 text-lg rounded-none",
         pill: "h-8 px-4 text-sm rounded-[var(--radius-pill)]",
       },
     },

@@ -101,10 +101,10 @@ export default function Masthead({
                 {room.label} ▾
               </summary>
               <div
-                className="absolute right-0 mt-2 flex flex-col gap-1.5 rounded-sm border p-3 min-w-52 shadow-sm"
+                className="absolute right-0 mt-2 flex flex-col gap-1.5 border p-3 min-w-52"
                 style={{
                   background: "var(--color-bg-card)",
-                  borderColor: "var(--color-border)",
+                  borderColor: "var(--color-frame)",
                   zIndex: 20,
                 }}
               >
