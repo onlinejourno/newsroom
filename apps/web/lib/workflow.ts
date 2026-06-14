@@ -175,7 +175,7 @@ export async function createLead(args: {
       args.origin === "pitched" ? null : args.actor.id, // commissioner
       args.actor.id, // created_by — who pitched/commissioned it
       args.eta || null,
-      args.trendScore ?? null,
+      args.trendScore == null ? null : Math.round(args.trendScore), // trend_score is integer
       args.keywords ?? [],
       args.topic ?? null,
       args.note ?? null,
