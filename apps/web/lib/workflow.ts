@@ -46,6 +46,7 @@ export type Lead = {
   assignee: string | null;
   commissioner: string | null;
   pitcher: string | null;
+  story_url: string | null;
   eta: Date | null;
   trend_score: number | null;
   keywords: string[];
@@ -61,13 +62,14 @@ const SELECT = `
          l.signal_id, l.story_id, l.eta, l.trend_score, l.keywords, l.topic,
          l.note, l.created_at, l.published_at,
          a.display_name as assignee, c.display_name as commissioner,
-         p.display_name as pitcher,
+         p.display_name as pitcher, s.url as story_url,
          case when l.eta is null or l.published_at is null then null
               else l.published_at <= l.eta end as on_time
     from story_leads l
     left join users a on a.id = l.assignee_id
     left join users c on c.id = l.commissioner_id
-    left join users p on p.id = l.created_by`;
+    left join users p on p.id = l.created_by
+    left join stories s on s.id = l.story_id`;
 
 export async function listLeads(
   tenantId: string,

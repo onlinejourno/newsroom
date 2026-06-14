@@ -1,4 +1,5 @@
 import { analyzeUrl, type AnalyzeResult } from "@/lib/analyze";
+import { probityScan, type ProbityResult } from "@/lib/probity";
 import {
   storiesWithScores,
   storyClassifications,
@@ -165,6 +166,83 @@ function AnalyzePanel({ res }: { res: AnalyzeResult }) {
   );
 }
 
+// Probity (ADR 0052) fused into the audit: a story's "fair chance" is also a
+// question of whether the page is honest to the reader. Same colour bands.
+const PROBITY_DIMS: Record<string, string> = {
+  surveillance: "Surveillance",
+  adTechDepth: "Ad-tech depth",
+  consentIntegrity: "Consent integrity",
+  pageBloat: "Page bloat",
+  performance: "Performance",
+};
+function probityColor(n: number): string {
+  if (n >= 75) return "#16a34a";
+  if (n >= 50) return "#d97706";
+  return "#dc2626";
+}
+function ProbityCard({ p }: { p: ProbityResult }) {
+  if (p.error) {
+    return (
+      <div
+        className="mt-4 pt-4 border-t text-sm"
+        style={{ borderColor: "var(--color-rule)", fontFamily: "var(--font-ui)" }}
+      >
+        <p className="ds-meta mb-1">Probity — honest to the reader</p>
+        <p style={{ color: "#b91c1c" }}>{p.error}</p>
+      </div>
+    );
+  }
+  return (
+    <div
+      className="mt-4 pt-4 border-t text-sm"
+      style={{ borderColor: "var(--color-rule)", fontFamily: "var(--font-ui)" }}
+    >
+      <p className="ds-meta mb-1">Probity — honest to the reader</p>
+      <p>
+        Overall{" "}
+        <strong style={{ color: probityColor(p.overall) }}>
+          {p.overall} {p.overallGrade}
+        </strong>
+        {p.summary?.trackers != null ? ` · ${p.summary.trackers} trackers` : ""}
+        {p.summary?.thirdPartyRequests != null
+          ? ` · ${p.summary.thirdPartyRequests} third-party requests`
+          : ""}
+      </p>
+      <ul className="mt-2 space-y-1">
+        {Object.entries(p.dimensions).map(([k, v]) => (
+          <li key={k}>
+            <span className="inline-block w-36 font-semibold">{PROBITY_DIMS[k] ?? k}</span>{" "}
+            <strong style={{ color: probityColor(v) }}>{v}</strong>
+          </li>
+        ))}
+      </ul>
+      {p.flags?.length ? (
+        <p className="mt-2" style={{ color: "#b45309" }}>
+          {p.flags.length} flag{p.flags.length === 1 ? "" : "s"}:{" "}
+          {p.flags
+            .slice(0, 3)
+            .map((f) => f.label ?? f.title)
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      ) : null}
+      {p.reportUrl ? (
+        <p className="mt-1">
+          <a
+            className="underline"
+            href={p.reportUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--color-brand)" }}
+          >
+            Full Digital Mirror report ↗
+          </a>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export default async function ScoresPage({
   params,
   searchParams,
@@ -176,10 +254,11 @@ export default async function ScoresPage({
     url?: string;
     need?: string;
     hours?: string;
+    probity?: string;
   }>;
 }) {
   await params;
-  const { section, sort, url, need, hours } = await searchParams;
+  const { section, sort, url, need, hours, probity } = await searchParams;
   const sinceHours = hours && Number(hours) > 0 ? Number(hours) : null;
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
 
@@ -205,7 +284,10 @@ export default async function ScoresPage({
     return composite(b.scores) - composite(a.scores);
   });
 
-  const analysis = url ? await analyzeUrl(url, need) : null;
+  const [analysis, probityResult] = await Promise.all([
+    url ? analyzeUrl(url, need) : null,
+    url && probity === "1" ? probityScan(url) : null,
+  ]);
 
   return (
     <main className="min-h-screen max-w-5xl mx-auto p-6 md:p-10">
@@ -226,7 +308,9 @@ export default async function ScoresPage({
         >
           The newsroom&rsquo;s own published stories (via the CMS connector),
           scored for their fair chance on each surface — Discover · News ·
-          Search. {rows.length} of {all.length} shown.
+          Search — and, with probity on, whether the page is honest to the
+          reader: trackers, consent, weight (ADR 0052). {rows.length} of{" "}
+          {all.length} shown.
         </p>
       </header>
 
@@ -264,6 +348,14 @@ export default async function ScoresPage({
             <option value="feel">Feel</option>
             <option value="do">Do</option>
           </select>
+          <label
+            className="flex items-center gap-1 text-sm"
+            style={{ fontFamily: "var(--font-ui)" }}
+            title="Also scan the page for trackers, consent honesty and weight (slower, 15–40s)"
+          >
+            <input type="checkbox" name="probity" value="1" defaultChecked={probity === "1"} />
+            + probity
+          </label>
           <button
             type="submit"
             className="px-4 py-2 text-sm font-semibold"
@@ -277,9 +369,11 @@ export default async function ScoresPage({
           style={{ color: "var(--color-fg-tertiary)" }}
         >
           Works for any age — fetches and audits the live article. Need weights
-          the audit (ADR 0049).
+          the audit (ADR 0049). Tick <strong>+ probity</strong> to also scan the
+          page for trackers, consent honesty and weight (ADR 0052) — slower.
         </p>
         {analysis ? <AnalyzePanel res={analysis} /> : null}
+        {probityResult ? <ProbityCard p={probityResult} /> : null}
       </section>
 
       <form

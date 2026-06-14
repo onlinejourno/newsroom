@@ -172,11 +172,18 @@ export default async function NewslistPage({
         <p className="text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-tertiary)" }}>
           ETA {eta(l.eta)}
           {l.on_time === true ? " · ✅ on time" : l.on_time === false ? " · ⚠ late" : ""}
-          {l.status === "published" && l.story_id ? (
+          {l.status === "published" && l.story_url ? (
             <>
               {" · "}
-              <a className="underline" href={`/${locale}/scores`}>
-                audit
+              <a className="underline" href={l.story_url} target="_blank" rel="noopener noreferrer">
+                read ↗
+              </a>
+              {" · "}
+              <a
+                className="underline"
+                href={`/${locale}/scores?url=${encodeURIComponent(l.story_url)}&probity=1`}
+              >
+                audit ↗
               </a>
             </>
           ) : null}
