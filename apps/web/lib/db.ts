@@ -468,6 +468,34 @@ export async function fetchCalendarEvents(
   return rows;
 }
 
+export async function calendarEventById(
+  tenantId: string,
+  id: string,
+): Promise<CalendarEventRow | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<CalendarEventRow>(
+    `select id, who, what, deadline_text, date_claimed, target_date, precision,
+            source_link, original_claim_text, confidence, topic, signal_id,
+            lead_id, outcome
+       from calendar_event
+      where tenant_id = $1 and id = $2`,
+    [tenantId, id],
+  );
+  return rows[0] ?? null;
+}
+
+export async function linkCalendarEventLead(
+  tenantId: string,
+  eventId: string,
+  leadId: string,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    "update calendar_event set lead_id = $3 where tenant_id = $1 and id = $2",
+    [tenantId, eventId, leadId],
+  );
+}
+
 export type BriefSection = {
   heading: string;
   lede_one_liner?: string;
