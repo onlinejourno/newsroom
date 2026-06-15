@@ -1021,6 +1021,36 @@ git commit -m "seo-audit: wire full audit into /en/scores (run + render per stor
 
 ---
 
+## Revision R2 (2026-06-14): admin surfaces + user-needs model + AIO + article-URL
+
+Three post-approval requirements. **Where R2 conflicts with a task above, R2 wins.**
+
+**#4 — score admin-enabled surfaces + user-needs weighting + AIO:**
+- **T1 (CLI):** add `--surfaces <csv>` (default `discover,google_news,google_search`) next to `--need`.
+- **T4 (channels.py):** keep `score_discover/news/search`; ADD `score_aio(page, *, trend, now)` — AIO/generative readiness: extractable answer lede (≤~300 chars up top), NewsArticle/QAPage structured data, named author + primary-source citations (E-E-A-T), freshness, concise scannable headings; same `{score,grade,signals[{name,value,max,note}]}` shape. ADD `SCORERS = {"discover":…,"google_news":…,"google_search":…,"aio":…}` and `score_surfaces(page, keys, *, trend, trend_alignment, now) -> dict[key, scored]` (skip unknown keys). ADD `need_weighted_composite(scored, need) -> {composite, priority_surfaces, top_fix}` — port `NEED_SURFACE_WEIGHTS` + logic from `agents-py/src/onlinejourno_agents/distribution_fit.py`, extended with `aio` weights (know: aio 1.25 · understand: aio 1.5 · feel: aio 0.75 · do: aio 1.0). Add tests pinning AIO signals + that need-weighting reweights the composite.
+- **T12 (audit.py):** `audit_page(page, *, trend, need, surfaces, with_external=True, cwv=None)` — score only `surfaces` via `score_surfaces`, add `need_weighted_composite`, return `{..., "surfaces": scored, "composite": {...}, "user_need": need}`. `run_audit(url, *, trend="", need="", surfaces=None)` defaults surfaces to the three built-ins.
+- **T14 (seoAudit.ts):** `runSeoAudit(url, {trend, need, surfaces})` passes `--surfaces` (csv) + `--need`.
+- **T20 (page.tsx):** server action reads enabled surface keys via the new `enabledSurfaceKeys` helper (below) + a per-story User-Need selector, passes both to `getOrRunSeoAudit`; `AuditView` renders the need-weighted composite + one surface card per enabled surface (incl. AIO).
+- **T13 (db.ts):** add this helper (mirrors the Python `enabled_surface_keys`):
+
+```typescript
+export async function enabledSurfaceKeys(tenantId: string): Promise<string[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ key: string }>(
+    "select key from optimization_surfaces where tenant_id = $1 and enabled = true order by sort",
+    [tenantId],
+  );
+  return rows.map((r) => r.key);
+}
+```
+
+**#3 — source must be the article, not the homepage (audit-local):**
+- **T10 (fetch.py):** set `Page.is_homepage = True` when the resolved URL path is empty or `"/"` (after `_resolve_article_url` + gnews lookup). Add `is_homepage: bool = False` to `Page` in **T2**.
+- **T12 (audit.py):** when `page.is_homepage`, add a top-level `"warning": "Homepage URL — run the audit on the article/story URL for a meaningful score."` and still return all sections (degraded).
+- **Upstream root cause** (`claim_extract.py:179 source_link=sig.get("url")` storing homepage URLs) is tracked as a **separate task — out of scope for this run.**
+
+---
+
 ## Self-review checklist (done while writing)
 
 - **Spec coverage:** engine in `scoring-py` ✓ (T1-T12); periodic table ✓ (T3); rich channels ✓ (T4); SQEG ✓ (T5); recirculation ✓ (T6); potential ✓ (T7); CWV ✓ (T8); radar ✓ (T9); fetch/parse ✓ (T10); external fetchers + advisory ✓ (T11); orchestrator+CLI ✓ (T12); persistence ✓ (T13); subprocess+cache ✓ (T14); all render sections ✓ (T15-T19); page wiring ✓ (T20); graceful degradation via `available` flags ✓; GSC omitted ✓; SVG charts, no new web dep ✓.

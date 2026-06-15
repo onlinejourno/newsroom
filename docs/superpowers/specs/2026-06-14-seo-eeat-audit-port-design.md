@@ -90,3 +90,9 @@ Migration `infra/migrations/00NN_seo_audit.sql`: `seo_audit(tenant_id, story_id,
 ## Branch
 
 `slice/seo-eeat-audit` (off the fusion branch HEAD to carry the in-tree planning WIP cleanly). Keeps audit commits out of the open calendar-fusion PR #102.
+
+## Revision R2 (2026-06-14)
+
+- **User Needs Model + admin surfaces + AIO:** the audit scores whatever surfaces are enabled in admin (`optimization_surfaces`), adds an **AIO** (AI Overviews / generative) scorer, and weights the composite by the reader's User Need — Know/Understand/Feel/Do (ADR 0049, reusing `NEED_SURFACE_WEIGHTS`/`need_weighted_composite`). Surfaces + need are passed from the web layer to the engine (`--surfaces`, `--need`); the engine stays pure.
+- **Article URL not homepage (audit-local):** `fetch.py` flags bare-homepage inputs (`Page.is_homepage`) and the audit surfaces a warning to run on the article URL. The **upstream** root cause (signals storing homepage URLs in `claim_extract.py`) is tracked separately, out of this run's scope.
+- See the plan's "Revision R2" section for the task-level deltas.
