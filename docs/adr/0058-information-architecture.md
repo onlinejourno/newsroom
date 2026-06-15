@@ -1,5 +1,7 @@
 # ADR 0058 — Information architecture: the story's life is the spine
 
+> **Superseded by [ADR 0060](0060-ia-flatten-calendar-spine.md) (2026-06-15).**
+
 **Status:** Accepted (2026-06-14).
 
 ## Context
