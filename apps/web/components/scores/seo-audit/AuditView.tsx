@@ -20,6 +20,12 @@ import { PotentialPanel } from "./PotentialPanel";
 import type { PotentialData } from "./PotentialPanel";
 import { PremiumDistributionAdvisory } from "./PremiumDistributionAdvisory";
 import type { AdvisoryData, AdvisoryOption } from "./PremiumDistributionAdvisory";
+import { YouTubeQueries } from "./YouTubeQueries";
+import type { YouTubeQueriesData } from "./YouTubeQueries";
+import { AiAssistantQueries } from "./AiAssistantQueries";
+import type { AiQueriesData } from "./AiAssistantQueries";
+import { KeywordsIntelligence } from "./KeywordsIntelligence";
+import type { KeywordsData, KeywordRow } from "./KeywordsIntelligence";
 
 // ── Local narrow types ────────────────────────────────────────────────────────
 // SeoAudit is Record<string, unknown> so we narrow each slice with guards
@@ -372,6 +378,63 @@ function narrowAdvisory(v: unknown): AdvisoryData | null {
   return { urgency: v.urgency, note: v.note, options };
 }
 
+// ── Narrowing: youtube ────────────────────────────────────────────────────────
+
+function narrowYoutube(v: unknown): YouTubeQueriesData | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.available !== "boolean") return null;
+  return {
+    available: v.available,
+    queries: narrowStringArray(v.queries),
+    angles: narrowStringArray(v.angles),
+    reason: typeof v.reason === "string" ? v.reason : undefined,
+  };
+}
+
+// ── Narrowing: ai_queries ─────────────────────────────────────────────────────
+
+function narrowAiQueries(v: unknown): AiQueriesData | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.available !== "boolean") return null;
+  return {
+    available: v.available,
+    questions: narrowStringArray(v.questions),
+    search_angles: narrowStringArray(v.search_angles),
+    reason: typeof v.reason === "string" ? v.reason : undefined,
+  };
+}
+
+// ── Narrowing: keywords ───────────────────────────────────────────────────────
+
+function narrowKeywordRow(v: unknown): KeywordRow | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.keyword !== "string") return null;
+  return {
+    keyword: v.keyword,
+    vol: typeof v.vol === "number" ? v.vol : undefined,
+    cpc: typeof v.cpc === "number" ? v.cpc : undefined,
+    competition: typeof v.competition === "number" ? v.competition : undefined,
+    position: typeof v.position === "number" ? v.position : undefined,
+  };
+}
+
+function narrowKeywords(v: unknown): KeywordsData | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.available !== "boolean") return null;
+  const rows: KeywordRow[] = [];
+  if (Array.isArray(v.keywords)) {
+    for (const item of v.keywords) {
+      const row = narrowKeywordRow(item);
+      if (row) rows.push(row);
+    }
+  }
+  return {
+    available: v.available,
+    keywords: rows,
+    reason: typeof v.reason === "string" ? v.reason : undefined,
+  };
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 export interface AuditViewProps {
@@ -392,6 +455,11 @@ export function AuditView({ audit }: AuditViewProps) {
   const cwv = narrowCwv(audit.cwv);
   const potential = narrowPotential(audit.potential);
   const advisory = narrowAdvisory(audit.advisory);
+
+  // ── T19: external enrichment (optional) ──────────────────────────────────
+  const youtube = narrowYoutube(audit.youtube);
+  const aiQueries = narrowAiQueries(audit.ai_queries);
+  const keywords = narrowKeywords(audit.keywords);
 
   // `audit.warning` is the homepage-detection warning string (engine sets it
   // when the URL is a section front, not an article).
@@ -482,6 +550,17 @@ export function AuditView({ audit }: AuditViewProps) {
 
       {/* Premium Distribution Advisory — T18 (only when paywalled) */}
       {advisory ? <PremiumDistributionAdvisory advisory={advisory} /> : null}
+
+      {/* ── T19: external enrichment sections (render only when available) ── */}
+
+      {/* YouTube search queries + content angles */}
+      {youtube ? <YouTubeQueries youtube={youtube} /> : null}
+
+      {/* What people ask AI assistants */}
+      {aiQueries ? <AiAssistantQueries ai_queries={aiQueries} /> : null}
+
+      {/* Keywords Intelligence (ranking keywords table) */}
+      {keywords ? <KeywordsIntelligence keywords={keywords} /> : null}
     </div>
   );
 }
