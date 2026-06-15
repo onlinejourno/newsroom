@@ -346,11 +346,11 @@ def cmd_feed(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
+    from onlinejourno_agents.feed_view import format_feed_signal
+
     print(f"{len(rows)} signals routed to {args.journalist}:")
     for r in rows:
-        ents = ", ".join((r.get("entities") or [])[:3])
-        head = (r.get("headline") or r.get("url") or "")[:54]
-        print(f"  [{r.get('beat')}/{r.get('region') or '-'}] {head}  · {ents}")
+        print(format_feed_signal(r))
     return 0
 
 
