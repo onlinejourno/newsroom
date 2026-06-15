@@ -15,6 +15,7 @@ dependencies = [
   "lxml>=5.0",
   "python-dotenv>=1.0",
   "pyyaml>=6.0",
+  "playwright>=1.44",
 ]
 
 [project.scripts]
@@ -33,3 +34,13 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.0",
+]
+
+[tool.pytest.ini_options]
+markers = [
+  "browser: real headless-browser test, opt-in via PLAYWRIGHT_E2E=1",
+]
