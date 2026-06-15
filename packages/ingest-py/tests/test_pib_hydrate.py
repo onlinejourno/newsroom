@@ -35,3 +35,25 @@ def test_missing_container_yields_empty_content():
     content = parse_pib_page("<html><body>nothing</body></html>")
     assert content.body_text is None
     assert content.published_at is None
+
+
+from onlinejourno_ingest.hydrate.pib import PibHydrator
+
+
+class _FakeFetcher:
+    def __init__(self, payload: bytes):
+        self._payload = payload
+        self.urls: list[str] = []
+
+    def get_bytes(self, url, *, headers=None):
+        self.urls.append(url)
+        return self._payload
+
+
+def test_hydrator_fetches_then_parses():
+    fetcher = _FakeFetcher(_FIXTURE.encode("utf-8"))
+    hydrator = PibHydrator(fetcher)
+    content = hydrator.hydrate("https://pib.gov.in/PressReleaseIframePage.aspx?PRID=1")
+    assert fetcher.urls == ["https://pib.gov.in/PressReleaseIframePage.aspx?PRID=1"]
+    assert content.published_at == datetime(2026, 6, 15, 9, 0, tzinfo=UTC)
+    assert "National Human Rights Commission" in content.body_text
