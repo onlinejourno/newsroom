@@ -137,7 +137,7 @@ insert into sources (
 select t.id, 'rss', 'The Hindu — Business',
        'https://www.thehindu.com/business/',
        'https://www.thehindu.com/business/feeder/default.rss',
-       'mainstream', '{markets-regulatory}', '{en}', false
+       'mainstream', '{markets-regulatory}', '{en}', true
 from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
@@ -150,7 +150,7 @@ insert into sources (
 select t.id, 'rss', 'Moneycontrol — Business',
        'https://www.moneycontrol.com/news/business/',
        'https://www.moneycontrol.com/rss/business.xml',
-       'mainstream', '{markets-regulatory}', '{en}', false
+       'mainstream', '{markets-regulatory}', '{en}', true
 from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
@@ -163,7 +163,7 @@ insert into sources (
 select t.id, 'rss', 'Business Standard — Markets',
        'https://www.business-standard.com/markets',
        'https://www.business-standard.com/rss/markets-106.rss',
-       'mainstream', '{markets-regulatory}', '{en}', false
+       'mainstream', '{markets-regulatory}', '{en}', true
 from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
