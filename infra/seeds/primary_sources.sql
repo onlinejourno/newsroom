@@ -28,6 +28,17 @@ on conflict do nothing;
 update sources set auth='{"method":"api_key","secret_ref":"DATA_GOV_IN_KEY"}'
  where tenant_id = :tenant and name like 'data.gov.in%';
 
+-- PRS bills: configure + enable the scrape. PRS is server-rendered and serves
+-- our UA; /billtrack is Drupal Views markup where each bill title lives in
+-- .views-field-title-field (category-nav links do not), so ScrapeCollector
+-- needs no code change. max_items bounds the first run; url-hash dedup means
+-- later runs add only new bills. Date/body land via a later hydration.
+update sources
+   set url = 'https://prsindia.org/billtrack',
+       params = '{"item_selector": ".views-field-title-field", "max_items": 100}',
+       enabled = true
+ where tenant_id = :tenant and name = 'PRS Legislative Research';
+
 -- MSM feeds are pipeline test fixtures, never the product's source layer.
 update sources set family='msm_test', tier=9
  where tenant_id = :tenant
