@@ -77,3 +77,81 @@ def _site_root(url: str) -> str:
     """scheme://netloc/ — the page Tier 2 loads to clear the challenge."""
     parts = urlsplit(url)
     return urlunsplit((parts.scheme, parts.netloc, "/", "", ""))
+
+
+class CloudflareFetcher:
+    """Two-tier Fetcher. Tier 1 = realistic headers via requests; Tier 2 =
+    headless Chromium that clears the JS challenge then pulls raw bytes."""
+
+    def __init__(self, session: requests.Session, *, timeout_seconds: int = 20) -> None:
+        self.session = session
+        self.timeout = timeout_seconds
+
+    def get_bytes(self, url: str, *, headers: dict[str, str] | None = None) -> bytes:
+        try:
+            return self._tier_headers(url, headers)
+        except CloudflareBlocked:
+            return self._tier_playwright(url)
+
+    def _tier_headers(self, url: str, extra: dict[str, str] | None) -> bytes:
+        merged = {**REALISTIC_HEADERS, **(extra or {})}
+        if os.environ.get("CF_COOKIES"):
+            merged["Cookie"] = os.environ["CF_COOKIES"]
+        resp = self.session.get(url, headers=merged, timeout=self.timeout)
+        if resp.status_code in (403, 503):
+            raise CloudflareBlocked(url, "headers")
+        resp.raise_for_status()
+        if is_cloudflare_challenge(resp.content):
+            raise CloudflareBlocked(url, "headers")
+        return resp.content
+
+    def _tier_playwright(self, url: str) -> bytes:
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError as exc:  # pragma: no cover - install-time guard
+            raise RuntimeError(
+                "Playwright not installed. Run `uv add playwright` and "
+                "`uv run playwright install chromium`."
+            ) from exc
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=True,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                ],
+            )
+            try:
+                context = browser.new_context(
+                    user_agent=REALISTIC_HEADERS["User-Agent"],
+                    viewport={"width": 1440, "height": 900},
+                    locale="en-IN",
+                    timezone_id="Asia/Kolkata",
+                    extra_http_headers={
+                        "Accept-Language": REALISTIC_HEADERS["Accept-Language"],
+                        "Sec-Ch-Ua": REALISTIC_HEADERS["Sec-Ch-Ua"],
+                        "Sec-Ch-Ua-Mobile": "?0",
+                        "Sec-Ch-Ua-Platform": '"macOS"',
+                    },
+                )
+                context.add_init_script(
+                    "Object.defineProperty(Navigator.prototype,'webdriver',{get:()=>undefined});"
+                    "window.chrome={runtime:{},app:{}};"
+                    "Object.defineProperty(navigator,'plugins',{get:()=>[1,2,3,4,5]});"
+                    "Object.defineProperty(navigator,'languages',{get:()=>['en-IN','en-US','en']});"
+                )
+                page = context.new_page()
+                page.goto(_site_root(url), wait_until="domcontentloaded", timeout=30_000)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=20_000)
+                except Exception:  # noqa: BLE001 - idle wait is best-effort
+                    pass
+                resp = context.request.get(url)
+                body = resp.body()
+                if is_cloudflare_challenge(body):
+                    raise CloudflareBlocked(url, "playwright")
+                return body
+            finally:
+                browser.close()
