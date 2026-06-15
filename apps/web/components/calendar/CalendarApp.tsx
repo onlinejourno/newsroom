@@ -263,7 +263,7 @@ function TimelineRow({
 function TimeAxis({ horizon, todayISO }: { horizon: number; todayISO: string }) {
   const ticks = [0, 7, 14, 30, 60, 90, 120, 150, 180].filter((t) => t <= horizon);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 230px", gap: 16, padding: "12px 0 6px", borderBottom: `2px solid ${C.ink}`, background: C.surface, position: "sticky", top: 0, zIndex: 5 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 230px", gap: 16, padding: "12px 0 6px", borderBottom: `2px solid ${C.ink}`, background: C.surface, position: "sticky", top: 56, zIndex: 5 }}>
       <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.ink3 }}>Who promised</div>
       <div style={{ position: "relative", height: 22 }}>
         {ticks.map((t) => (
