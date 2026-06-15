@@ -234,3 +234,50 @@ def mark_source_failed(
             """,
             (source_id, tenant_id),
         )
+
+
+def pib_signals_needing_hydration(
+    conn: psycopg.Connection, tenant_id: UUID, *, limit: int = 200
+) -> list[dict[str, Any]]:
+    """PIB signals (by url domain) still missing body_text or published_at."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select id, url
+              from signals
+             where tenant_id = %s
+               and url like %s
+               and (body_text is null or body_text = '' or published_at is null)
+             order by fetched_at desc
+             limit %s
+            """,
+            (tenant_id, "%pib.gov.in%", limit),
+        )
+        return list(cur.fetchall())
+
+
+def set_signal_body_published(
+    conn: psycopg.Connection,
+    *,
+    tenant_id: UUID,
+    signal_id: UUID,
+    body_text: str | None,
+    published_at: datetime | None,
+) -> None:
+    """Update only the fields that were successfully parsed (non-None)."""
+    sets: list[str] = []
+    params: list[Any] = []
+    if body_text is not None:
+        sets.append("body_text = %s")
+        params.append(body_text)
+    if published_at is not None:
+        sets.append("published_at = %s")
+        params.append(published_at)
+    if not sets:
+        return
+    params.extend([tenant_id, signal_id])
+    with conn.cursor() as cur:
+        cur.execute(
+            f"update signals set {', '.join(sets)} where tenant_id = %s and id = %s",
+            params,
+        )
