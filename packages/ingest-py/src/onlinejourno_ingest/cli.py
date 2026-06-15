@@ -15,10 +15,12 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from typing import Any
 from uuid import UUID
 
 from onlinejourno_ingest.collectors.api import ApiCollector
+from onlinejourno_ingest.collectors.base import http_session
 from onlinejourno_ingest.collectors.gdelt import GDELTCollector
 from onlinejourno_ingest.collectors.rss import RSSCollector
 from onlinejourno_ingest.collectors.scrape import ScrapeCollector
@@ -28,10 +30,14 @@ from onlinejourno_ingest.db import (
     finish_run,
     mark_source_failed,
     mark_source_seen,
+    pib_signals_needing_hydration,
+    set_signal_body_published,
     start_run,
     tenant_id_for_slug,
     upsert_signal,
 )
+from onlinejourno_ingest.fetch.cloudflare import CloudflareFetcher
+from onlinejourno_ingest.hydrate.pib import PibHydrator
 from onlinejourno_ingest.protocols import FetchError
 
 # Map of source kind to a collector factory. Instances are created once per
@@ -193,6 +199,47 @@ def cmd_collect(args: argparse.Namespace) -> int:
     return 0 if failed_sources == 0 else 2
 
 
+def cmd_hydrate_pib(args: argparse.Namespace) -> int:
+    """Fetch PIB release pages to fill body_text + published_at on signals."""
+    hydrator = PibHydrator(CloudflareFetcher(http_session()))
+    with connect() as conn:
+        tenant_id = tenant_id_for_slug(conn, args.tenant)
+        rows = pib_signals_needing_hydration(conn, tenant_id, limit=args.limit)
+
+    if not rows:
+        print("No PIB signals need hydration.")
+        return 0
+
+    hydrated = 0
+    skipped = 0
+    last = 0.0
+    for row in rows:
+        wait = args.min_interval - (time.monotonic() - last)
+        if wait > 0:
+            time.sleep(wait)
+        last = time.monotonic()
+        try:
+            content = hydrator.hydrate(row["url"])
+            if content.body_text is None and content.published_at is None:
+                skipped += 1
+                continue
+            with connect() as conn:
+                set_signal_body_published(
+                    conn,
+                    tenant_id=tenant_id,
+                    signal_id=row["id"],
+                    body_text=content.body_text,
+                    published_at=content.published_at,
+                )
+            hydrated += 1
+        except Exception as exc:  # robust: one bad page never aborts the batch
+            skipped += 1
+            print(f"  skip {row['url']}: {exc}", file=sys.stderr)
+
+    print(f"hydrated {hydrated}, skipped {skipped} of {len(rows)}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="onlinejourno-ingest")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -202,6 +249,17 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--beat", help="Filter by beat tag, e.g. 'markets-regulatory'")
     collect.add_argument("--source-name", help="Run a single source by its exact name")
     collect.set_defaults(func=cmd_collect)
+
+    hydrate = subparsers.add_parser(
+        "hydrate-pib",
+        help="Fetch PIB release pages to fill body_text + published_at",
+    )
+    hydrate.add_argument("--tenant", required=True, help="Tenant slug, e.g. 'self'")
+    hydrate.add_argument("--limit", type=int, default=200, help="Max signals per run")
+    hydrate.add_argument(
+        "--min-interval", type=float, default=2.0, help="Seconds between page fetches"
+    )
+    hydrate.set_defaults(func=cmd_hydrate_pib)
 
     return parser
 
