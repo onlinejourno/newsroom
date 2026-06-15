@@ -109,12 +109,12 @@ export default async function PotentialPage({
   return (
     <main className="min-h-screen max-w-4xl mx-auto p-6 md:p-10">
       <header className="mb-8">
-        <p className="ds-label mb-2">OnlineJourno · Discover Potential</p>
+        <p className="ds-label mb-2">OnlineJourno · Story Scores</p>
         <h1
           className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-3"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Discover Potential
+          Story Scores
         </h1>
         <p
           className="text-base max-w-2xl"
@@ -123,9 +123,9 @@ export default async function PotentialPage({
             color: "var(--color-fg-secondary)",
           }}
         >
-          The inflow ranked by what to take up first — each signal scored
-          against the moving topics. The proven discover-dashboard composite,
-          fed by the platform&rsquo;s own convergence engine.
+          Your published stories ranked by Discover potential — so the digital
+          desk can identify which ones to optimise, re-angle, or push to catch
+          the trends that are moving right now.
         </p>
       </header>
 

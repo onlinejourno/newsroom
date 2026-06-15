@@ -121,7 +121,7 @@ export default async function GemsPage({
           className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-3"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Hidden gems · stories worth promoting
+          Hidden Gems
         </h1>
         <p
           className="text-base max-w-3xl"
@@ -130,12 +130,11 @@ export default async function GemsPage({
             color: "var(--color-fg-secondary)",
           }}
         >
-          Published stories scored on five signals — trend alignment, image,
-          depth, <strong>age urgency (12–24h is the at-risk Discover
-          window)</strong>, freshness. Stat cards are clickable filters;
-          action chips are prompts the digital desk can act on now. Placement
-          signals (only-in-sub-section, on-homepage) arrive with the
-          site-structure crawl — not yet computed.
+          Already-published stories that are buried or under-surfaced — scored
+          against live trends so the digital desk can re-optimise or resurface
+          them before the{" "}
+          <strong>12–24h at-risk Discover window</strong> closes. Stat cards
+          are clickable filters; action chips show what to do now.
         </p>
       </header>
 

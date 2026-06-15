@@ -58,7 +58,7 @@ export default async function TrendsPage({
           className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-3"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Trending topics
+          Trending Topics
         </h1>
         <p
           className="text-base"
@@ -67,10 +67,10 @@ export default async function TrendsPage({
             color: "var(--color-fg-secondary)",
           }}
         >
-          Cross-source convergence over the enriched inflow — the same entity
-          surfacing across signals is the trend. Recent {windowHours}h vs the
-          prior {windowHours}h; the momentum bands are the proven
-          discover-dashboard ones.
+          Topics moving right now — ranked by momentum across the enriched
+          inflow. The same entity surfacing across multiple signals in the last{" "}
+          {windowHours}h vs the prior {windowHours}h defines the trend; the
+          momentum bands show how fast each topic is accelerating.
         </p>
       </header>
 
