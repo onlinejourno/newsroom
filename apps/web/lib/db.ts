@@ -1102,6 +1102,41 @@ export async function publishedStoriesForScoring(
   }));
 }
 
+// ── SEO / E-E-A-T audit cache (Story Analyser, Task 13) ──────────────────────
+// Keyed by (tenant_id, url) so arbitrary URLs can be audited independently of
+// whether they correspond to a stored story. story_id is set when the URL IS a
+// known story (allows joining back to distribution_fit_scores etc.).
+
+export type SeoAuditRow = { url: string; audit: unknown; computed_at: Date };
+
+export async function seoAuditForUrl(
+  tenantId: string,
+  url: string,
+): Promise<SeoAuditRow | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<SeoAuditRow>(
+    "select url, audit, computed_at from seo_audit where tenant_id = $1 and url = $2",
+    [tenantId, url],
+  );
+  return rows[0] ?? null;
+}
+
+export async function upsertSeoAudit(
+  tenantId: string,
+  url: string,
+  audit: unknown,
+  storyId: string | null = null,
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `insert into seo_audit (tenant_id, url, story_id, audit, computed_at)
+     values ($1, $2, $3, $4, now())
+     on conflict (tenant_id, url)
+       do update set audit = excluded.audit, story_id = excluded.story_id, computed_at = now()`,
+    [tenantId, url, storyId, JSON.stringify(audit)],
+  );
+}
+
 // Stories published per day over the last N days (oldest→newest) — the home
 // snapshot sparkline.
 export async function publishedPerDay(
