@@ -331,6 +331,16 @@ export default async function Home({
                 s: "BBC / smartocto model",
                 d: "Know · Understand · Feel · Do — why a reader comes to a story. Every signal is classified by it, and coverage is audited for balance across the four.",
               },
+              {
+                k: "SEJ Periodic Table",
+                s: "Search Engine Journal · SEO elements",
+                d: "The periodic table of SEO success factors — content, architecture, HTML, links, trust. The SEO + E-E-A-T audit scores every story against these elements, turning ranking factors into concrete fixes.",
+              },
+              {
+                k: "Search Quality Guidelines",
+                s: "Google Search Quality Evaluator Guidelines",
+                d: "How Google's human raters judge pages — YMYL sensitivity, Page Quality, Needs Met, and E-E-A-T. The audit classifies each story by these and flags the lowest-quality risk signals.",
+              },
             ].map((g) => (
               <div key={g.k}>
                 <p
