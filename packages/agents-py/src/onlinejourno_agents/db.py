@@ -383,6 +383,7 @@ def signals_for_journalist(
         cur.execute(
             """
             select s.id, s.headline, s.url, s.beat, s.region, s.district,
+                   s.trend_score, s.trend_reason,
                    s.enrichment->'analyse'->'entities' as entities,
                    coalesce(s.published_at, s.fetched_at) as at
               from signals s, journalist_profiles j
@@ -397,7 +398,8 @@ def signals_for_journalist(
                )
                and coalesce(s.published_at, s.fetched_at)
                    >= now() - make_interval(hours => %s)
-             order by coalesce(s.published_at, s.fetched_at) desc
+             order by s.trend_score desc nulls last,
+                      coalesce(s.published_at, s.fetched_at) desc
              limit %s
             """,
             (tenant_id, tenant_id, journalist_id, since_hours, limit),
