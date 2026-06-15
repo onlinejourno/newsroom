@@ -1,11 +1,11 @@
 import {
   entityWindows,
-  fetchLatestSignals,
+  publishedStoriesForScoring,
   tenantIdForSlug,
+  tenantRegion,
 } from "@/lib/db";
 import {
   WEIGHTS,
-  hostOf,
   scorePotential,
 } from "@/lib/potential";
 import { topicMomentum } from "@/lib/trends";
@@ -16,7 +16,6 @@ export const dynamic = "force-dynamic";
 
 const TENANT_SLUG = "self";
 const WINDOW_HOURS = 48;
-const POOL = 80; // signals considered
 const SHOW = 30;
 
 const LABEL_COLOR: Record<string, string> = {
@@ -53,19 +52,22 @@ export default async function PotentialPage({
   const tenantId = await tenantIdForSlug(TENANT_SLUG);
   if (!tenantId) return null;
 
-  const [signals, recent, prior] = await Promise.all([
-    fetchLatestSignals(tenantId, POOL),
+  const [stories, recent, prior, outletRegion] = await Promise.all([
+    publishedStoriesForScoring(tenantId, WINDOW_HOURS),
     entityWindows(tenantId, WINDOW_HOURS, 0),
     entityWindows(tenantId, WINDOW_HOURS * 2, WINDOW_HOURS),
+    tenantRegion(tenantId),
   ]);
   const topics = topicMomentum(recent, prior).slice(0, 40);
 
-  // Coverage per topic from the same pool: topic -> host -> signal count.
+  // Coverage per topic from published stories: topic -> host -> story count.
   const coverage = new Map<string, Map<string, number>>();
-  for (const s of signals) {
-    const host = hostOf(s.url);
+  for (const story of stories) {
+    const host = story.url
+      ? new URL(story.url).hostname.replace(/^www\./, "")
+      : null;
     if (!host) continue;
-    const ents = new Set(s.enrichment?.analyse?.entities ?? []);
+    const ents = new Set(story.entities);
     for (const t of topics) {
       if (!ents.has(t.topic)) continue;
       const hosts = coverage.get(t.topic) ?? new Map<string, number>();
@@ -75,25 +77,29 @@ export default async function PotentialPage({
   }
 
   const now = new Date();
-  const allRanked = signals
-    .map((s) => ({
-      signal: s,
+  const allRanked = stories
+    .map((story) => ({
+      story,
       score: scorePotential(
         {
-          headline: s.headline,
-          entities: s.enrichment?.analyse?.entities ?? [],
-          published_at: s.published_at,
-          host: hostOf(s.url),
+          host: story.url
+            ? new URL(story.url).hostname.replace(/^www\./, "")
+            : "",
+          published_at: story.published_at,
+          headline: story.headline ?? "",
+          entities: story.entities,
+          region: story.region,
         },
         topics,
         coverage,
         now,
+        outletRegion,
       ),
     }))
     .sort((a, b) => b.score.potential - a.score.potential);
 
   const sectionOptions = [...new Set(
-    allRanked.map((r) => r.signal.beat).filter((b): b is string => !!b),
+    allRanked.map((r) => r.story.section).filter((s): s is string => !!s),
   )].sort();
   const bandCounts: Record<string, number> = {};
   for (const r of allRanked)
@@ -102,7 +108,7 @@ export default async function PotentialPage({
   let ranked = allRanked;
   if (bands.length) ranked = ranked.filter((r) => bands.includes(r.score.label));
   if (sections.length)
-    ranked = ranked.filter((r) => r.signal.beat && sections.includes(r.signal.beat));
+    ranked = ranked.filter((r) => r.story.section && sections.includes(r.story.section));
   if (minScore > 0) ranked = ranked.filter((r) => r.score.potential >= minScore);
   if (!showAll) ranked = ranked.slice(0, SHOW);
 
@@ -144,24 +150,46 @@ export default async function PotentialPage({
         <table className="mt-3 text-xs w-full max-w-xl">
           <tbody>
             <tr>
-              <td className="py-1 font-semibold">Trend momentum</td>
+              <td className="py-1 font-semibold">Momentum</td>
               <td>{WEIGHTS.momentum * 100}%</td>
-              <td>how fast the matched topic is moving in the inflow</td>
+              <td>
+                How fast this topic is moving across the inflow right now. A
+                topic climbing quickly scores high; one that&rsquo;s cooling
+                scores low.
+              </td>
             </tr>
             <tr>
-              <td className="py-1 font-semibold">Content alignment</td>
+              <td className="py-1 font-semibold">Trend fit</td>
               <td>{WEIGHTS.alignment * 100}%</td>
-              <td>topic in the headline (guarded match) or entities</td>
+              <td>
+                Does your story match a trend that&rsquo;s hot <em>in your
+                market</em>? A trend heating up abroad counts much less
+                (&times;0.4) and is flagged &ldquo;foreign trend&rdquo; — so a
+                US story spiking on American Twitter doesn&rsquo;t inflate your
+                score if you publish for an Indian audience.
+              </td>
             </tr>
             <tr>
-              <td className="py-1 font-semibold">Domain authority</td>
+              <td className="py-1 font-semibold">Topic ownership</td>
               <td>{WEIGHTS.authority * 100}%</td>
-              <td>the source&rsquo;s share of coverage for the topic</td>
+              <td>
+                Your newsroom&rsquo;s share of recent coverage on this topic
+                among the stories in the inflow. High ownership means you&rsquo;re
+                already seen as a voice on this subject.{" "}
+                <em>
+                  (Comparison against specific local competitor domains arrives
+                  with Topic &rarr; Domains.)
+                </em>
+              </td>
             </tr>
             <tr>
               <td className="py-1 font-semibold">Freshness</td>
               <td>{WEIGHTS.freshness * 100}%</td>
-              <td>&lt;2h=100 · &lt;24h=70 · &lt;48h=40 · &gt;72h=10</td>
+              <td>
+                Newer stories rank higher because the Discover window is
+                time-sensitive. Under 2 hours = 100; under 24 hours = 70; under
+                48 hours = 40; older = lower.
+              </td>
             </tr>
           </tbody>
         </table>
@@ -246,9 +274,9 @@ export default async function PotentialPage({
       </form>
 
       <ol className="space-y-3 list-none">
-        {ranked.map(({ signal, score }) => (
+        {ranked.map(({ story, score }) => (
           <li
-            key={signal.id}
+            key={story.id}
             className="ds-panel p-4"
             style={{
               borderLeft: `4px solid ${LABEL_COLOR[score.label]}`,
@@ -272,15 +300,26 @@ export default async function PotentialPage({
                   trend: {score.matchedTrend}
                 </span>
               ) : null}
+              {score.foreign ? (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    border: "1px solid var(--color-fg-tertiary)",
+                    color: "var(--color-fg-tertiary)",
+                  }}
+                >
+                  foreign trend — down-weighted
+                </span>
+              ) : null}
             </div>
             <a
-              href={signal.url}
+              href={story.url ?? "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold text-lg leading-snug block mt-1"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {signal.headline ?? signal.url}
+              {story.headline ?? story.url}
             </a>
             <p
               className="text-xs mt-1"
@@ -289,8 +328,8 @@ export default async function PotentialPage({
                 color: "var(--color-fg-secondary)",
               }}
             >
-              momentum {score.momentum} · alignment {score.alignment} ·
-              authority {score.authority} · freshness {score.freshness}
+              momentum {score.momentum} · trend fit {score.alignment} ·
+              topic ownership {score.authority} · freshness {score.freshness}
             </p>
             <p
               className="text-xs mt-1"
@@ -299,8 +338,8 @@ export default async function PotentialPage({
                 color: "var(--color-fg-tertiary)",
               }}
             >
-              {[signal.beat, signal.source_name].filter(Boolean).join(" · ")} ·{" "}
-              {formatDate(signal.published_at)}
+              {[story.section].filter(Boolean).join(" · ")}{" "}
+              {formatDate(story.published_at)}
             </p>
           </li>
         ))}
