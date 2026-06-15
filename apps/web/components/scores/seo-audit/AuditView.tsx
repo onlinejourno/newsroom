@@ -2,8 +2,12 @@ import * as React from "react";
 
 import type { SeoAudit } from "@/lib/seoAudit";
 import { AuditScorecard } from "./AuditScorecard";
+import { ChannelCards } from "./ChannelCards";
+import type { SurfaceEntry, CompositeEntry } from "./ChannelCards";
 import { PeriodicTable } from "./PeriodicTable";
 import type { PeriodicCheck } from "./PeriodicTable";
+import { SignalRadar } from "./SignalRadar";
+import type { RadarAxis } from "./SignalRadar";
 
 // ── Local narrow types ────────────────────────────────────────────────────────
 // SeoAudit is Record<string, unknown> so we narrow each slice with guards
@@ -78,6 +82,81 @@ function narrowChecks(v: unknown): PeriodicCheck[] {
   return out;
 }
 
+// ── Narrowing: surfaces ───────────────────────────────────────────────────────
+
+function narrowSignal(v: unknown): { name: string; value: number; max: number; note: string } | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.name !== "string") return null;
+  if (typeof v.value !== "number") return null;
+  if (typeof v.max !== "number") return null;
+  return {
+    name: v.name,
+    value: v.value,
+    max: v.max,
+    note: typeof v.note === "string" ? v.note : "",
+  };
+}
+
+function narrowSurfaceEntry(v: unknown): SurfaceEntry | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.score !== "number") return null;
+  if (typeof v.grade !== "string") return null;
+  const rawSignals = Array.isArray(v.signals) ? v.signals : [];
+  const signals: SurfaceEntry["signals"] = [];
+  for (const s of rawSignals) {
+    const sig = narrowSignal(s);
+    if (sig) signals.push(sig);
+  }
+  return { score: v.score, grade: v.grade, signals };
+}
+
+function narrowSurfaces(v: unknown): Record<string, SurfaceEntry> {
+  if (!isRecord(v)) return {};
+  const out: Record<string, SurfaceEntry> = {};
+  for (const [key, val] of Object.entries(v)) {
+    const entry = narrowSurfaceEntry(val);
+    if (entry) out[key] = entry;
+  }
+  return out;
+}
+
+// ── Narrowing: composite ──────────────────────────────────────────────────────
+
+function narrowComposite(v: unknown): CompositeEntry | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.composite !== "number") return null;
+  const priority_surfaces: string[] = [];
+  if (Array.isArray(v.priority_surfaces)) {
+    for (const s of v.priority_surfaces) {
+      if (typeof s === "string") priority_surfaces.push(s);
+    }
+  }
+  return {
+    composite: v.composite,
+    priority_surfaces,
+    top_fix: typeof v.top_fix === "string" ? v.top_fix : null,
+  };
+}
+
+// ── Narrowing: radar ──────────────────────────────────────────────────────────
+
+function narrowRadarAxis(v: unknown): RadarAxis | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.axis !== "string") return null;
+  if (typeof v.value !== "number") return null;
+  return { axis: v.axis, value: v.value };
+}
+
+function narrowRadar(v: unknown): RadarAxis[] {
+  if (!Array.isArray(v)) return [];
+  const out: RadarAxis[] = [];
+  for (const item of v) {
+    const a = narrowRadarAxis(item);
+    if (a) out.push(a);
+  }
+  return out;
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 export interface AuditViewProps {
@@ -89,6 +168,9 @@ export interface AuditViewProps {
 export function AuditView({ audit }: AuditViewProps) {
   const overall = narrowOverall(audit.overall);
   const checks = narrowChecks(audit.checks);
+  const surfaces = narrowSurfaces(audit.surfaces);
+  const composite = narrowComposite(audit.composite);
+  const radarAxes = narrowRadar(audit.radar);
 
   // `audit.warning` is the homepage-detection warning string (engine sets it
   // when the URL is a section front, not an article).
@@ -148,10 +230,19 @@ export function AuditView({ audit }: AuditViewProps) {
         />
       ) : null}
 
+      {/* Channel distribution cards — T16 */}
+      {Object.keys(surfaces).length > 0 ? (
+        <ChannelCards
+          surfaces={surfaces}
+          composite={composite ?? undefined}
+        />
+      ) : null}
+
+      {/* E-E-A-T signal radar — T16 */}
+      {radarAxes.length >= 3 ? <SignalRadar axes={radarAxes} /> : null}
+
       {/* SEJ signal checks — periodic table */}
       <PeriodicTable checks={checks} />
-
-      {/* ChannelCards — T16 */}
 
       {/* SQEG / quality signals — T17 */}
 
