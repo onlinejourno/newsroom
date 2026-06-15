@@ -8,6 +8,12 @@ import { PeriodicTable } from "./PeriodicTable";
 import type { PeriodicCheck } from "./PeriodicTable";
 import { SignalRadar } from "./SignalRadar";
 import type { RadarAxis } from "./SignalRadar";
+import { SqegPanel } from "./SqegPanel";
+import type { SqegData, SqegYmyl, SqegPageQuality, SqegNeedsMet, SqegPqSignal } from "./SqegPanel";
+import { Recirculation } from "./Recirculation";
+import type { RecirculationData } from "./Recirculation";
+import { Taxonomy } from "./Taxonomy";
+import type { TaxonomyData } from "./Taxonomy";
 
 // ── Local narrow types ────────────────────────────────────────────────────────
 // SeoAudit is Record<string, unknown> so we narrow each slice with guards
@@ -157,6 +163,118 @@ function narrowRadar(v: unknown): RadarAxis[] {
   return out;
 }
 
+// ── Narrowing: sqeg ───────────────────────────────────────────────────────────
+
+function narrowPqSignal(v: unknown): SqegPqSignal | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.name !== "string") return null;
+  if (typeof v.points !== "number") return null;
+  if (typeof v.max !== "number") return null;
+  return {
+    name: v.name,
+    points: v.points,
+    max: v.max,
+    ref: typeof v.ref === "string" ? v.ref : "",
+    note: typeof v.note === "string" ? v.note : "",
+  };
+}
+
+function narrowPqSignals(v: unknown): SqegPqSignal[] {
+  if (!Array.isArray(v)) return [];
+  const out: SqegPqSignal[] = [];
+  for (const item of v) {
+    const s = narrowPqSignal(item);
+    if (s) out.push(s);
+  }
+  return out;
+}
+
+function narrowStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  const out: string[] = [];
+  for (const item of v) {
+    if (typeof item === "string") out.push(item);
+  }
+  return out;
+}
+
+function narrowSqegYmyl(v: unknown): SqegYmyl | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.is_ymyl !== "boolean") return null;
+  if (typeof v.level !== "string") return null;
+  return {
+    is_ymyl: v.is_ymyl,
+    level: v.level,
+    requirements: narrowStringArray(v.requirements),
+  };
+}
+
+function narrowSqegPq(v: unknown): SqegPageQuality | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.score !== "number") return null;
+  if (typeof v.grade !== "string") return null;
+  return {
+    score: v.score,
+    grade: v.grade,
+    signals: narrowPqSignals(v.signals),
+    risk_flags: narrowStringArray(v.risk_flags),
+  };
+}
+
+function narrowSqegNeedsMet(v: unknown): SqegNeedsMet | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.needs_met !== "string") return null;
+  if (typeof v.query_intent !== "string") return null;
+  return {
+    needs_met: v.needs_met,
+    query_intent: v.query_intent,
+    alignment_ratio: typeof v.alignment_ratio === "number" ? v.alignment_ratio : 0,
+  };
+}
+
+function narrowSqeg(v: unknown): SqegData | null {
+  if (!isRecord(v)) return null;
+  const ymyl = narrowSqegYmyl(v.ymyl);
+  const page_quality = narrowSqegPq(v.page_quality);
+  const needs_met = narrowSqegNeedsMet(v.needs_met);
+  if (!ymyl || !page_quality || !needs_met) return null;
+  return { ymyl, page_quality, needs_met };
+}
+
+// ── Narrowing: recirculation ──────────────────────────────────────────────────
+
+function narrowMetrics(v: unknown): Record<string, number | boolean> {
+  if (!isRecord(v)) return {};
+  const out: Record<string, number | boolean> = {};
+  for (const [key, val] of Object.entries(v)) {
+    if (typeof val === "number" || typeof val === "boolean") {
+      out[key] = val;
+    }
+  }
+  return out;
+}
+
+function narrowRecirculation(v: unknown): RecirculationData | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.score !== "number") return null;
+  return {
+    score: v.score,
+    metrics: narrowMetrics(v.metrics),
+    recommendations: narrowStringArray(v.recommendations),
+  };
+}
+
+// ── Narrowing: taxonomy ───────────────────────────────────────────────────────
+
+function narrowTaxonomy(v: unknown): TaxonomyData | null {
+  if (!isRecord(v)) return null;
+  return {
+    section_path: typeof v.section_path === "string" ? v.section_path : "",
+    topic: typeof v.topic === "string" ? v.topic : "",
+    tags: narrowStringArray(v.tags),
+  };
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 export interface AuditViewProps {
@@ -171,6 +289,9 @@ export function AuditView({ audit }: AuditViewProps) {
   const surfaces = narrowSurfaces(audit.surfaces);
   const composite = narrowComposite(audit.composite);
   const radarAxes = narrowRadar(audit.radar);
+  const sqeg = narrowSqeg(audit.sqeg);
+  const recirculation = narrowRecirculation(audit.recirculation);
+  const taxonomy = narrowTaxonomy(audit.taxonomy);
 
   // `audit.warning` is the homepage-detection warning string (engine sets it
   // when the URL is a section front, not an article).
@@ -230,6 +351,9 @@ export function AuditView({ audit }: AuditViewProps) {
         />
       ) : null}
 
+      {/* Taxonomy context strip — T17 (right after scorecard for orientation) */}
+      {taxonomy ? <Taxonomy taxonomy={taxonomy} /> : null}
+
       {/* Channel distribution cards — T16 */}
       {Object.keys(surfaces).length > 0 ? (
         <ChannelCards
@@ -241,12 +365,14 @@ export function AuditView({ audit }: AuditViewProps) {
       {/* E-E-A-T signal radar — T16 */}
       {radarAxes.length >= 3 ? <SignalRadar axes={radarAxes} /> : null}
 
+      {/* SQEG / quality signals — T17 */}
+      {sqeg ? <SqegPanel sqeg={sqeg} /> : null}
+
       {/* SEJ signal checks — periodic table */}
       <PeriodicTable checks={checks} />
 
-      {/* SQEG / quality signals — T17 */}
-
-      {/* Recirculation + potential — T18 */}
+      {/* Recirculation + internal link quality — T17 */}
+      {recirculation ? <Recirculation recirculation={recirculation} /> : null}
 
       {/* CWV / advisory / AI-overview / YouTube — T19 */}
     </div>
