@@ -1043,6 +1043,65 @@ export async function archiveMatches(
   return rows.filter((r: { overlap: number }) => r.overlap > 0);
 }
 
+// ── Potential scoring helpers (Slice-2 Task 2) ────────────────────────────────
+
+// The outlet's ISO region code (e.g. "IN") for market-relevance scoring.
+export async function tenantRegion(tenantId: string): Promise<string> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ region: string | null }>(
+    "select region from tenants where id = $1",
+    [tenantId],
+  );
+  return rows[0]?.region ?? "IN";
+}
+
+// A story row pre-shaped for scorePotential (published stories only).
+export type ScorableStoryRow = {
+  id: string;
+  url: string | null;
+  headline: string | null;
+  published_at: Date | null;
+  section: string | null;
+  /** enrichment->'classify'->>'region' — mirrors how storyClassifications reads classify. */
+  region: string | null;
+  entities: string[];
+};
+
+// Published stories in the last `hours` window, with the fields scorePotential
+// needs. The region comes from enrichment->'classify'->>'region' (the same
+// classify sub-object that storyClassifications reads for beat/topic/user_need).
+// Entities are extracted from enrichment->'analyse'->'entities' (the same path
+// archiveMatches and entityWindows use).
+export async function publishedStoriesForScoring(
+  tenantId: string,
+  hours = 168,
+): Promise<ScorableStoryRow[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<
+    Omit<ScorableStoryRow, "entities"> & { entities: unknown }
+  >(
+    `
+    select id, url, headline, published_at, section,
+           enrichment->'classify'->>'region' as region,
+           coalesce(enrichment->'analyse'->'entities', '[]'::jsonb) as entities
+      from stories
+     where tenant_id = $1
+       and status = 'published'
+       and coalesce(published_at, created_at) >= now() - make_interval(hours => $2)
+     order by coalesce(published_at, created_at) desc
+    `,
+    [tenantId, hours],
+  );
+  return rows.map((r) => ({
+    ...r,
+    entities: Array.isArray(r.entities)
+      ? (r.entities as string[])
+      : typeof r.entities === "string"
+        ? (JSON.parse(r.entities) as string[])
+        : [],
+  }));
+}
+
 // Stories published per day over the last N days (oldest→newest) — the home
 // snapshot sparkline.
 export async function publishedPerDay(
