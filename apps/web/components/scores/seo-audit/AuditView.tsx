@@ -14,6 +14,12 @@ import { Recirculation } from "./Recirculation";
 import type { RecirculationData } from "./Recirculation";
 import { Taxonomy } from "./Taxonomy";
 import type { TaxonomyData } from "./Taxonomy";
+import { CoreWebVitals } from "./CoreWebVitals";
+import type { CwvData, CwvMetrics } from "./CoreWebVitals";
+import { PotentialPanel } from "./PotentialPanel";
+import type { PotentialData } from "./PotentialPanel";
+import { PremiumDistributionAdvisory } from "./PremiumDistributionAdvisory";
+import type { AdvisoryData, AdvisoryOption } from "./PremiumDistributionAdvisory";
 
 // ── Local narrow types ────────────────────────────────────────────────────────
 // SeoAudit is Record<string, unknown> so we narrow each slice with guards
@@ -275,6 +281,97 @@ function narrowTaxonomy(v: unknown): TaxonomyData | null {
   };
 }
 
+// ── Narrowing: CWV ────────────────────────────────────────────────────────────
+
+function narrowCwvMetrics(v: unknown): CwvMetrics | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.performance_score !== "number") return null;
+  if (typeof v.lcp_ms !== "number") return null;
+  if (typeof v.cls_score !== "number") return null;
+  if (typeof v.tbt_ms !== "number") return null;
+  if (typeof v.fcp_ms !== "number") return null;
+  return {
+    performance_score: v.performance_score,
+    lcp_ms: v.lcp_ms,
+    cls_score: v.cls_score,
+    tbt_ms: v.tbt_ms,
+    fcp_ms: v.fcp_ms,
+  };
+}
+
+function narrowCwv(v: unknown): CwvData | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.available !== "boolean") return null;
+  if (!v.available) {
+    return {
+      available: false,
+      reason: typeof v.reason === "string" ? v.reason : undefined,
+    };
+  }
+  // available = true
+  if (typeof v.performance_score !== "number") return null;
+  if (typeof v.grade !== "string") return null;
+  const metrics = narrowCwvMetrics(v.metrics);
+  if (!metrics) return null;
+  return {
+    available: true,
+    performance_score: v.performance_score,
+    grade: v.grade,
+    metrics,
+    recommendations: narrowStringArray(v.recommendations),
+  };
+}
+
+// ── Narrowing: potential ──────────────────────────────────────────────────────
+
+function narrowPotential(v: unknown): PotentialData | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.score !== "number") return null;
+  if (typeof v.label !== "string") return null;
+  // components: defensive — pick numeric fields from whatever's there
+  const components: PotentialData["components"] = {};
+  if (isRecord(v.components)) {
+    for (const [key, val] of Object.entries(v.components)) {
+      if (typeof val === "number") {
+        components[key] = val;
+      }
+    }
+  }
+  return { score: v.score, label: v.label, components };
+}
+
+// ── Narrowing: advisory ───────────────────────────────────────────────────────
+
+function narrowAdvisoryOption(v: unknown): AdvisoryOption | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.rank !== "number") return null;
+  if (typeof v.title !== "string") return null;
+  if (typeof v.rationale !== "string") return null;
+  if (typeof v.effort !== "string") return null;
+  if (typeof v.impact !== "string") return null;
+  return {
+    rank: v.rank,
+    title: v.title,
+    rationale: v.rationale,
+    effort: v.effort,
+    impact: v.impact,
+  };
+}
+
+function narrowAdvisory(v: unknown): AdvisoryData | null {
+  if (!isRecord(v)) return null;
+  if (typeof v.urgency !== "string") return null;
+  if (typeof v.note !== "string") return null;
+  const options: AdvisoryOption[] = [];
+  if (Array.isArray(v.options)) {
+    for (const item of v.options) {
+      const opt = narrowAdvisoryOption(item);
+      if (opt) options.push(opt);
+    }
+  }
+  return { urgency: v.urgency, note: v.note, options };
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 export interface AuditViewProps {
@@ -292,6 +389,9 @@ export function AuditView({ audit }: AuditViewProps) {
   const sqeg = narrowSqeg(audit.sqeg);
   const recirculation = narrowRecirculation(audit.recirculation);
   const taxonomy = narrowTaxonomy(audit.taxonomy);
+  const cwv = narrowCwv(audit.cwv);
+  const potential = narrowPotential(audit.potential);
+  const advisory = narrowAdvisory(audit.advisory);
 
   // `audit.warning` is the homepage-detection warning string (engine sets it
   // when the URL is a section front, not an article).
@@ -351,6 +451,9 @@ export function AuditView({ audit }: AuditViewProps) {
         />
       ) : null}
 
+      {/* Discover Potential — T18 (near scorecard / composite) */}
+      {potential ? <PotentialPanel potential={potential} /> : null}
+
       {/* Taxonomy context strip — T17 (right after scorecard for orientation) */}
       {taxonomy ? <Taxonomy taxonomy={taxonomy} /> : null}
 
@@ -365,6 +468,9 @@ export function AuditView({ audit }: AuditViewProps) {
       {/* E-E-A-T signal radar — T16 */}
       {radarAxes.length >= 3 ? <SignalRadar axes={radarAxes} /> : null}
 
+      {/* Core Web Vitals — T18 (technical area, after radar) */}
+      {cwv ? <CoreWebVitals cwv={cwv} /> : null}
+
       {/* SQEG / quality signals — T17 */}
       {sqeg ? <SqegPanel sqeg={sqeg} /> : null}
 
@@ -374,7 +480,8 @@ export function AuditView({ audit }: AuditViewProps) {
       {/* Recirculation + internal link quality — T17 */}
       {recirculation ? <Recirculation recirculation={recirculation} /> : null}
 
-      {/* CWV / advisory / AI-overview / YouTube — T19 */}
+      {/* Premium Distribution Advisory — T18 (only when paywalled) */}
+      {advisory ? <PremiumDistributionAdvisory advisory={advisory} /> : null}
     </div>
   );
 }
