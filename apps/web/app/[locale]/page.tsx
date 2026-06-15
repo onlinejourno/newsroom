@@ -329,7 +329,7 @@ export default async function Home({
               {
                 k: "User Needs",
                 s: "BBC / smartocto model",
-                d: "Know · Understand · Feel · Do — why a reader comes to a story. Every signal is classified by it, and coverage is audited for balance across the four.",
+                d: "Why a reader comes to a story — four needs: Know (give me the facts, fast) · Understand (explain why it matters) · Feel (move me — the human story) · Do (tell me what I can act on). Every signal is classified by need, and coverage is audited for balance — so the desk sees if it over-produces 'Know' and neglects 'Understand'.",
               },
               {
                 k: "SEJ Periodic Table",
