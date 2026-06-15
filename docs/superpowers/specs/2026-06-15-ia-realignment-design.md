@@ -32,6 +32,7 @@ Top nav becomes the Calendar spine + the original's tabs + the raw inflow. Drop 
 4. **Calendar right-column prominence** — the "Promise & lead-time" right column needs more visual weight; the middle Gantt area reads sparse.
 5. **Context for non-digital journalists** — every surface explains what / why / how (ground-up principle).
 6. **The Hindu test case** — seed/verify content + IA against The Hindu; per-outlet IA/content/connectors configurable in Admin (don't hardcode The Hindu).
+7. **Story Scores must be locale/market-aware + competitor-relative** ([[onlinejourno-locale-relative-scoring]], founder 2026-06-15) — the `potential.py` model (momentum · alignment · authority · freshness) currently scores a **US** trend 90/100 for an India outlet, which is wrong. In the **Story Scores slice**: locale-scope the trend pipeline (market trends per outlet, set in Admin); relabel `content_alignment` to state *alignment to what* (story ↔ your market's trends) and `domain_authority` to state *whose* — how your domain owns the topic **vs local competitors**. Momentum + freshness unchanged. (Touches `potential.py`, the trend fetchers, and the Story Scores render — its own slice, not Slice 1.)
 
 ## How the in-flight audit fits
 
