@@ -29,6 +29,11 @@ from onlinejourno_ingest.collectors.base import (
     latin_share,
     url_hash,
 )
+from onlinejourno_ingest.fetch.cloudflare import (
+    CloudflareBlocked,
+    CloudflareFetcher,
+    Fetcher,
+)
 from onlinejourno_ingest.protocols import FetchError, Signal
 
 COMMON_FEED_PATHS = ["/feed/", "/feed", "/rss", "/rss.xml", "/feeds/all.rss"]
@@ -45,10 +50,12 @@ class RSSCollector:
         timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
         max_items_per_source: int = 200,
         session: requests.Session | None = None,
+        fetcher: Fetcher | None = None,
     ) -> None:
         self.timeout = timeout_seconds
         self.max_items = max_items_per_source
         self.session = session or http_session()
+        self.fetcher = fetcher or CloudflareFetcher(self.session, timeout_seconds=timeout_seconds)
 
     # ------------------------------------------------------------------
     # Public API
@@ -68,14 +75,13 @@ class RSSCollector:
             headers["User-Agent"] = str(params["user_agent"])
 
         try:
-            response = self.session.get(
-                feed_url, timeout=self.timeout, headers=headers or None
-            )
-            response.raise_for_status()
+            raw = self.fetcher.get_bytes(feed_url, headers=headers or None)
+        except CloudflareBlocked as exc:
+            raise FetchError(f"cloudflare blocked at {exc.stage}: {feed_url}") from exc
         except requests.RequestException as exc:
             raise FetchError(f"fetch failed: {exc}") from exc
 
-        parsed = feedparser.parse(response.content)
+        parsed = feedparser.parse(raw)
         # A malformed feed yields no entries. Without this check the run logs
         # "0 new, success" and source rot hides as health (premortem #6 /
         # m-portal-health). Bozo + no entries = treat as a fetch failure so
@@ -98,12 +104,11 @@ class RSSCollector:
     def _discover_feed(self, homepage: str) -> str | None:
         """Find a feed URL from <link> tags or common paths."""
         try:
-            response = self.session.get(homepage, timeout=self.timeout)
-            response.raise_for_status()
-        except requests.RequestException:
+            raw = self.fetcher.get_bytes(homepage)
+        except (CloudflareBlocked, requests.RequestException):
             return None
 
-        soup = BeautifulSoup(response.text, "lxml")
+        soup = BeautifulSoup(raw, "lxml")
         for link in soup.find_all("link", rel="alternate"):
             link_type = (link.get("type") or "").lower()
             href = link.get("href")
