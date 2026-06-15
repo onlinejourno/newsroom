@@ -11,6 +11,7 @@ import {
 import { endSession, getAccount, roomForRole } from "@/lib/auth";
 import { Sparkline } from "@/components/Sparkline";
 import { topicMomentum } from "@/lib/trends";
+import { PRIMARY, WORKFLOW } from "@/lib/nav";
 
 const TENANT_SLUG = "self";
 const SNAPSHOT_HOURS = 12;
@@ -52,61 +53,6 @@ async function orgSnapshot(tenantId: string) {
   return { total: stories.length, grade, tweak, intervene, trending, trend };
 }
 
-// The five rooms of the story lifecycle (ADR 0053), each with who stands in
-// it and what question it answers. The front door routes by role, not tool.
-// The front door mirrors the four-job IA (ADR 0058): the same Plan · Produce ·
-// Check · Newsroom the masthead uses, so the door and the nav never disagree.
-const ROOMS = [
-  {
-    href: "signals",
-    room: "Plan",
-    who: "Reporter · Bureau chief · Editor",
-    title: "Decide what to cover",
-    desc: "The public record flowing in — governments, courts, tenders, wires — analysed, classified and routed to the reporter on the beat. Potential says what to take up first; the Calendar shows what's coming before it breaks; Hidden gems resurfaces your own buried stories.",
-    links: [
-      { href: "signals", label: "Signals" },
-      { href: "potential", label: "Potential" },
-      { href: "trends", label: "Trends" },
-      { href: "calendar", label: "Calendar" },
-      { href: "gems", label: "Hidden gems" },
-    ],
-  },
-  {
-    href: "newslist",
-    room: "Produce",
-    who: "Desk · Reporter · Editor",
-    title: "Move it — signal → published",
-    desc: "The spine: every story in flight on one board. Pitch or commission, assign a reporter with an ETA, file, approve, publish — the state visible to the whole desk, on-time tracked.",
-    links: [
-      { href: "newslist", label: "Newslist" },
-      { href: "shortlist", label: "Shortlist" },
-      { href: "brief", label: "Morning brief" },
-    ],
-  },
-  {
-    href: "scores",
-    room: "Check",
-    who: "Desk · Everyone",
-    title: "Fair, honest, good",
-    desc: "Once published, does the story get a fair chance on every surface — Discover, News, Search, the AI readers? Plus probity — what the page does to the reader — and compliance, both seared into the workflow.",
-    links: [
-      { href: "scores", label: "Scores" },
-      { href: "probity", label: "Probity" },
-      { href: "standards", label: "Compliance" },
-    ],
-  },
-  {
-    href: "journalists",
-    room: "Newsroom",
-    who: "Editor · Vertical heads",
-    title: "People & strategy",
-    desc: "Who covers what, and where the record moves with no reporter on it. And every score, frame and surface explains itself inside the tool — assistive for those new to digital, a workhorse for the cognoscenti.",
-    links: [
-      { href: "journalists", label: "Journalists" },
-      { href: "gaps", label: "Gaps" },
-    ],
-  },
-] as const;
 
 export default async function Home({
   params,
@@ -245,55 +191,77 @@ export default async function Home({
 
         <hr className="ds-rule my-10" />
 
-        <div className="grid grid-cols-1 gap-4 text-left">
-          {ROOMS.map((r) => (
-            <div key={r.room} className="ds-frame p-5">
-              <div
-                className="flex items-baseline justify-between gap-3 flex-wrap mb-1"
-                style={{ fontFamily: "var(--font-ui)" }}
-              >
-                <p className="ds-label">{r.room}</p>
-                <span
-                  className="text-xs"
-                  style={{ color: "var(--color-fg-tertiary)" }}
-                >
-                  {r.who}
-                </span>
-              </div>
-              <Link
-                href={`/${locale}/${r.href}`}
-                className="text-xl font-bold hover:underline"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {r.title}
-              </Link>
+        {/* Calendar — the spine. Lead card, prominent. */}
+        <div className="text-left mb-6">
+          <Link
+            href={`/${locale}/${PRIMARY[0].path}` as Route}
+            className="block ds-frame p-6 hover:no-underline"
+            style={{ textDecoration: "none" }}
+          >
+            <p className="ds-label mb-1">Start here</p>
+            <p
+              className="text-2xl font-extrabold mb-1 hover:underline"
+              style={{ fontFamily: "var(--font-display)", color: "var(--color-fg-primary)" }}
+            >
+              {PRIMARY[0].label}
+            </p>
+            <p
+              className="text-sm"
+              style={{
+                fontFamily: "var(--font-body)",
+                color: "var(--color-fg-secondary)",
+                lineHeight: 1.5,
+              }}
+            >
+              {PRIMARY[0].blurb}
+            </p>
+          </Link>
+        </div>
+
+        {/* Remaining PRIMARY items — intelligence tabs grid */}
+        <div className="grid md:grid-cols-3 gap-4 text-left mb-8">
+          {PRIMARY.slice(1).map((item) => (
+            <Link
+              key={item.path}
+              href={`/${locale}/${item.path}` as Route}
+              className="block ds-frame p-4 hover:no-underline"
+              style={{ textDecoration: "none" }}
+            >
               <p
-                className="text-sm mt-1"
+                className="font-bold mb-1"
+                style={{ fontFamily: "var(--font-display)", color: "var(--color-fg-primary)" }}
+              >
+                {item.label}
+              </p>
+              <p
+                className="text-sm"
                 style={{
                   fontFamily: "var(--font-body)",
                   color: "var(--color-fg-secondary)",
                   lineHeight: 1.5,
                 }}
               >
-                {r.desc}
+                {item.blurb}
               </p>
-              <p
-                className="text-sm mt-2 flex gap-4 flex-wrap"
-                style={{ fontFamily: "var(--font-ui)" }}
-              >
-                {r.links.map((l) => (
-                  <Link
-                    key={l.label}
-                    href={`/${locale}/${l.href}`}
-                    className="underline"
-                    style={{ color: "var(--color-brand)" }}
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </p>
-            </div>
+            </Link>
           ))}
+        </div>
+
+        {/* Workflow — compact link row */}
+        <div className="text-left mb-4" style={{ fontFamily: "var(--font-ui)" }}>
+          <p className="ds-label mb-2">Workflow</p>
+          <p className="text-sm flex gap-4 flex-wrap">
+            {WORKFLOW.map((item) => (
+              <Link
+                key={item.path}
+                href={`/${locale}/${item.path}` as Route}
+                className="underline"
+                style={{ color: "var(--color-brand)" }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </p>
         </div>
 
         <hr className="ds-rule my-10" />
