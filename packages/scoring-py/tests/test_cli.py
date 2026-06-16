@@ -16,3 +16,17 @@ def test_audit_subcommand_parses_all_flags():
 def test_surfaces_has_default():
     ns = build_parser().parse_args(["audit", "https://x.com/a"])
     assert ns.surfaces == "discover,google_news,google_search"
+
+
+def test_topic_domains_subcommand_parses():
+    p = build_parser()
+    ns = p.parse_args(["topic-domains", "Iran", "--days", "14", "--json"])
+    assert ns.topic == "Iran"
+    assert ns.days == 14
+    assert ns.json is True
+
+
+def test_topic_domains_defaults():
+    ns = build_parser().parse_args(["topic-domains", "climate"])
+    assert ns.days == 7
+    assert ns.json is False

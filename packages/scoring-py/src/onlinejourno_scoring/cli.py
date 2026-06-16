@@ -15,6 +15,10 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--surfaces", default="discover,google_news,google_search",
                    help="comma-separated optimization_surfaces keys to score")
     a.add_argument("--json", action="store_true")
+    td = sub.add_parser("topic-domains", help="which domains own a topic (GDELT)")
+    td.add_argument("topic")
+    td.add_argument("--days", type=int, default=7)
+    td.add_argument("--json", action="store_true")
     return p
 
 
@@ -26,5 +30,10 @@ def main(argv: list[str] | None = None) -> int:
         surfaces = [s.strip() for s in args.surfaces.split(",") if s.strip()]
         result = run_audit(args.url, trend=args.trend, need=args.need, surfaces=surfaces)
         print(_json.dumps(result) if args.json else result)
+        return 0
+    if args.cmd == "topic-domains":
+        from onlinejourno_scoring.gdelt import top_domains
+        res = top_domains(args.topic, days=args.days)
+        print(_json.dumps(res) if args.json else res)
         return 0
     return 1
