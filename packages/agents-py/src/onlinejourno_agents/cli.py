@@ -268,6 +268,24 @@ def cmd_calendar_fuse(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_affinity_log(args: argparse.Namespace) -> int:
+    """Channel-affinity log writer — populate channel_affinity_log (migration 0023).
+
+    For each recent story with a distribution_fit_scores row scoring >= 65 on a
+    surface, classifies entities via the spaCy NLP connector (coarsened to Topic
+    if unavailable) and appends one row per (entity_type, channel) to the
+    append-only channel_affinity_log table.  This fills the /trends
+    'Channel Performance & Entity Affinity' section.
+    """
+    from onlinejourno_agents.affinity_log import run_affinity_log
+
+    counts = run_affinity_log(tenant_slug=args.tenant)
+    print(
+        f"affinity-log: {counts['stories']} stories · {counts['rows_logged']} rows logged"
+    )
+    return 0
+
+
 def cmd_need_mix(args: argparse.Namespace) -> int:
     """Need-mix view (ADR 0049) — reader-need distribution overall + per beat."""
     from onlinejourno_agents.need_mix import build_mix, render_mix
@@ -830,6 +848,13 @@ def main(argv: list[str] | None = None) -> int:
     p_nlp.add_argument("--provider", default="spacy")
     p_nlp.add_argument("--model", default=None)
     p_nlp.set_defaults(func=cmd_nlp_extract)
+
+    p_aff = sub.add_parser(
+        "affinity-log",
+        help="populate channel_affinity_log — feeds /trends Channel Performance & Entity Affinity",
+    )
+    p_aff.add_argument("--tenant", required=True)
+    p_aff.set_defaults(func=cmd_affinity_log)
 
     args = parser.parse_args(argv)
     return args.func(args)

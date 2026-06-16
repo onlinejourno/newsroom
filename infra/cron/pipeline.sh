@@ -1,7 +1,7 @@
 #!/bin/zsh
-# OnlineJourno pipeline — collect → enrich → frame → claim-extract → calendar-fuse → trends → alert.
+# OnlineJourno pipeline — collect → enrich → frame → claim-extract → calendar-fuse → affinity-log → trends → alert.
 # Designed for cron (every 30 min). The daily LLM cap (tenants.daily_cap_usd)
-# is the spend guard: enrich/frame stop at the cap, collect/trends are free.
+# is the spend guard: enrich/frame stop at the cap, collect/trends/affinity-log are free.
 #
 # Install:  crontab -e  →
 #   */30 * * * * /Users/subhashrai/projects/platform/infra/cron/pipeline.sh
@@ -24,6 +24,7 @@ cd "$REPO" || exit 1
   uv run --package onlinejourno-agents onlinejourno-agents frame --tenant "$TENANT" --since-hours 24 --limit 8 2>&1 | tail -1
   uv run --package onlinejourno-agents onlinejourno-agents claim-extract --tenant "$TENANT" --since-hours 48 --limit 12 2>&1 | tail -1
   uv run --package onlinejourno-agents onlinejourno-agents calendar-fuse --tenant "$TENANT" 2>&1 | tail -1
+  uv run --package onlinejourno-agents onlinejourno-agents affinity-log --tenant "$TENANT" 2>&1 | tail -1
   uv run --package onlinejourno-agents onlinejourno-agents trends --tenant "$TENANT" --window-hours 24 2>&1 | tail -1
   # Demo own-corpus freshness: promote the demo masthead's new signals into
   # stories and audit them (OJ_DEMO_HOST empty = skip).
