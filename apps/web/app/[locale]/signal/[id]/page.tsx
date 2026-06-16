@@ -10,7 +10,7 @@ import {
   signalById,
   tenantIdForSlug,
 } from "@/lib/db";
-import { STATUS_META, createLead, leadForSignal } from "@/lib/workflow";
+import { STATUS_META, assignableReporters, createLead, leadForSignal } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -124,10 +124,11 @@ export default async function SignalDetailPage({
     redirect(`/${locale}/newslist` as Route);
   }
 
-  const [routed, archive, lead] = await Promise.all([
+  const [routed, archive, lead, reporters] = await Promise.all([
     journalistsForSignal(tenantId!, id),
     archiveMatches(tenantId!, e.analyse?.entities ?? []),
     leadForSignal(tenantId!, id),
+    canCommission ? assignableReporters(tenantId!) : Promise.resolve([] as { id: string; name: string }[]),
   ]);
   const analyse = e.analyse ?? {};
   const classify = e.classify ?? {};
@@ -211,7 +212,20 @@ export default async function SignalDetailPage({
             </button>
           </form>
           {canCommission ? (
-            <form action={commission}>
+            <form action={commission} className="flex items-center gap-2">
+              <select
+                name="assigneeId"
+                defaultValue=""
+                className="text-sm border px-2 py-2"
+                style={{ borderColor: "var(--color-frame)", background: "var(--color-bg)" }}
+              >
+                <option value="">— Commission (unassigned) —</option>
+                {reporters.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
               <button
                 type="submit"
                 className="px-4 py-2 text-sm font-semibold border"
@@ -220,9 +234,9 @@ export default async function SignalDetailPage({
                   color: "var(--color-fg-primary)",
                   background: "var(--color-bg-card)",
                 }}
-                title="Send it to the Newslist for the desk to assign someone"
+                title="Send it to the Newslist"
               >
-                Commission to someone → Newslist
+                Commission → Newslist
               </button>
             </form>
           ) : null}

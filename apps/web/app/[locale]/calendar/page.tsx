@@ -6,7 +6,7 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import { getAccount } from "@/lib/auth";
-import { commissionFromCalendarEvent } from "@/lib/workflow";
+import { assignableReporters, commissionFromCalendarEvent } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +87,10 @@ export default async function CalendarPage({
   }
 
   const todayISO = ymd(istToday())!;
-  const rows = await fetchCalendarEvents(tenantId);
+  const [rows, reporters] = await Promise.all([
+    fetchCalendarEvents(tenantId),
+    canCommission ? assignableReporters(tenantId) : Promise.resolve([] as { id: string; name: string }[]),
+  ]);
 
   const events: CalEvent[] = rows.map((r) => ({
     id: r.id,
@@ -126,6 +129,7 @@ export default async function CalendarPage({
       locale={locale}
       canCommission={canCommission}
       commission={commissionEvent}
+      reporters={reporters}
     />
   );
 }

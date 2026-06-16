@@ -527,7 +527,7 @@ function PipelineView({ counts }: { counts: { total: number; forward: number; pa
 
 // ─────────────────────────── drawer ───────────────────────────
 
-function EventDrawer({ event, beats, todayISO, locale, canCommission, commission, onClose }: { event: CalEvent; beats: Beat[]; todayISO: string; locale: string; canCommission: boolean; commission: (formData: FormData) => void; onClose: () => void }) {
+function EventDrawer({ event, beats, todayISO, locale, canCommission, commission, reporters, onClose }: { event: CalEvent; beats: Beat[]; todayISO: string; locale: string; canCommission: boolean; commission: (formData: FormData) => void; reporters: { id: string; name: string }[]; onClose: () => void }) {
   const dated = event.deadline !== null;
   const d = dated ? daysBetween(todayISO, event.deadline!) : 0;
   const isPast = dated && d < 0;
@@ -637,6 +637,12 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
           ) : canCommission && dated ? (
             <form action={commission}>
               <input type="hidden" name="eventId" value={event.id} />
+              <select name="assigneeId" defaultValue="" style={{ display: "block", width: "100%", fontFamily: UI, fontSize: 12, padding: "8px 10px", marginBottom: 8, border: `1px solid ${C.rule}`, background: "#fff", color: C.ink }}>
+                <option value="">— Commission (unassigned, lands in Suggested) —</option>
+                {reporters.map((r) => (
+                  <option key={r.id} value={r.id}>Commission to {r.name}</option>
+                ))}
+              </select>
               <button type="submit" style={{ display: "block", width: "100%", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.ink, color: "#fff", border: "none", padding: "11px 0", cursor: "pointer", letterSpacing: ".04em" }}>
                 {isPast ? "Commission an accountability story →" : "Commission this to the Newslist →"}
               </button>
@@ -668,7 +674,7 @@ function EmptyRow({ text = "No events match these filters." }: { text?: string }
 
 // ─────────────────────────── shell + app ───────────────────────────
 
-export default function CalendarApp({ events, beats, todayISO, locale, canCommission, commission }: { events: CalEvent[]; beats: Beat[]; todayISO: string; locale: string; canCommission: boolean; commission: (formData: FormData) => void }) {
+export default function CalendarApp({ events, beats, todayISO, locale, canCommission, commission, reporters }: { events: CalEvent[]; beats: Beat[]; todayISO: string; locale: string; canCommission: boolean; commission: (formData: FormData) => void; reporters: { id: string; name: string }[] }) {
   const [tab, setTab] = useState<TabId>("calendar");
   const [beat, setBeat] = useState("all");
   const [horizon, setHorizon] = useState(90);
@@ -787,7 +793,7 @@ export default function CalendarApp({ events, beats, todayISO, locale, canCommis
         {tab === "pipeline" && <PipelineView counts={{ total: events.length, forward: upcomingAll.length, pastdue: pastDueAll.length, undated: undated.length }} />}
       </div>
 
-      {selected && <EventDrawer event={selected} beats={beats} todayISO={todayISO} locale={locale} canCommission={canCommission} commission={commission} onClose={() => setSelected(null)} />}
+      {selected && <EventDrawer event={selected} beats={beats} todayISO={todayISO} locale={locale} canCommission={canCommission} commission={commission} reporters={reporters} onClose={() => setSelected(null)} />}
     </div>
   );
 }
