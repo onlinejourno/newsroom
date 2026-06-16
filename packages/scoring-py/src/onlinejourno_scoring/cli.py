@@ -19,6 +19,9 @@ def build_parser() -> argparse.ArgumentParser:
     td.add_argument("topic")
     td.add_argument("--days", type=int, default=7)
     td.add_argument("--json", action="store_true")
+    rk = sub.add_parser("ranking-keywords", help="the outlet's ranking keywords (Keywords Everywhere)")
+    rk.add_argument("domain")
+    rk.add_argument("--json", action="store_true")
     return p
 
 
@@ -34,6 +37,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "topic-domains":
         from onlinejourno_scoring.gdelt import top_domains
         res = top_domains(args.topic, days=args.days)
+        print(_json.dumps(res) if args.json else res)
+        return 0
+    if args.cmd == "ranking-keywords":
+        from onlinejourno_scoring.keywords_everywhere import ranking_keywords
+        res = ranking_keywords(args.domain)
         print(_json.dumps(res) if args.json else res)
         return 0
     return 1

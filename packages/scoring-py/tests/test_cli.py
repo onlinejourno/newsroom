@@ -30,3 +30,16 @@ def test_topic_domains_defaults():
     ns = build_parser().parse_args(["topic-domains", "climate"])
     assert ns.days == 7
     assert ns.json is False
+
+
+def test_ranking_keywords_subcommand_parses():
+    p = build_parser()
+    ns = p.parse_args(["ranking-keywords", "thehindu.com", "--json"])
+    assert ns.domain == "thehindu.com"
+    assert ns.json is True
+
+
+def test_ranking_keywords_defaults():
+    ns = build_parser().parse_args(["ranking-keywords", "thehindu.com"])
+    assert ns.domain == "thehindu.com"
+    assert ns.json is False

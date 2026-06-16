@@ -1269,6 +1269,56 @@ export async function upsertTopicDomains(
   );
 }
 
+// ── Outlet Keywords cache (Trends-enrichment Task 1) ─────────────────────────
+// Backed by the outlet_keywords table (migration 0022). TTL checked in-process.
+// keywords jsonb stores OutletKeyword[]; coerced safely (never `any`).
+
+export type OutletKeyword = {
+  keyword: string;
+  vol?: number;
+  cpc?: number;
+  competition?: number;
+  position?: number;
+};
+
+/** Cached ranking keywords for an outlet domain; null when missing or stale. */
+export async function cachedOutletKeywords(
+  tenantId: string,
+  domain: string,
+  ttlHours = 72,
+): Promise<OutletKeyword[] | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ keywords: unknown; computed_at: Date }>(
+    "select keywords, computed_at from outlet_keywords where tenant_id = $1 and domain = $2",
+    [tenantId, domain],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  const ageH = (Date.now() - new Date(row.computed_at).getTime()) / 3_600_000;
+  if (ageH > ttlHours) return null;
+  const keywords = Array.isArray(row.keywords)
+    ? (row.keywords as OutletKeyword[])
+    : typeof row.keywords === "string"
+      ? (JSON.parse(row.keywords) as OutletKeyword[])
+      : [];
+  return keywords;
+}
+
+export async function upsertOutletKeywords(
+  tenantId: string,
+  domain: string,
+  keywords: OutletKeyword[],
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `insert into outlet_keywords (tenant_id, domain, keywords, computed_at)
+     values ($1, $2, $3, now())
+     on conflict (tenant_id, domain)
+       do update set keywords = excluded.keywords, computed_at = now()`,
+    [tenantId, domain, JSON.stringify(keywords)],
+  );
+}
+
 // Stories published per day over the last N days (oldest→newest) — the home
 // snapshot sparkline.
 export async function publishedPerDay(
