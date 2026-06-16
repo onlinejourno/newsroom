@@ -326,6 +326,16 @@ export async function deleteSurface(tenantId: string, id: string): Promise<void>
   );
 }
 
+/** Admin-configured surfaces — keys of enabled optimization_surfaces rows (ADR 0043). */
+export async function enabledSurfaceKeys(tenantId: string): Promise<string[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ key: string }>(
+    "select key from optimization_surfaces where tenant_id = $1 and enabled = true order by sort",
+    [tenantId],
+  );
+  return rows.map((r) => r.key);
+}
+
 // ── Journalist directory ───────────────────────────────────────────────────
 
 export type JournalistRow = {
