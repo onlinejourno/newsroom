@@ -1319,6 +1319,95 @@ export async function upsertOutletKeywords(
   );
 }
 
+// ── Channel Affinity (migration 0023) ───────────────────────────────────────
+// Aggregates channel_affinity_log in TS, mirroring the Python affinity_stats()
+// in packages/scoring-py/src/onlinejourno_scoring/affinity.py.
+// Window filtering happens in SQL; all aggregation is pure TS (no any).
+
+export type ChannelAffinityEntityRow = {
+  entity_type: string;
+  appearances: number;
+  top_channels: string[];
+  top_sections: string[];
+};
+
+export type ChannelAffinity = {
+  by_entity_type: ChannelAffinityEntityRow[];
+  channel_totals: Record<string, number>;
+  total: number;
+};
+
+export async function channelAffinity(
+  tenantId: string,
+  days = 90,
+): Promise<ChannelAffinity> {
+  const empty: ChannelAffinity = { by_entity_type: [], channel_totals: {}, total: 0 };
+  const pool = getPool();
+  const { rows } = await pool.query<{
+    entity_type: string;
+    channel: string;
+    section: string | null;
+  }>(
+    `
+    select entity_type, channel, section
+      from channel_affinity_log
+     where tenant_id = $1
+       and logged_at >= now() - make_interval(days => $2)
+    `,
+    [tenantId, days],
+  );
+
+  if (rows.length === 0) return empty;
+
+  // Accumulators keyed by entity_type (mirrors Python Counter / defaultdict).
+  const appearances = new Map<string, number>();
+  const channelCounts = new Map<string, Map<string, number>>();
+  const sectionCounts = new Map<string, Map<string, number>>();
+  const channelTotals = new Map<string, number>();
+
+  for (const row of rows) {
+    const et = row.entity_type || "Unknown";
+    const ch = row.channel || "unknown";
+    const sec = row.section ?? "";
+
+    appearances.set(et, (appearances.get(et) ?? 0) + 1);
+
+    // per entity_type channel counter
+    let cMap = channelCounts.get(et);
+    if (!cMap) { cMap = new Map(); channelCounts.set(et, cMap); }
+    cMap.set(ch, (cMap.get(ch) ?? 0) + 1);
+
+    // per entity_type section counter (exclude empty)
+    if (sec) {
+      let sMap = sectionCounts.get(et);
+      if (!sMap) { sMap = new Map(); sectionCounts.set(et, sMap); }
+      sMap.set(sec, (sMap.get(sec) ?? 0) + 1);
+    }
+
+    channelTotals.set(ch, (channelTotals.get(ch) ?? 0) + 1);
+  }
+
+  // Sort helper: descending by count, return keys.
+  function topKeys(m: Map<string, number>): string[] {
+    return Array.from(m.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([k]) => k);
+  }
+
+  const by_entity_type: ChannelAffinityEntityRow[] = Array.from(appearances.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([entity_type, count]) => ({
+      entity_type,
+      appearances: count,
+      top_channels: topKeys(channelCounts.get(entity_type) ?? new Map()),
+      top_sections: topKeys(sectionCounts.get(entity_type) ?? new Map()),
+    }));
+
+  const channel_totals: Record<string, number> = Object.fromEntries(channelTotals);
+
+  return { by_entity_type, channel_totals, total: rows.length };
+}
+
 // Stories published per day over the last N days (oldest→newest) — the home
 // snapshot sparkline.
 export async function publishedPerDay(
