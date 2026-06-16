@@ -30,14 +30,15 @@ from onlinejourno_ingest.db import (
     finish_run,
     mark_source_failed,
     mark_source_seen,
-    pib_signals_needing_hydration,
     set_signal_body_published,
+    signals_needing_hydration,
     start_run,
     tenant_id_for_slug,
     upsert_signal,
 )
 from onlinejourno_ingest.fetch.cloudflare import CloudflareFetcher
 from onlinejourno_ingest.hydrate.pib import PibHydrator
+from onlinejourno_ingest.hydrate.prs import PrsHydrator
 from onlinejourno_ingest.protocols import FetchError
 
 # Map of source kind to a collector factory. Instances are created once per
@@ -199,15 +200,17 @@ def cmd_collect(args: argparse.Namespace) -> int:
     return 0 if failed_sources == 0 else 2
 
 
-def cmd_hydrate_pib(args: argparse.Namespace) -> int:
-    """Fetch PIB release pages to fill body_text + published_at on signals."""
-    hydrator = PibHydrator(CloudflareFetcher(http_session()))
+def _run_hydration(args: argparse.Namespace, *, hydrator, domain: str, label: str) -> int:
+    """Shared loop: fetch each matching signal's page, fill body_text + published_at.
+
+    Per-signal isolated (one bad page never aborts the batch); throttled.
+    """
     with connect() as conn:
         tenant_id = tenant_id_for_slug(conn, args.tenant)
-        rows = pib_signals_needing_hydration(conn, tenant_id, limit=args.limit)
+        rows = signals_needing_hydration(conn, tenant_id, domain, limit=args.limit)
 
     if not rows:
-        print("No PIB signals need hydration.")
+        print(f"No {label} signals need hydration.")
         return 0
 
     hydrated = 0
@@ -240,6 +243,26 @@ def cmd_hydrate_pib(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_hydrate_pib(args: argparse.Namespace) -> int:
+    """Fetch PIB release pages to fill body_text + published_at on signals."""
+    return _run_hydration(
+        args,
+        hydrator=PibHydrator(CloudflareFetcher(http_session())),
+        domain="pib.gov.in",
+        label="PIB",
+    )
+
+
+def cmd_hydrate_prs(args: argparse.Namespace) -> int:
+    """Fetch PRS bill pages to fill body_text + published_at on signals."""
+    return _run_hydration(
+        args,
+        hydrator=PrsHydrator(CloudflareFetcher(http_session())),
+        domain="prsindia.org",
+        label="PRS",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="onlinejourno-ingest")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -250,16 +273,19 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--source-name", help="Run a single source by its exact name")
     collect.set_defaults(func=cmd_collect)
 
-    hydrate = subparsers.add_parser(
-        "hydrate-pib",
-        help="Fetch PIB release pages to fill body_text + published_at",
-    )
-    hydrate.add_argument("--tenant", required=True, help="Tenant slug, e.g. 'self'")
-    hydrate.add_argument("--limit", type=int, default=200, help="Max signals per run")
-    hydrate.add_argument(
-        "--min-interval", type=float, default=2.0, help="Seconds between page fetches"
-    )
-    hydrate.set_defaults(func=cmd_hydrate_pib)
+    for _cmd, _fn, _what in (
+        ("hydrate-pib", cmd_hydrate_pib, "PIB release"),
+        ("hydrate-prs", cmd_hydrate_prs, "PRS bill"),
+    ):
+        h = subparsers.add_parser(
+            _cmd, help=f"Fetch {_what} pages to fill body_text + published_at"
+        )
+        h.add_argument("--tenant", required=True, help="Tenant slug, e.g. 'self'")
+        h.add_argument("--limit", type=int, default=200, help="Max signals per run")
+        h.add_argument(
+            "--min-interval", type=float, default=2.0, help="Seconds between page fetches"
+        )
+        h.set_defaults(func=_fn)
 
     return parser
 

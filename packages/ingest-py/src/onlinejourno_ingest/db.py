@@ -236,10 +236,10 @@ def mark_source_failed(
         )
 
 
-def pib_signals_needing_hydration(
-    conn: psycopg.Connection, tenant_id: UUID, *, limit: int = 200
+def signals_needing_hydration(
+    conn: psycopg.Connection, tenant_id: UUID, domain: str, *, limit: int = 200
 ) -> list[dict[str, Any]]:
-    """PIB signals (by url domain) still missing body_text or published_at."""
+    """Signals from a url domain still missing body_text or published_at."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -251,7 +251,7 @@ def pib_signals_needing_hydration(
              order by fetched_at desc
              limit %s
             """,
-            (tenant_id, "%pib.gov.in%", limit),
+            (tenant_id, f"%{domain}%", limit),
         )
         return list(cur.fetchall())
 
