@@ -497,11 +497,25 @@ def cmd_analyze_url(args: argparse.Namespace) -> int:
     try:
         res = analyze_url(args.url, user_need=args.need)
     except _rq.RequestException as exc:
+        # A Cloudflare/JS-challenge block (403/503) is an expected "can't audit
+        # this site yet" outcome, not a crash — surface it honestly and exit 0
+        # so the caller shows "unavailable" rather than a hard command failure
+        # or fake scores. The browser-fetch tier that would unblock it isn't
+        # enabled for on-demand audits (see
+        # docs/notes/2026-06-15-analyze-url-cloudflare-403.md).
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        blocked = status in (403, 503)
+        msg = (
+            "Cloudflare-blocked — this site can't be audited on demand yet "
+            "(needs a browser-fetch tier)."
+            if blocked
+            else f"fetch failed: {exc}"
+        )
         if args.json:
-            print(json.dumps({"error": f"fetch failed: {exc}"}))
+            print(json.dumps({"error": msg, "available": False, "url": args.url}))
         else:
-            print(f"fetch failed: {exc}", file=sys.stderr)
-        return 1
+            print(msg, file=sys.stderr)
+        return 0 if blocked else 1
     story = res["story"]
     if args.json:
         out = {
