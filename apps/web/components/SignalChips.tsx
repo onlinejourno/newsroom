@@ -149,7 +149,7 @@ export function TagLegend() {
           </ul>
         </div>
         <div>
-          <p className="ds-label mb-1">Narrative frame (how it's told · PEJ)</p>
+          <p className="ds-label mb-1">Narrative frame (how it&rsquo;s told · PEJ)</p>
           <ul className="space-y-1 text-xs" style={{ color: "var(--color-fg-secondary)" }}>
             <li><span className="font-semibold" style={{ color: "#dc2626" }}>Combative</span> — conflict, standings, wrongdoing, scrutiny of an institution.</li>
             <li><span className="font-semibold" style={{ color: "#0d9488" }}>Explanatory</span> — process, trends, historical context.</li>
