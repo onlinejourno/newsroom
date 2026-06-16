@@ -1,13 +1,19 @@
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+
 import {
+  cachedTopicDomains,
   entityWindows,
   publishedStoriesForScoring,
   tenantIdForSlug,
   tenantRegion,
+  upsertTopicDomains,
 } from "@/lib/db";
 import {
   WEIGHTS,
   scorePotential,
 } from "@/lib/potential";
+import { fetchTopicDomains } from "@/lib/topicDomains";
 import { topicMomentum } from "@/lib/trends";
 
 import { MinScoreSlider } from "@/components/MinScoreSlider";
@@ -17,6 +23,8 @@ export const dynamic = "force-dynamic";
 const TENANT_SLUG = "self";
 const WINDOW_HOURS = 48;
 const SHOW = 30;
+/** Max distinct trends to warm per on-demand refresh (avoid GDELT storms). */
+const WARM_CAP = 8;
 
 const LABEL_COLOR: Record<string, string> = {
   HIGH: "#dc2626",
@@ -60,11 +68,31 @@ export default async function PotentialPage({
   ]);
   const topics = topicMomentum(recent, prior).slice(0, 40);
 
+  // Derive outletDomain from the dominant host in published stories.
+  const hostFreq = new Map<string, number>();
+  for (const story of stories) {
+    if (!story.url) continue;
+    try {
+      const h = new URL(story.url).hostname.replace(/^www\./, "");
+      if (h) hostFreq.set(h, (hostFreq.get(h) ?? 0) + 1);
+    } catch {
+      // malformed URL — skip
+    }
+  }
+  let outletDomain: string | undefined;
+  let maxFreq = 0;
+  for (const [h, n] of hostFreq) {
+    if (n > maxFreq) { maxFreq = n; outletDomain = h; }
+  }
+
   // Coverage per topic from published stories: topic -> host -> story count.
   const coverage = new Map<string, Map<string, number>>();
   for (const story of stories) {
     const host = story.url
-      ? new URL(story.url).hostname.replace(/^www\./, "")
+      ? (() => {
+          try { return new URL(story.url).hostname.replace(/^www\./, ""); }
+          catch { return null; }
+        })()
       : null;
     if (!host) continue;
     const ents = new Set(story.entities);
@@ -76,26 +104,62 @@ export default async function PotentialPage({
     }
   }
 
+  // Collect distinct matched trends across all stories (for cache reads + warm UI).
+  const storyTrends = new Map<string, string>(); // storyId → matchedTrend
+  for (const story of stories) {
+    const ents = new Set(story.entities);
+    const headline = story.headline ?? "";
+    for (const t of topics) {
+      if (ents.has(t.topic) || (headline && headline.toLowerCase().includes(t.topic.toLowerCase()))) {
+        storyTrends.set(story.id, t.topic);
+        break;
+      }
+    }
+  }
+  const distinctTrends = [...new Set(storyTrends.values())];
+
+  // On load: read cache once per distinct trend (NO fetchTopicDomains on load).
+  const trendDomainsCache = new Map<string, { domain: string; count: number }[]>();
+  await Promise.all(
+    distinctTrends.map(async (trend) => {
+      const cached = await cachedTopicDomains(tenantId, trend);
+      if (cached && cached.domains.length > 0) {
+        trendDomainsCache.set(trend, cached.domains);
+      }
+    }),
+  );
+
   const now = new Date();
   const allRanked = stories
-    .map((story) => ({
-      story,
-      score: scorePotential(
-        {
-          host: story.url
-            ? new URL(story.url).hostname.replace(/^www\./, "")
-            : "",
-          published_at: story.published_at,
-          headline: story.headline ?? "",
-          entities: story.entities,
-          region: story.region,
-        },
-        topics,
-        coverage,
-        now,
-        outletRegion,
-      ),
-    }))
+    .map((story) => {
+      const matchedTrend = storyTrends.get(story.id);
+      const topicDomains = matchedTrend
+        ? trendDomainsCache.get(matchedTrend)
+        : undefined;
+      return {
+        story,
+        score: scorePotential(
+          {
+            host: story.url
+              ? (() => {
+                  try { return new URL(story.url).hostname.replace(/^www\./, ""); }
+                  catch { return null; }
+                })()
+              : "",
+            published_at: story.published_at,
+            headline: story.headline ?? "",
+            entities: story.entities,
+            region: story.region,
+          },
+          topics,
+          coverage,
+          now,
+          outletRegion,
+          topicDomains,
+          outletDomain,
+        ),
+      };
+    })
     .sort((a, b) => b.score.potential - a.score.potential);
 
   const sectionOptions = [...new Set(
@@ -111,6 +175,45 @@ export default async function PotentialPage({
     ranked = ranked.filter((r) => r.story.section && sections.includes(r.story.section));
   if (minScore > 0) ranked = ranked.filter((r) => r.score.potential >= minScore);
   if (!showAll) ranked = ranked.slice(0, SHOW);
+
+  // On-demand warm action: fetch GDELT for top WARM_CAP distinct trends shown.
+  async function refreshCompetitorData(_formData: FormData) {
+    "use server";
+    const tid = await tenantIdForSlug(TENANT_SLUG);
+    if (!tid) return;
+
+    const [recentW, priorW] = await Promise.all([
+      entityWindows(tid, WINDOW_HOURS, 0),
+      entityWindows(tid, WINDOW_HOURS * 2, WINDOW_HOURS),
+    ]);
+    const topicsW = topicMomentum(recentW, priorW).slice(0, 40);
+    const storiesW = await publishedStoriesForScoring(tid, WINDOW_HOURS);
+
+    // Collect distinct matched trends (order by score desc proxy: topic momentum).
+    const trendSet = new Set<string>();
+    for (const story of storiesW) {
+      const ents = new Set(story.entities);
+      for (const t of topicsW) {
+        if (ents.has(t.topic) || (story.headline ?? "").toLowerCase().includes(t.topic.toLowerCase())) {
+          trendSet.add(t.topic);
+          break;
+        }
+      }
+      if (trendSet.size >= WARM_CAP) break;
+    }
+
+    await Promise.all(
+      [...trendSet].map(async (trend) => {
+        const result = await fetchTopicDomains(trend, 7);
+        if (result.available && result.source && result.domains) {
+          await upsertTopicDomains(tid, trend, result.source, result.domains);
+        }
+      }),
+    );
+
+    revalidatePath("/[locale]/potential", "page");
+    redirect("/potential" as `/${string}`);
+  }
 
   return (
     <main className="min-h-screen max-w-4xl mx-auto p-6 md:p-10">
@@ -174,11 +277,12 @@ export default async function PotentialPage({
               <td>{WEIGHTS.authority * 100}%</td>
               <td>
                 Your newsroom&rsquo;s share of recent coverage on this topic
-                among the stories in the inflow. High ownership means you&rsquo;re
-                already seen as a voice on this subject.{" "}
+                {" "}
+                <strong>vs competitor domains</strong> (GDELT, cached) — falls
+                back to your own coverage share until competitor data is
+                refreshed.{" "}
                 <em>
-                  (Comparison against specific local competitor domains arrives
-                  with Topic &rarr; Domains.)
+                  Competitor data refreshes on demand; cached 12h.
                 </em>
               </td>
             </tr>
@@ -273,6 +377,30 @@ export default async function PotentialPage({
         </span>
       </form>
 
+      {/* On-demand competitor data warm */}
+      <div
+        className="ds-frame p-3 mb-6 text-xs flex items-center gap-4"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+      >
+        <form action={refreshCompetitorData}>
+          <button
+            type="submit"
+            className="px-3 py-1.5 text-xs font-semibold border"
+            style={{
+              borderColor: "var(--color-rule)",
+              color: "var(--color-fg-secondary)",
+              background: "transparent",
+            }}
+          >
+            Refresh competitor data
+          </button>
+        </form>
+        <span>
+          Competitor data refreshes on demand; cached 12h. Warms up to{" "}
+          {WARM_CAP} trends via GDELT.
+        </span>
+      </div>
+
       <ol className="space-y-3 list-none">
         {ranked.map(({ story, score }) => (
           <li
@@ -329,7 +457,14 @@ export default async function PotentialPage({
               }}
             >
               momentum {score.momentum} · trend fit {score.alignment} ·
-              topic ownership {score.authority} · freshness {score.freshness}
+              topic ownership {score.authority}
+              {" "}
+              <span style={{ color: "var(--color-fg-tertiary)" }}>
+                {score.authoritySource === "competitors"
+                  ? "(vs competitors)"
+                  : "(your coverage)"}
+              </span>
+              {" "}· freshness {score.freshness}
             </p>
             <p
               className="text-xs mt-1"
