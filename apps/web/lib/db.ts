@@ -1147,6 +1147,79 @@ export async function upsertSeoAudit(
   );
 }
 
+// ── Local Pulse (IA realignment) ────────────────────────────────────────────
+
+// Regional trending from the platform's own geo-tagged signals (NOT Google
+// Trends). Groups signals by region, counts entity occurrences within each
+// region, and returns the top topics sorted by signal volume descending.
+
+export type RegionalPulse = {
+  region: string;
+  signalCount: number;
+  topics: { topic: string; count: number }[];
+}[];
+
+export async function regionalPulse(
+  tenantId: string,
+  hours = 48,
+  topPerRegion = 8,
+): Promise<RegionalPulse> {
+  const pool = getPool();
+  const { rows } = await pool.query<{
+    region: string;
+    entities: unknown;
+  }>(
+    `
+    select region,
+           coalesce(enrichment->'analyse'->'entities', '[]'::jsonb) as entities
+      from signals
+     where tenant_id = $1
+       and region is not null
+       and region <> ''
+       and coalesce(published_at, fetched_at) >= now() - make_interval(hours => $2)
+    `,
+    [tenantId, hours],
+  );
+
+  // Group by region: accumulate entity counts and signal count.
+  const byRegion = new Map<string, { signalCount: number; counts: Map<string, number> }>();
+
+  for (const row of rows) {
+    const r = row.region;
+    let entry = byRegion.get(r);
+    if (!entry) {
+      entry = { signalCount: 0, counts: new Map() };
+      byRegion.set(r, entry);
+    }
+    entry.signalCount += 1;
+
+    // Coerce entities: pg driver may return a parsed array or a JSON string.
+    const entities: string[] = Array.isArray(row.entities)
+      ? (row.entities as string[])
+      : typeof row.entities === "string"
+        ? (JSON.parse(row.entities) as string[])
+        : [];
+
+    for (const raw of entities) {
+      const topic = raw.trim().toLowerCase();
+      if (!topic) continue;
+      entry.counts.set(topic, (entry.counts.get(topic) ?? 0) + 1);
+    }
+  }
+
+  // Build output: top `topPerRegion` topics per region, sorted by signalCount desc.
+  return Array.from(byRegion.entries())
+    .map(([region, { signalCount, counts }]) => ({
+      region,
+      signalCount,
+      topics: Array.from(counts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topPerRegion)
+        .map(([topic, count]) => ({ topic, count })),
+    }))
+    .sort((a, b) => b.signalCount - a.signalCount);
+}
+
 // Stories published per day over the last N days (oldest→newest) — the home
 // snapshot sparkline.
 export async function publishedPerDay(
