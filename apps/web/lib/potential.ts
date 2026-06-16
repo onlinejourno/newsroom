@@ -4,11 +4,10 @@
 //   0.30 × trend fit (your market) — alignment with the matched topic, then
 //                                 down-weighted by marketRelevance when the
 //                                 trend is clearly foreign to the outlet's geo
-//   0.20 × topic ownership        (the source's share of coverage for the topic
-//                                 in the inflow; unknown = 50, as upstream;
-//                                 NOTE: competitor-relative authority vs local
-//                                 domain peers arrives in Slice 4 with
-//                                 Topic→Domains — authority value unchanged)
+//   0.20 × topic ownership        — authority = Topic ownership — your share vs
+//                                 competitor domains on this topic (GDELT cache);
+//                                 falls back to your own coverage share when
+//                                 competitor data isn't cached.
 //   0.10 × freshness              (age bands ported verbatim)
 
 import type { TopicTrend } from "@/lib/trends";
@@ -27,13 +26,17 @@ export type PotentialScore = {
   momentum: number;
   /** Trend fit (your market): base alignment down-weighted by marketRelevance. */
   alignment: number;
-  /** Topic ownership (your coverage share): source's share of inflow for topic. */
+  /** Topic ownership: your share vs competitor domains on this topic (GDELT cache);
+   *  falls back to your own coverage share when competitor data isn't cached. */
   authority: number;
   freshness: number;
   /** True when the matched trend / item is clearly foreign to outletRegion. */
   foreign: boolean;
   /** The geo relevance factor applied to alignment: 1.0 (local/unknown) or 0.4 (foreign). */
   marketFactor: number;
+  /** How authority was computed: "competitors" = share among topic's GDELT domains;
+   *  "coverage" = fallback share among our own inflow signals. */
+  authoritySource: "competitors" | "coverage";
 };
 
 export function freshnessScore(published: Date | null, now: Date): number {
@@ -92,6 +95,16 @@ export function marketRelevance(
   return { local: false, factor: 0.4 };
 }
 
+/** Strip www. and lowercase for domain comparison. */
+function normaliseDomain(d: string): string {
+  return d.trim().toLowerCase().replace(/^www\./, "");
+}
+
+/** Case-insensitive domain match, ignoring leading www. */
+function sameDomain(a: string, b: string): boolean {
+  return normaliseDomain(a) === normaliseDomain(b);
+}
+
 export function scorePotential(
   item: {
     headline: string | null;
@@ -108,6 +121,12 @@ export function scorePotential(
   /** ISO 2-letter region code for the outlet (e.g. "IN"). Defaults to unknown
    *  → no market penalty (safe for callers that haven't migrated yet). */
   outletRegion = "",
+  /** Top domains for the matched trend from the GDELT topic_domains cache.
+   *  When provided together with outletDomain, authority is computed as the
+   *  outlet's share among these competitor domains. */
+  topicDomains?: { domain: string; count: number }[],
+  /** The outlet's own domain (e.g. "thehindu.com") for competitor comparison. */
+  outletDomain?: string,
 ): PotentialScore {
   const headline = item.headline ?? "";
   let matched: TopicTrend | null = null;
@@ -132,10 +151,20 @@ export function scorePotential(
     : { local: true, factor: 1.0 }; // no match → no penalty needed
   const alignment = Math.round(baseAlignment * factor);
 
-  // Topic ownership (your coverage share). Competitor-relative authority vs
-  // local domain peers arrives in Slice 4 with Topic→Domains; value unchanged.
+  // Topic ownership: competitor-relative when topicDomains + outletDomain are
+  // provided; otherwise falls back to the existing coverage-share computation.
   let authority = 50;
-  if (matched && item.host) {
+  let authoritySource: PotentialScore["authoritySource"] = "coverage";
+
+  if (topicDomains && topicDomains.length > 0 && outletDomain) {
+    // Competitor-relative: our domain's share among the topic's top domains.
+    const ourCount =
+      topicDomains.find((d) => sameDomain(d.domain, outletDomain))?.count ?? 0;
+    const total = topicDomains.reduce((a, d) => a + d.count, 0);
+    authority = total > 0 ? Math.round((ourCount / total) * 100) : 0;
+    authoritySource = "competitors";
+  } else if (matched && item.host) {
+    // Coverage-share fallback (original behaviour).
     const hosts = coverage.get(matched.topic);
     const total = hosts
       ? [...hosts.values()].reduce((a, b) => a + b, 0)
@@ -162,6 +191,7 @@ export function scorePotential(
     freshness,
     foreign: !local,
     marketFactor: factor,
+    authoritySource,
   };
 }
 
