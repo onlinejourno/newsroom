@@ -3,6 +3,23 @@ from __future__ import annotations
 
 import argparse
 import json as _json
+from functools import lru_cache
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+
+@lru_cache(maxsize=1)
+def _load_env_once() -> None:
+    """Load the repo .env so keyed integrations (KEYWORDS_EVERYWHERE, PAGESPEED_API_KEY)
+    are visible — mirrors onlinejourno_agents.db._load_env_once (ADR 0005)."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / ".env").exists():
+            load_dotenv(parent / ".env")
+            return
+        if (parent / "pnpm-workspace.yaml").exists():
+            return
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _load_env_once()
     args = build_parser().parse_args(argv)
     if args.cmd == "audit":
         from onlinejourno_scoring.audit import run_audit
