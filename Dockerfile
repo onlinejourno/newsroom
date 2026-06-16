@@ -42,5 +42,10 @@ COPY --from=build --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=build --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 
+# DB migrate-on-deploy: migrations + runner for the fly.toml [deploy] release_command.
+# pg is already in the standalone node_modules (the app uses it).
+COPY --chown=nextjs:nextjs apps/web/scripts ./apps/web/scripts
+COPY --chown=nextjs:nextjs infra/migrations ./infra/migrations
+
 EXPOSE 3000
 CMD ["node", "apps/web/server.js"]

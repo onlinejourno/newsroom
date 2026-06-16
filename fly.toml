@@ -9,6 +9,11 @@ primary_region = "sin"
 [build]
   dockerfile = "Dockerfile"
 
+[deploy]
+  # Apply DB migrations against DATABASE_URL before each release goes live.
+  # Fly aborts the deploy (keeps the prior version) if this exits non-zero.
+  release_command = "node apps/web/scripts/migrate.mjs"
+
 [env]
   PORT = "3000"
   NEXT_TELEMETRY_DISABLED = "1"
