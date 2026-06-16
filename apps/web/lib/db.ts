@@ -1220,6 +1220,55 @@ export async function regionalPulse(
     .sort((a, b) => b.signalCount - a.signalCount);
 }
 
+// ── Topic→Domains cache (Story Scores competitor authority) ──────────────────
+// Backed by the topic_domains table (migration 0021). TTL checked in-process;
+// upsert normalises topic to lowercase so lookups are case-insensitive.
+
+export type TopicDomainRow = { domain: string; count: number };
+
+/** Cached top-domains for a topic; null when missing or staler than ttlHours. */
+export async function cachedTopicDomains(
+  tenantId: string,
+  topic: string,
+  ttlHours = 12,
+): Promise<{ source: string | null; domains: TopicDomainRow[] } | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<{
+    source: string | null;
+    domains: unknown;
+    computed_at: Date;
+  }>(
+    "select source, domains, computed_at from topic_domains where tenant_id = $1 and topic = $2",
+    [tenantId, topic.toLowerCase().trim()],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  const ageH = (Date.now() - new Date(row.computed_at).getTime()) / 3_600_000;
+  if (ageH > ttlHours) return null;
+  const domains = Array.isArray(row.domains)
+    ? (row.domains as TopicDomainRow[])
+    : typeof row.domains === "string"
+      ? (JSON.parse(row.domains) as TopicDomainRow[])
+      : [];
+  return { source: row.source, domains };
+}
+
+export async function upsertTopicDomains(
+  tenantId: string,
+  topic: string,
+  source: string | null,
+  domains: TopicDomainRow[],
+): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `insert into topic_domains (tenant_id, topic, source, domains, computed_at)
+     values ($1, $2, $3, $4, now())
+     on conflict (tenant_id, topic)
+       do update set source = excluded.source, domains = excluded.domains, computed_at = now()`,
+    [tenantId, topic.toLowerCase().trim(), source, JSON.stringify(domains)],
+  );
+}
+
 // Stories published per day over the last N days (oldest→newest) — the home
 // snapshot sparkline.
 export async function publishedPerDay(
