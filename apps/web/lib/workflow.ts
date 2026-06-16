@@ -49,6 +49,8 @@ export type Lead = {
   commissioner: string | null;
   pitcher: string | null;
   story_url: string | null;
+  target_surfaces: string[];
+  plan_approval: string;
   eta: Date | null;
   trend_score: number | null;
   keywords: string[];
@@ -65,6 +67,7 @@ const SELECT = `
          l.note, l.created_at, l.published_at,
          a.display_name as assignee, c.display_name as commissioner,
          p.display_name as pitcher, s.url as story_url,
+         l.target_surfaces, l.plan_approval,
          case when l.eta is null or l.published_at is null then null
               else l.published_at <= l.eta end as on_time
     from story_leads l
@@ -264,29 +267,56 @@ export async function assignLead(
   return (rowCount ?? 0) > 0;
 }
 
-// Commission a calendar event into a Suggested lead (ADR 0057 §2, manual path).
+// Commission a calendar event into a lead (ADR 0057 §2, manual path).
 // Mirrors the auto cron: requested→idea lead, then links the event. Desk only;
 // no-ops if the event is missing, undated, or already linked.
+// When assigneeId is provided the lead is immediately assigned to that reporter
+// (status = "assigned"); commissioner remains actor (the editor). When
+// assigneeId is null/undefined the lead lands unassigned in Suggested (status =
+// "idea") — unchanged behaviour.
 export async function commissionFromCalendarEvent(
   tenantId: string,
   actor: Account,
   eventId: string,
+  assigneeId?: string | null,
 ): Promise<string | null> {
   const ev = await calendarEventById(tenantId, eventId);
   if (!ev || !ev.target_date || ev.lead_id) return null;
   const pastDue = new Date(ev.target_date) < new Date();
+  // When an assignee is chosen up-front use "assigned" origin so createLead
+  // sets status = "assigned" directly; otherwise "requested" → "idea".
+  const origin = assigneeId ? "assigned" : "requested";
   const leadId = await createLead({
     tenantId,
     actor,
     title: ev.what,
-    origin: "requested",
+    origin,
     beat: ev.topic,
     importance: pastDue ? "high" : "normal",
     signalId: ev.signal_id,
+    assigneeId: assigneeId ?? null,
     eta: typeof ev.target_date === "string" ? ev.target_date : ev.target_date.toISOString(),
     topic: ev.topic,
     note: pastDue ? `Promised by ${ev.who ?? "—"} — delivered?` : null,
   });
   if (leadId) await linkCalendarEventLead(tenantId, eventId, leadId);
   return leadId;
+}
+
+// A journalist (or desk) claims an existing Suggested/idea or pitched lead and
+// commits to writing it themselves. Sets assignee_id = actor.id, status →
+// "assigned". Desk may take up on behalf of any reporter by passing a different
+// actor; self-claim always uses actor.id. No-ops on leads already assigned.
+export async function takeUpLead(
+  tenantId: string,
+  actor: Account,
+  leadId: string,
+): Promise<boolean> {
+  const { rowCount } = await pool().query(
+    `update story_leads
+        set status = 'assigned', assignee_id = $3, assigned_at = now()
+      where tenant_id = $1 and id = $2 and status in ('idea', 'pitched')`,
+    [tenantId, leadId, actor.id],
+  );
+  return (rowCount ?? 0) > 0;
 }

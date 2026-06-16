@@ -80,7 +80,9 @@ export default async function CalendarPage({
     const tid = await tenantIdForSlug(TENANT_SLUG);
     const who = await getAccount();
     if (!tid || !who) return;
-    await commissionFromCalendarEvent(tid, who, String(formData.get("eventId")));
+    // assigneeId is supplied by the T2 reporter selector; null when not chosen.
+    const assigneeId = String(formData.get("assigneeId") ?? "").trim() || null;
+    await commissionFromCalendarEvent(tid, who, String(formData.get("eventId")), assigneeId);
     redirect(`/${locale}/newslist` as Route);
   }
 

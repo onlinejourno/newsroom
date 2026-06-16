@@ -73,21 +73,26 @@ export default async function SignalDetailPage({
   const me = await getAccount();
   const canCommission = !!me && ["admin", "editor", "desk"].includes(me.role);
 
-  async function commission() {
+  async function commission(formData: FormData) {
     "use server";
     const tenantId = await tenantIdForSlug(TENANT_SLUG);
     const me = await getAccount();
     const sig = tenantId ? await signalById(tenantId, id) : null;
     if (!tenantId || !me || !sig) return;
     if (!["admin", "editor", "desk"].includes(me.role)) return;
+    // assigneeId is supplied by the T2 reporter selector; null when not chosen.
+    const assigneeId = String(formData.get("assigneeId") ?? "").trim() || null;
     await createLead({
       tenantId,
       actor: me,
       title: sig.headline ?? sig.url,
-      origin: "requested",
+      // If a reporter is chosen up-front set origin "assigned" so the lead
+      // lands in the Assigned lane; otherwise "requested" → Suggested.
+      origin: assigneeId ? "assigned" : "requested",
       beat: sig.beat,
       bureau: me.bureau ?? null,
       signalId: id,
+      assigneeId,
       trendScore: sig.trend_score,
       keywords: sig.enrichment?.analyse?.entities ?? [],
       topic: sig.enrichment?.classify?.topic ?? null,

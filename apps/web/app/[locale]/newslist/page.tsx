@@ -12,6 +12,7 @@ import {
   bureaus,
   createLead,
   listLeads,
+  takeUpLead,
   transition,
 } from "@/lib/workflow";
 
@@ -126,6 +127,17 @@ export default async function NewslistPage({
     redirect(`/${locale}/newslist` as Route);
   }
 
+  // Reporter (or desk) self-claims an unassigned Suggested/idea or pitched lead.
+  // Sets assignee_id = actor.id → status "assigned"; attributed to that journalist.
+  async function selfAssign(formData: FormData) {
+    "use server";
+    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const me = await getAccount();
+    if (!tenantId || !me) return;
+    await takeUpLead(tenantId, me, String(formData.get("id")));
+    redirect(`/${locale}/newslist` as Route);
+  }
+
   const byStatus = (s: string) => leads.filter((l) => l.status === s);
 
   const card = (l: Lead) => {
@@ -202,7 +214,7 @@ export default async function NewslistPage({
             {l.keywords.slice(0, 4).join(" · ")}
           </p>
         ) : null}
-        {((l.status === "pitched" || l.status === "idea") && isDesk) || moves.length ? (
+        {((l.status === "pitched" || l.status === "idea") && (isDesk || !l.assignee_id)) || moves.length ? (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {(l.status === "pitched" || l.status === "idea") && isDesk ? (
               <form action={assign} className="flex items-center gap-1">
@@ -229,6 +241,19 @@ export default async function NewslistPage({
                   style={{ borderColor: STATUS_META.assigned.color, color: STATUS_META.assigned.color }}
                 >
                   → Assign
+                </button>
+              </form>
+            ) : (l.status === "pitched" || l.status === "idea") && !isDesk && !l.assignee_id ? (
+              // Reporter self-claims an unassigned lead — "Take it up / I'll write this".
+              <form action={selfAssign}>
+                <input type="hidden" name="id" value={l.id} />
+                <button
+                  type="submit"
+                  className="text-xs px-2 py-0.5 border font-semibold"
+                  style={{ borderColor: STATUS_META.assigned.color, color: STATUS_META.assigned.color }}
+                  title="Assign this to yourself and write it"
+                >
+                  Take it up → I&rsquo;ll write this
                 </button>
               </form>
             ) : (
