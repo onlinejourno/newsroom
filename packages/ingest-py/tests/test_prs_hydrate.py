@@ -1,33 +1,52 @@
-"""PRS hydration tests — pure parsing, no network."""
+"""PRS hydration tests — pure parsing on a saved real-page fixture, no network."""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import Path
 
 from onlinejourno_ingest.hydrate.prs import PrsHydrator, parse_prs_page
 
-_HTML = """
-<html><body>
-  <div class="region region-content">
-    <h1>The Cinematograph (Amendment) Bill, 2023</h1>
-    <p>The Cinematograph (Amendment) Bill, 2023 was introduced in Rajya Sabha on
-       July 20, 2023. It seeks to curb film piracy.</p>
-    <div class="status">Introduced Rajya Sabha Jul 20, 2023 · Passed Jul 31, 2023</div>
-  </div>
-</body></html>
-"""
+_FIXTURE = (Path(__file__).parent / "fixtures" / "prs_bill.html").read_text()
 
 
-def test_parses_summary_and_earliest_date():
-    content = parse_prs_page(_HTML)
-    # earliest date across the page = the introduced date
-    assert content.published_at == datetime(2023, 7, 20, tzinfo=UTC)
-    assert "introduced in Rajya Sabha" in content.body_text
-    assert "curb film piracy" in content.body_text
+def test_parses_latest_status_date_ist_to_utc():
+    content = parse_prs_page(_FIXTURE)
+    # Latest status date Dec 18, 2023 at noon IST == 06:30 UTC same day.
+    assert content.published_at == datetime(2023, 12, 18, 6, 30, tzinfo=UTC)
 
 
-def test_missing_content_region():
-    content = parse_prs_page("<html><body>nope</body></html>")
+def test_ignores_dates_outside_the_status_field():
+    content = parse_prs_page(_FIXTURE)
+    # The decoy Jan 02, 2030 in the related-bills block must NOT be picked,
+    # nor the earliest status date.
+    assert content.published_at != datetime(2030, 1, 2, 6, 30, tzinfo=UTC)
+    assert content.published_at.year == 2023
+
+
+def test_body_is_the_summary_field_only():
+    content = parse_prs_page(_FIXTURE)
+    assert "Highlights of the Bill" in content.body_text
+    assert "Indian Post Office Act, 1898" in content.body_text
+    # body comes from field-name-body — not the status timeline, ministry, or nav
+    assert "Dec 18, 2023" not in content.body_text
+    assert "Communications" not in content.body_text
+    assert "Follow Us" not in content.body_text
+    assert "2030" not in content.body_text
+
+
+def test_missing_status_field_yields_none_date_but_keeps_body():
+    html = (
+        '<div class="field field-name-body"><div class="field-items">'
+        '<div class="field-item even"><p>Body sentence here.</p></div></div></div>'
+    )
+    content = parse_prs_page(html)
+    assert content.published_at is None
+    assert content.body_text == "Body sentence here."
+
+
+def test_missing_both_fields_yields_empty_content():
+    content = parse_prs_page("<html><body>nothing</body></html>")
     assert content.body_text is None
     assert content.published_at is None
 
@@ -43,8 +62,9 @@ class _FakeFetcher:
 
 
 def test_hydrator_fetches_then_parses():
-    fetcher = _FakeFetcher(_HTML.encode("utf-8"))
-    content = PrsHydrator(fetcher).hydrate("https://prsindia.org/billtrack/the-cinematograph-amendment-bill-2023")
-    assert fetcher.urls == ["https://prsindia.org/billtrack/the-cinematograph-amendment-bill-2023"]
-    assert content.published_at == datetime(2023, 7, 20, tzinfo=UTC)
-    assert content.body_text
+    fetcher = _FakeFetcher(_FIXTURE.encode("utf-8"))
+    url = "https://prsindia.org/billtrack/the-post-office-bill-2023"
+    content = PrsHydrator(fetcher).hydrate(url)
+    assert fetcher.urls == [url]
+    assert content.published_at == datetime(2023, 12, 18, 6, 30, tzinfo=UTC)
+    assert "Highlights of the Bill" in content.body_text
