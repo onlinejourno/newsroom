@@ -9,7 +9,8 @@ Dockerfile
 **/.env*
 **/.DS_Store
 docs
-infra
+infra/*
+!infra/migrations
 packages/*-py
 **/__pycache__
 .venv
