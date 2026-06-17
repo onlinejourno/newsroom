@@ -44,6 +44,14 @@ export function verifyPassword(pw: string, stored: string | null): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+// Set a new password for an account (self-serve change; admin reset later).
+export async function setPassword(accountId: string, newPassword: string): Promise<void> {
+  await pool().query("update users set password_hash = $2 where id = $1", [
+    accountId,
+    hashPassword(newPassword),
+  ]);
+}
+
 // ── session ─────────────────────────────────────────────────────────────
 export async function startSession(accountId: string): Promise<void> {
   const jar = await cookies();

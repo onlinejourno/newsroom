@@ -116,7 +116,11 @@ export default function Masthead({
           )}
 
           <span className="flex items-center gap-2 ml-2 text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
-            {userName ? <span>{userName}</span> : null}
+            {userName ? (
+              <a href={href("account")} className="no-underline hover:underline" style={linkStyle}>
+                {userName}
+              </a>
+            ) : null}
             <form action={signOut}>
               <button type="submit" className="underline" style={linkStyle}>
                 Sign out
