@@ -1,5 +1,7 @@
 # Wk 0 Plan — Mon Jun 1 → Fri Jun 5
 
+> **Closed historical record (Wk 0, Jun 1–5) — not the current plan.** The audit + decisions phase is complete; build is well past Wk 0 (see the stage line in `CLAUDE.md` and the binding `docs/PRODUCT.md`). The unchecked Fri items below (design-partner shortlist + outreach) remained open at Wk 0 close. Preserved as-is for the record.
+
 Hard cap: Fri Jun 5 18:00 IST. Saturday is review-only. Monday Jun 8 = Wk 1 build starts whether or not every doc is finished.
 
 ## Day-by-day

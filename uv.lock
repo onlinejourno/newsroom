@@ -992,6 +992,7 @@ dependencies = [
     { name = "feedparser" },
     { name = "lxml" },
     { name = "python-dateutil" },
+    { name = "python-dotenv" },
     { name = "requests" },
 ]
 
@@ -1001,6 +1002,7 @@ requires-dist = [
     { name = "feedparser", specifier = ">=6.0" },
     { name = "lxml", specifier = ">=5.0" },
     { name = "python-dateutil", specifier = ">=2.8" },
+    { name = "python-dotenv", specifier = ">=1.0" },
     { name = "requests", specifier = ">=2.31" },
 ]
 

@@ -4,7 +4,7 @@ Editorial intelligence **by a journalist, for journalists** — one vendor-neutr
 
 > **`docs/PRODUCT.md` is the binding product definition.** It consolidates the founder's prior engines — front (collect → analyse → score → alert + archive + reporter PWA) and back (distribution-fit, GSC, hidden gems, subscription, probity) — onto this multi-tenant spine. `MVP-SCOPE.md` is suspended.
 
-**Status:** Wk 0 (audit + decisions) complete Thu Jun 4. Wk 1 build starts Mon Jun 8.
+**Status (2026-06-14):** Build underway, past Wk 0. Multi-tenant spine live — `apps/web` (Next.js, ~22 surfaces), Python workers + `packages/*-py`, Postgres with 19 migrations. Architecture decisions through ADR 0059. `docs/WK0-PLAN.md` is the closed Wk 0 record; `docs/PRODUCT.md` is the binding product definition.
 
 **Owner:** Subhash Rai (sole proprietor, OnlineJourno).
 
@@ -40,7 +40,7 @@ docs/         # ADRs, plans, ledgers, decisions
 - `CONTEXT.md` — domain language and product intent
 - `CLAUDE.md` — instructions for Claude Code working in this repo
 - `AGENTS.md` — instructions for any AI agent
-- `docs/WK0-PLAN.md` — current week's plan
+- `docs/WK0-PLAN.md` — Wk 0 plan (closed historical record; audit + decisions phase)
 - `docs/adr/` — architecture decision records
 - `docs/IP-PROVENANCE.md` — every dep and reused code source, with license
 - `docs/CAP-TABLE.md` — ownership snapshot

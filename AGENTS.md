@@ -37,7 +37,7 @@ See `CONTEXT.md`.
 
 ## Issue tracker
 
-Local markdown files in `.scratch/<feature-slug>/`. No external tracker Y1.
+GitHub Issues in `onlinejourno/platform`, via the `gh` CLI. See `docs/agents/issue-tracker.md`. Triaged with the labels below; new issues default to `needs-triage`.
 
 ## Triage labels (when issues are created)
 

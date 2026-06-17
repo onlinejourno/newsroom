@@ -7,7 +7,7 @@ Inherits global `~/.claude/CLAUDE.md`. Project-specific rules below take precede
 This is **OnlineJourno's Platform** — a multi-tenant editorial intelligence product for newsrooms. Journalist-first, configurable, modular.
 
 - Owner: Subhash Rai (sole proprietor).
-- Stage: Wk 0 (audit + decisions). No production code yet.
+- Stage (2026-06-14): Build underway, well past Wk 0. Multi-tenant spine is live — `apps/web` (Next.js, ~22 `[locale]` surfaces), `apps/worker` + `packages/*-py` (Python ingest/scoring/agents), Postgres with 19 migrations. ADRs through 0059. The `m-*` capabilities (framing-pej, probity) currently live inline in `apps/web` and `packages/agents-py`; `packages/modules/` is still an empty scaffold (module-plugin contract per ADR 0006 not yet exercised).
 - Web: https://onlinejourno.com
 
 ## Code rules
