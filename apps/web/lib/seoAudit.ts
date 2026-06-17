@@ -15,6 +15,9 @@ export async function runSeoAudit(
   opts: { trend?: string; need?: string; surfaces?: string[] } = {},
 ): Promise<SeoAudit> {
   if (!/^https?:\/\//i.test(url)) return { error: "URL must start with http(s)://" };
+  // v1: disabled in prod (Node-only image can't shell uv); see fly.toml [env].
+  if (process.env.DISABLE_ONDEMAND_AUDIT === "1")
+    return { error: "On-demand audit isn't enabled in this deployment yet." };
   const args = ["run", "--package", "onlinejourno-scoring", "onlinejourno-scoring",
     "audit", url, "--json"];
   if (opts.trend) args.push("--trend", opts.trend);

@@ -12,7 +12,7 @@ The committed branch **builds green** (`next build` ✅, after `dd4a7df`) and al
 
 | # | Gap | Fix |
 |---|-----|-----|
-| 1 | **Image is Node-only**; web shells `uv run` for `analyze-url` + audit (`apps/web/lib/analyze.ts`, `seoAudit.ts`) | Either (a) add `uv`+Python+the packages to `Dockerfile` (fat image), (b) split the audit into its own Fly machine the web calls over HTTP, or (c) disable Analyze/audit for v1. **Decision needed.** |
+| 1 | **Image is Node-only**; web shells `uv run` for `analyze-url` + audit | **Resolved (v1):** on-demand audit disabled via `DISABLE_ONDEMAND_AUDIT` (set in `fly.toml [env]`; local dev unaffected — no `uv` shell-out in prod). Story Scores still render pre-computed DB scores. Re-enable via the Python audit service (with gap 3). |
 | 2 | **No DB migration on deploy** — 20 SQL migrations applied manually | Add a `[deploy] release_command` to `fly.toml` that runs the migrations against the prod DB, or a documented one-shot migrate step. |
 | 3 | **Python pipeline not deployed** (collect / enrich / score / hydrate / trends / alerts) | Add a Fly **scheduled-machines / cron** process (or a worker process group) that runs the CLIs. Without it the UI has no live data (seeds only). |
 | 4 | **Auth is demo** — `DEMO_SIGNIN` person-picker + a pre-filled `admin12345` | In prod: **leave `DEMO_SIGNIN` unset**, set a strong `AUTH_SECRET`, create the real design-partner account. |
@@ -43,7 +43,7 @@ Never in `fly.toml`. From `.env.example`, grouped by need:
 
 ## Open decisions (resolve before pilot)
 
-- **Audit execution model** (gap 1) — fat image vs HTTP-split vs disabled-for-v1.
+- ~~Audit execution model (gap 1)~~ — **resolved: disabled for v1** via flag; revisit with the Python audit service.
 - **Pipeline scheduling** (gap 3) — Fly scheduled machines vs a worker process vs external cron.
 - **Migration automation** (gap 2) — `release_command` vs manual.
 - **Backups + observability** — Postgres backup cadence; where logs/metrics go.

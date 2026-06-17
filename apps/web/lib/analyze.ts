@@ -34,6 +34,11 @@ export async function analyzeUrl(
   if (!/^https?:\/\//i.test(url)) {
     return { error: "URL must start with http(s)://" } as AnalyzeResult;
   }
+  // v1: on-demand audit shells `uv run`, absent from the Node-only prod image.
+  // Disabled via env in prod (fly.toml [env]); unset locally so dev keeps working.
+  if (process.env.DISABLE_ONDEMAND_AUDIT === "1") {
+    return { error: "On-demand audit isn't enabled in this deployment yet.", url } as AnalyzeResult;
+  }
   const args = [
     "run",
     "--package",
