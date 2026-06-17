@@ -26,7 +26,10 @@ REALISTIC_HEADERS: dict[str, str] = {
         "image/avif,image/webp,image/apng,*/*;q=0.8"
     ),
     "Accept-Language": "en-IN,en-US;q=0.9,en;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
+    # Advertise only codecs requests/urllib3 can decode without extra deps.
+    # `br` (brotli) needs the `brotli` package; without it RBI + Cloudflare-fronted
+    # feeds came back as undecoded brotli bytes → feedparser saw binary (0 entries).
+    "Accept-Encoding": "gzip, deflate",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
     "Sec-Ch-Ua": '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
