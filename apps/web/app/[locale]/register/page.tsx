@@ -72,8 +72,8 @@ export default async function RegisterPage({
       <div className="ds-frame max-w-md w-full p-8" style={{ fontFamily: "var(--font-ui)" }}>
         <p className="ds-label mb-2">OnlineJourno</p>
         <h1
-          className="text-3xl font-extrabold tracking-tight mb-1"
-          style={{ fontFamily: "var(--font-display)" }}
+          className="ds-lead mb-1"
+          style={{ fontSize: "2rem" }}
         >
           Request access
         </h1>
