@@ -4,6 +4,7 @@
 update tenants
    set config = coalesce(config, '{}'::jsonb) || jsonb_build_object(
          'peers', jsonb_build_array(
+           jsonb_build_object('domain','moneycontrol.com','name','Moneycontrol','tier','peer'),
            jsonb_build_object('domain','thehindu.com','name','The Hindu','tier','peer'),
            jsonb_build_object('domain','indianexpress.com','name','The Indian Express','tier','peer'),
            jsonb_build_object('domain','timesofindia.indiatimes.com','name','The Times of India','tier','peer'),
