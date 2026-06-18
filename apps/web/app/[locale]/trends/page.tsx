@@ -3,14 +3,17 @@ import {
   distinctSignalRegions,
   entityWindows,
   publishedStoriesForScoring,
+  outletChannelMarkers,
   signalsMentioning,
   tenantIdForSlug,
   tenantOutletDomain,
   topicDomains,
+  topicInterestSeries,
 } from "@/lib/db";
 import { getOrFetchOutletKeywords } from "@/lib/outletKeywords";
 import { momentumLabel, topicMomentum } from "@/lib/trends";
 import MomentumBar from "@/components/charts/MomentumBar";
+import InterestTrajectory from "@/components/charts/InterestTrajectory";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +88,14 @@ export default async function TrendsPage({
   ]);
 
   const topics = topicMomentum(recent, prior).slice(0, TOP);
+
+  // Interest Trajectory (#107): per-topic signal-interest series + outlet
+  // Google-News / Discover appearance markers, for the top topics.
+  const trajTopics = topics.slice(0, 6).map((t) => t.topic);
+  const [trajSeries, chanMarkers] = await Promise.all([
+    topicInterestSeries(tenantId, trajTopics, 7),
+    outletChannelMarkers(tenantId, 7),
+  ]);
 
   const [drill, owners] = await Promise.all([
     Promise.all(
@@ -316,6 +327,42 @@ export default async function TrendsPage({
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      {/* ── Section 1a: Interest Trajectory (chart) ── */}
+      <section className="mb-12">
+        <h2
+          className="text-xl font-bold mb-1"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Interest Trajectory · last 7 days
+        </h2>
+        <p
+          className="text-sm mb-4"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+        >
+          Each line is a topic&rsquo;s signal interest day by day (from your own
+          corpus, not Google Trends). Diamonds mark where{" "}
+          <span className="font-semibold">{outletDomain || "your outlet"}</span>{" "}
+          appeared in Google News (blue) or as a Discover candidate (gold).
+          Toggle topics via the legend.
+        </p>
+        {trajSeries.length === 0 ? (
+          <div
+            className="ds-frame p-4 text-sm"
+            style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+          >
+            Not enough signal history yet to plot a trajectory.
+          </div>
+        ) : (
+          <div className="ds-frame p-2">
+            <InterestTrajectory
+              series={trajSeries}
+              markers={chanMarkers}
+              outletLabel={outletDomain || "Your outlet"}
+            />
           </div>
         )}
       </section>

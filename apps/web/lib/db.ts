@@ -1446,3 +1446,64 @@ export async function publishedPerDay(
   );
   return rows.map((r) => r.n);
 }
+
+// Per-topic signal-interest over time (Interest Trajectory, #107). The platform
+// uses its own enriched-signal corpus, not Google Trends (ADR/trend_score.py),
+// so "interest" = daily count of signals mentioning the topic. One row per
+// (topic, day); the caller pivots into per-topic series.
+export type TopicSeriesPoint = { topic: string; d: string; n: number };
+export async function topicInterestSeries(
+  tenantId: string,
+  topics: string[],
+  days = 7,
+): Promise<TopicSeriesPoint[]> {
+  if (topics.length === 0) return [];
+  const pool = getPool();
+  const { rows } = await pool.query<TopicSeriesPoint>(
+    `
+    with span as (
+      select generate_series(
+        (now() at time zone 'utc')::date - ($3::int - 1),
+        (now() at time zone 'utc')::date, interval '1 day')::date as d
+    ),
+    topics as (select unnest($2::text[]) as topic)
+    select t.topic, to_char(span.d,'YYYY-MM-DD') as d, count(s.id)::int as n
+      from topics t
+      cross join span
+      left join signals s
+        on s.tenant_id = $1
+       and s.enrichment->'analyse'->'entities' @> to_jsonb(array[t.topic])
+       and coalesce(s.published_at, s.fetched_at)::date = span.d
+     group by t.topic, span.d
+     order by t.topic, span.d
+    `,
+    [tenantId, topics, days],
+  );
+  return rows;
+}
+
+// Outlet appearances in Google News / Discover over time, from the
+// channel-affinity log (markers on the trajectory). Per-tenant, channel-based —
+// no hardcoded masthead. One row per (channel, day).
+export type OutletChannelMarker = { channel: string; d: string; n: number };
+export async function outletChannelMarkers(
+  tenantId: string,
+  days = 7,
+): Promise<OutletChannelMarker[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<OutletChannelMarker>(
+    `
+    select channel,
+           to_char(logged_at at time zone 'utc','YYYY-MM-DD') as d,
+           count(*)::int as n
+      from channel_affinity_log
+     where tenant_id = $1
+       and channel in ('google_news','discover')
+       and logged_at >= now() - make_interval(days => $2)
+     group by channel, to_char(logged_at at time zone 'utc','YYYY-MM-DD')
+     order by d
+    `,
+    [tenantId, days],
+  );
+  return rows;
+}
