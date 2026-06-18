@@ -4,7 +4,7 @@ Editorial intelligence **by a journalist, for journalists** — one vendor-neutr
 
 > **`docs/PRODUCT.md` is the binding product definition.** It consolidates the founder's prior engines — front (collect → analyse → score → alert + archive + reporter PWA) and back (distribution-fit, GSC, hidden gems, subscription, probity) — onto this multi-tenant spine. `MVP-SCOPE.md` is suspended.
 
-**Status (2026-06-14):** Build underway, past Wk 0. Multi-tenant spine live — `apps/web` (Next.js, ~22 surfaces), Python workers + `packages/*-py`, Postgres with 19 migrations. Architecture decisions through ADR 0059. `docs/WK0-PLAN.md` is the closed Wk 0 record; `docs/PRODUCT.md` is the binding product definition.
+**Status (2026-06-18):** Live in prod on Fly — `app.onlinejourno.com` (auth-gated). Inflow pipeline running on the markets/regulatory wedge (RBI · SEBI · PIB · bill-tracking); ~28 surfaces; 22 migrations; IA realigned (Calendar = the planning spine). Back-engine surfaces (Story Scores / Hidden Gems / dashboard) await a published-story corpus in prod. Open work is tracked in GitHub Issues; the latest session handoff is `docs/notes/2026-06-18-handoff.md`. `docs/PRODUCT.md` is the binding product definition; `docs/DEPLOY.md` is the go-live runbook; `docs/WK0-PLAN.md` is the closed Wk 0 record.
 
 **Owner:** Subhash Rai (sole proprietor, OnlineJourno).
 
