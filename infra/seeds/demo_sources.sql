@@ -58,3 +58,9 @@ select t.id, 'rss', 'The Hindu — Business',
 from tenants t
 where t.slug = 'self'
 on conflict (tenant_id, name) do nothing;
+
+-- Demo tenant's outlet domain — vendor-neutral: the outlet's domain is config
+-- (a tenant row), never hardcoded in source. A real outlet sets its own.
+update tenants
+   set config = coalesce(config, '{}'::jsonb) || '{"domain": "thehindu.com"}'::jsonb
+ where slug = 'self';

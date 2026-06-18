@@ -28,6 +28,7 @@ def premium_distribution_advice(
     is_trending: bool,
     matched_trend: str,
     word_count: int,
+    outlet_name: str = "the newsroom",
 ) -> dict:
     """
     When a paywalled / partial-paywall article is trending, assess the opportunity
@@ -155,8 +156,9 @@ def premium_distribution_advice(
             "title": "Consider syndication of the intro/lede to PTI / wire partners",
             "rationale": (
                 "For high-momentum trending topics, syndicating the news lede (not the full analysis) "
-                "to wire services or partner sites expands brand reach and positions The Hindu "
-                "as the authoritative source, driving return traffic to the subscriber-gated full story."
+                "to wire services or partner sites expands brand reach and positions "
+                f"{outlet_name} as the authoritative source, driving return traffic to "
+                "the subscriber-gated full story."
             ),
             "effort": "Medium — editorial approval + wire desk coordination",
             "impact": "High",

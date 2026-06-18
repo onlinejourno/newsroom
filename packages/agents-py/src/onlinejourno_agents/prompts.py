@@ -286,8 +286,9 @@ def build_frame_prompt(
     return ScorePromptParts(system=system, user=user)
 
 
-# The Hindu's section/desk map (single-publisher demo coherence): site
-# sections plus the desks the paper actually staffs (Legal, Defence, Data).
+# Default beat/section taxonomy — a broad Indian-newsroom desk set, used when a
+# tenant has not configured its own. Per-tenant IA overrides this via
+# tenants.config (passed as `beats=` to build_enrich_prompt); see the module note.
 ENRICH_BEATS = (
     "National", "International", "States", "Cities", "Politics", "Legal",
     "Defence", "Business", "Economy", "Markets", "Agri-Business", "Sport",
@@ -305,6 +306,7 @@ def build_enrich_prompt(
     *,
     include_extraction: bool = True,
     output_language: str = "en",
+    beats: tuple[str, ...] = ENRICH_BEATS,
 ) -> ScorePromptParts:
     """Batch enrichment prompt (Analyse pillar): per signal extract entities, geo,
     beat, topic, summary. Pure. The model returns one entry per 1-based index.
@@ -343,7 +345,7 @@ def build_enrich_prompt(
         "metadata. Respond with ONLY a JSON object, no prose, no markdown, exactly:\n"
         '{"results": [{"index": <item number>, '
         f"{extraction}"
-        f'"beat": <one of {list(ENRICH_BEATS)}>, '
+        f'"beat": <one of {list(beats)}>, '
         f'"user_need": <one of {list(USER_NEEDS)} — the reader need it serves>, '
         '"topic": <short topic>, "summary": <one sentence>}, ...]}\n'
         f"One object per item, using the item's number as `index`. {geo_note}"

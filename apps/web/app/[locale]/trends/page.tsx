@@ -5,6 +5,7 @@ import {
   publishedStoriesForScoring,
   signalsMentioning,
   tenantIdForSlug,
+  tenantOutletDomain,
   topicDomains,
 } from "@/lib/db";
 import { getOrFetchOutletKeywords } from "@/lib/outletKeywords";
@@ -105,7 +106,7 @@ export default async function TrendsPage({
       // malformed URL — skip
     }
   }
-  let outletDomain = "thehindu.com";
+  let outletDomain = await tenantOutletDomain(tenantId);
   let maxFreq = 0;
   for (const [h, n] of hostFreq) {
     if (n > maxFreq) { maxFreq = n; outletDomain = h; }
