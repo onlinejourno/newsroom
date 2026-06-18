@@ -135,24 +135,12 @@ export default async function TrendsPage({
     <main className="min-h-screen max-w-5xl mx-auto p-6 md:p-10">
       {/* ── Header ── */}
       <header className="mb-8">
-        <p className="ds-label mb-2">OnlineJourno · Trending Topics</p>
-        <h1
-          className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-3"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          Trending Topics
-        </h1>
-        <p
-          className="text-base max-w-2xl"
-          style={{
-            fontFamily: "var(--font-body)",
-            color: "var(--color-fg-secondary)",
-          }}
-        >
-          Topics moving right now — ranked by momentum across the enriched
-          inflow. The same entity surfacing across multiple signals in the last{" "}
-          {windowHours}h vs the prior {windowHours}h defines the trend; the
-          momentum bands show how fast each topic is accelerating.
+        <p className="ds-label mb-2">Analyse · What&rsquo;s moving</p>
+        <h1 className="ds-lead mb-3">Where coverage is heading.</h1>
+        <p className="ds-deck">
+          The framing landscape plus what&rsquo;s trending — by topic and by place — measured
+          against your baseline. <span className="ds-amber">Competitive positioning lights up
+          once your peer set is wired (Phase B).</span>
         </p>
       </header>
 
@@ -207,6 +195,57 @@ export default async function TrendsPage({
           Apply
         </button>
       </form>
+
+      {/* ── Trending now — editorial card grid (Phase A re-skin) ── */}
+      {topics.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="ds-h2">Trending now</h2>
+            <span className="ds-meta">Momentum · last {windowHours}h · where you stand</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {topics.map((t) => {
+              const label = momentumLabel(t.momentum);
+              const color = labelColor(label);
+              const dir = direction(t.recent, t.prior);
+              return (
+                <div key={t.topic} className="ds-card">
+                  <div className="flex items-baseline justify-between gap-3 mb-2">
+                    <h3
+                      className="text-base font-semibold"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {t.topic}
+                    </h3>
+                    <span className="ds-tag" style={{ color: "var(--color-fg-tertiary)" }}>
+                      baseline pending
+                    </span>
+                  </div>
+                  <p className="text-sm mb-2" style={{ fontFamily: "var(--font-ui)" }}>
+                    <span className="font-bold" style={{ color: "var(--color-brand)" }}>
+                      {Math.round(t.momentum)}
+                    </span>
+                    <span style={{ color: color }}> {label}</span>
+                    <span style={{ color: "var(--color-fg-tertiary)" }}> · {t.recent} mentions</span>
+                    <span
+                      className="font-semibold ml-1"
+                      style={{ color: DIR_COLOR[dir] }}
+                    >
+                      {dir}
+                    </span>
+                  </p>
+                  <p className="text-xs mb-2" style={{ color: "var(--color-fg-tertiary)", fontFamily: "var(--font-ui)" }}>
+                    {predictionBand(t.momentum)}
+                  </p>
+                  <div className="ds-momentum">
+                    <span style={{ width: `${Math.min(100, t.momentum)}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ── Section 1: Editorial Overview table ── */}
       <section className="mb-12">
