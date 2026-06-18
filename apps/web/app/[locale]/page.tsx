@@ -145,6 +145,13 @@ export default async function Home({
                 </div>
               ))}
             </div>
+            {snapshot.total === 0 ? (
+              <p className="text-xs mt-3" style={{ color: "var(--color-fg-tertiary)" }}>
+                No published stories in the last {SNAPSHOT_HOURS}h yet — connect your
+                newsroom&rsquo;s corpus (demo: set <code>OJ_DEMO_HOST=thehindu.com</code>)
+                and run the pipeline to populate published output.
+              </p>
+            ) : null}
             <div className="flex items-center gap-3 mt-4 pt-3 border-t" style={{ borderColor: "var(--color-rule)" }}>
               <span className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
                 Published · last 7 days

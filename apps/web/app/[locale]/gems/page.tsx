@@ -138,6 +138,19 @@ export default async function GemsPage({
         </p>
       </header>
 
+      {all.length === 0 ? (
+        <div className="ds-frame p-6 mb-6 text-center" style={{ fontFamily: "var(--font-ui)" }}>
+          <p className="text-base mb-1" style={{ color: "var(--color-fg-primary)" }}>
+            No published stories yet.
+          </p>
+          <p className="text-sm" style={{ color: "var(--color-fg-secondary)" }}>
+            Hidden Gems resurfaces already-published stories worth re-optimising.
+            Connect a corpus — set <code>OJ_DEMO_HOST</code> (demo:{" "}
+            <code>thehindu.com</code>) or your CMS — then run the pipeline.
+          </p>
+        </div>
+      ) : null}
+
       <div
         className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4"
         style={{ fontFamily: "var(--font-ui)" }}
