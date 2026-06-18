@@ -33,10 +33,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Forward the path so server components (the masthead) can mark the active
+  // lifecycle stage — App Router doesn't expose the pathname otherwise.
+  const withPath = () => {
+    const h = new Headers(req.headers);
+    h.set("x-invoke-path", pathname);
+    return NextResponse.next({ request: { headers: h } });
+  };
+
   // The login gate: everything requires a valid session except OPEN paths.
   const rest = pathname.slice(`/${locale}`.length).replace(/^\//, "");
   const top = rest.split("/")[0];
-  if (OPEN.includes(top)) return NextResponse.next();
+  if (OPEN.includes(top)) return withPath();
 
   const account = await verifyToken(req.cookies.get(SESSION_COOKIE)?.value);
   if (!account) {
@@ -45,7 +53,7 @@ export async function middleware(req: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+  return withPath();
 }
 
 export const config = {
