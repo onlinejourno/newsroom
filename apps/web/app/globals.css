@@ -261,3 +261,50 @@ a:hover {
   letter-spacing: -0.02em;
   color: var(--color-fg-primary);
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   EDITORIAL DATA-DESIGN (redesign Phase A) — FT/Economist feel layered
+   on the broadsheet kit. All values resolve to ADR 0013 tokens.
+───────────────────────────────────────────────────────────────── */
+
+/* Big narrative lead (the "Where coverage is heading." headline). */
+.ds-lead {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: var(--color-fg-primary);
+}
+
+/* Editorial content card (topic / story). White, hairline frame, square. */
+.ds-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 0;
+  padding: 18px 20px;
+}
+
+/* Position tag — the "where you stand" state pills. */
+.ds-tag {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.ds-tag-behind   { color: var(--color-urgent); }          /* red — you're behind */
+.ds-tag-noangle  { color: var(--color-urgent); }          /* red — no angle yet */
+.ds-tag-onit     { color: var(--color-brand); }           /* green — on it */
+.ds-tag-peak     { color: #fff; background: var(--color-urgent); border-color: var(--color-urgent); }
+
+/* Momentum bar — 0–100 fill. */
+.ds-momentum { height: 4px; background: var(--color-rule-soft); }
+.ds-momentum > span { display: block; height: 100%; background: var(--color-brand); }
+
+/* Honest-data amber (n<30 / low confidence). */
+.ds-amber { color: var(--color-amber-600); }
