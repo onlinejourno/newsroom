@@ -1,43 +1,58 @@
-// The flat information architecture (ADR 0060, supersedes the four-job rooms of
-// ADR 0058). Mirrors the original discover-dashboard: the Calendar is the spine,
-// the intelligence tabs hang off it. ONE source so masthead, front-door and
-// breadcrumbs never disagree. Route paths are unchanged from earlier slices;
-// only grouping/labels/order change here.
-export type NavItem = { path: string; label: string; blurb: string };
+// The story-lifecycle information architecture (redesign Phase A, supersedes the
+// flat nav of ADR 0060). The masthead is the lifecycle: PLAN → BRIEF → IN →
+// FRAME → DRAFT → SCORE. Each stage is a verb (kicker) + a noun (label) + the
+// route it lands on. Route paths are unchanged from ADR 0060 — only grouping,
+// labels and order change. ONE source so masthead, front-door and breadcrumbs
+// never disagree.
+export type Stage = {
+  verb: string;       // PLAN, BRIEF, IN, FRAME, DRAFT, SCORE
+  label: string;      // Calendar, Today, Sources, Analyse, Compose, Audit
+  path: string;       // unchanged route
+  blurb: string;
+  minRole?: "reporter" | "desk" | "editor" | "admin"; // lowest role that sees it (default: all)
+};
 
-// Primary nav — the Calendar spine + the original's 7 intelligence tabs + the raw inflow.
-export const PRIMARY: NavItem[] = [
-  { path: "calendar", label: "Calendar", blurb: "Promises ahead — the planning spine" },
-  { path: "trends", label: "Trending Topics", blurb: "Moving topics, right now" },
-  { path: "potential", label: "Story Scores", blurb: "Published stories ranked to optimise for the trends" },
-  { path: "story-analyser", label: "Story Analyser", blurb: "Audit one story — SEO + E-E-A-T, every signal" },
-  { path: "topic-domains", label: "Topic → Domains", blurb: "Which domains own a topic" },
-  { path: "local-pulse", label: "Local Pulse", blurb: "What's trending by state & city" },
-  { path: "gems", label: "Hidden Gems", blurb: "Already-published, buried — worth re-optimising" },
-  { path: "eip-signals", label: "EIP Signals", blurb: "Subscription & editorial-intelligence signals" },
-  { path: "signals", label: "Signals", blurb: "The raw public record flowing in" },
+// The six lifecycle stages, in working order.
+export const LIFECYCLE: Stage[] = [
+  { verb: "Plan",  label: "Calendar",  path: "calendar",       blurb: "Promises ahead — the planning spine" },
+  { verb: "Brief", label: "Today",     path: "brief",          blurb: "The day's brief — your inflow, scoped to you" },
+  { verb: "In",    label: "Sources",   path: "signals",        blurb: "The public record flowing in" },
+  { verb: "Frame", label: "Analyse",   path: "trends",         blurb: "What's moving + the framing landscape — where you stand" },
+  { verb: "Draft", label: "Compose",   path: "newslist",       blurb: "Stories in flight — draft & commission", minRole: "reporter" },
+  { verb: "Score", label: "Audit",     path: "potential",      blurb: "Fair-chance — distribution-fit + probity", minRole: "desk" },
 ];
 
-// Secondary "Workflow" group — the production/check/newsroom pages stay reachable,
-// just no longer top-level rooms.
-export const WORKFLOW: NavItem[] = [
-  { path: "newslist", label: "Newslist", blurb: "Every story in flight" },
-  { path: "scores", label: "Surface Scores", blurb: "Channel-distribution audit" },
-  { path: "probity", label: "Probity", blurb: "Page-honesty audit" },
-  { path: "standards", label: "Compliance", blurb: "GDPR / DPDPA" },
-  { path: "journalists", label: "Journalists", blurb: "People & coverage gaps" },
-  { path: "brief", label: "Morning brief", blurb: "The day's brief" },
+// Secondary destinations reachable from their stage (kept off the top bar to
+// avoid the old overload). Grouped by the stage they belong to.
+export const WORKFLOW_EXTRA: Stage[] = [
+  { verb: "Frame", label: "Topic → Domains", path: "topic-domains", blurb: "Which domains own a topic" },
+  { verb: "Frame", label: "Local Pulse",     path: "local-pulse",   blurb: "Trending by state & city" },
+  { verb: "Score", label: "Surface Scores",  path: "scores",        blurb: "Per-surface channel audit" },
+  { verb: "Score", label: "Hidden Gems",     path: "gems",          blurb: "Buried, worth re-optimising" },
+  { verb: "Score", label: "Story Analyser",  path: "story-analyser", blurb: "Audit one story" },
+  { verb: "Score", label: "Probity",         path: "probity",       blurb: "Page-honesty audit" },
+  { verb: "Score", label: "Compliance",      path: "standards",     blurb: "GDPR / DPDPA" },
+  { verb: "Brief", label: "EIP Signals",     path: "eip-signals",   blurb: "Subscription & editorial-intelligence signals" },
+  { verb: "Brief", label: "Morning brief",   path: "brief",         blurb: "The day's brief" },
+  { verb: "Plan",  label: "Journalists",     path: "journalists",   blurb: "People & coverage gaps" },
 ];
 
-export const ADMIN: NavItem[] = [
-  { path: "admin/users", label: "Accounts & approvals", blurb: "" },
-  { path: "admin/sources", label: "Sources", blurb: "" },
-  { path: "admin/connectors", label: "Connectors", blurb: "" },
-  { path: "admin/surfaces", label: "Surfaces", blurb: "" },
-  { path: "architecture", label: "Architecture", blurb: "" },
+export const ADMIN: Stage[] = [
+  { verb: "Admin", label: "Accounts & approvals", path: "admin/users",      blurb: "" },
+  { verb: "Admin", label: "Sources",              path: "admin/sources",    blurb: "" },
+  { verb: "Admin", label: "Connectors",           path: "admin/connectors", blurb: "" },
+  { verb: "Admin", label: "Surfaces",             path: "admin/surfaces",   blurb: "" },
+  { verb: "Admin", label: "Architecture",         path: "architecture",     blurb: "" },
 ];
 
-// Flat lookup: path → label, for breadcrumbs.
+// Flat path → label lookup for breadcrumbs (every known surface).
 export const LABEL_BY_PATH: Record<string, string> = Object.fromEntries(
-  [...PRIMARY, ...WORKFLOW, ...ADMIN].map((i) => [i.path, i.label]),
+  [...LIFECYCLE, ...WORKFLOW_EXTRA, ...ADMIN].map((s) => [s.path, s.label]),
 );
+
+// Role ordering for minRole gating.
+const ROLE_RANK: Record<string, number> = { reporter: 0, desk: 1, editor: 2, admin: 3 };
+export function stageVisible(stage: Stage, role: string | null): boolean {
+  if (!stage.minRole) return true;
+  return (ROLE_RANK[role ?? "reporter"] ?? 0) >= ROLE_RANK[stage.minRole];
+}

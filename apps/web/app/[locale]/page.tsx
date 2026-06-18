@@ -11,7 +11,7 @@ import {
 import { endSession, getAccount, roomForRole } from "@/lib/auth";
 import { Sparkline } from "@/components/Sparkline";
 import { topicMomentum } from "@/lib/trends";
-import { PRIMARY, WORKFLOW } from "@/lib/nav";
+import { LIFECYCLE, WORKFLOW_EXTRA } from "@/lib/nav";
 
 const TENANT_SLUG = "self";
 const SNAPSHOT_HOURS = 12;
@@ -198,19 +198,19 @@ export default async function Home({
 
         <hr className="ds-rule my-10" />
 
-        {/* Calendar — the spine. Lead card, prominent. */}
+        {/* Lifecycle — Plan·Calendar lead card, prominent. */}
         <div className="text-left mb-6">
           <Link
-            href={`/${locale}/${PRIMARY[0].path}` as Route}
+            href={`/${locale}/${LIFECYCLE[0].path}` as Route}
             className="block ds-frame p-6 hover:no-underline"
             style={{ textDecoration: "none" }}
           >
-            <p className="ds-label mb-1">Start here</p>
+            <p className="ds-label mb-1">{LIFECYCLE[0].verb} · Start here</p>
             <p
               className="text-2xl font-extrabold mb-1 hover:underline"
               style={{ fontFamily: "var(--font-display)", color: "var(--color-fg-primary)" }}
             >
-              {PRIMARY[0].label}
+              {LIFECYCLE[0].label}
             </p>
             <p
               className="text-sm"
@@ -220,25 +220,26 @@ export default async function Home({
                 lineHeight: 1.5,
               }}
             >
-              {PRIMARY[0].blurb}
+              {LIFECYCLE[0].blurb}
             </p>
           </Link>
         </div>
 
-        {/* Remaining PRIMARY items — intelligence tabs grid */}
+        {/* Remaining lifecycle stages — grid */}
         <div className="grid md:grid-cols-3 gap-4 text-left mb-8">
-          {PRIMARY.slice(1).map((item) => (
+          {LIFECYCLE.slice(1).map((s) => (
             <Link
-              key={item.path}
-              href={`/${locale}/${item.path}` as Route}
+              key={s.path}
+              href={`/${locale}/${s.path}` as Route}
               className="block ds-frame p-4 hover:no-underline"
               style={{ textDecoration: "none" }}
             >
+              <p className="ds-meta mb-1" style={{ color: "var(--color-fg-tertiary)" }}>{s.verb}</p>
               <p
                 className="font-bold mb-1"
                 style={{ fontFamily: "var(--font-display)", color: "var(--color-fg-primary)" }}
               >
-                {item.label}
+                {s.label}
               </p>
               <p
                 className="text-sm"
@@ -248,24 +249,24 @@ export default async function Home({
                   lineHeight: 1.5,
                 }}
               >
-                {item.blurb}
+                {s.blurb}
               </p>
             </Link>
           ))}
         </div>
 
-        {/* Workflow — compact link row */}
+        {/* Secondary surfaces — compact link row */}
         <div className="text-left mb-4" style={{ fontFamily: "var(--font-ui)" }}>
-          <p className="ds-label mb-2">Workflow</p>
+          <p className="ds-label mb-2">More surfaces</p>
           <p className="text-sm flex gap-4 flex-wrap">
-            {WORKFLOW.map((item) => (
+            {WORKFLOW_EXTRA.map((s) => (
               <Link
-                key={item.path}
-                href={`/${locale}/${item.path}` as Route}
+                key={`${s.verb}-${s.path}`}
+                href={`/${locale}/${s.path}` as Route}
                 className="underline"
                 style={{ color: "var(--color-brand)" }}
               >
-                {item.label}
+                {s.label}
               </Link>
             ))}
           </p>
