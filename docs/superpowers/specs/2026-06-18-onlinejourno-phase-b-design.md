@@ -59,9 +59,11 @@ proceed.**
    framing-landscape panel + by-place dimension are out of scope.
 5. **Compute location — request-time in `lib/` (Approach A).** No migration, no worker
    step; mirrors how momentum/trends already compute. YAGNI vs a precompute table.
-6. **Card set — own ∪ peer top topics.** Phase A sourced cards from own momentum only,
-   so `ownRecent > 0` always → `NO ANGLE` could never fire. Broaden the set so peer-led
-   topics (own coverage = 0) appear. A `lib/db.ts` query change, no new surface.
+6. **`NO ANGLE` fires via own=stories.** Phase A's card set already comes from
+   field momentum over signal entities, which spans peer-covered topics. The fix is
+   not a set-union but redefining **own coverage = the tenant's own `stories`** (own
+   published work). When a trending topic has zero own stories, `NO ANGLE` fires. No new
+   surface; `db.ts` query change only. (Implementation: see the Phase B plan, Task 2.)
 
 ## Architecture & data flow
 
@@ -77,7 +79,8 @@ tenants.config.peers = [{domain, name, tier}]            ← the peer set (vendo
                                             enrichment.framing={frame,frame_group,topic,confidence})
 
 PER TOP TOPIC (entity), request-time in lib/:
-   ownRecent   = own mentions this window        (TopicTrend.recent — already have)
+   ownRecent   = own PUBLISHED STORIES on the topic this window (stories, headline ILIKE;
+                 "your angle" = your own work, not the monitored inflow)
    peerRecent  = peer-domain mentions this window (new: entity-count over peer signals)
    peerCount   = # distinct peers covering it
    peerMedian  = median of per-peer mention counts on the topic
