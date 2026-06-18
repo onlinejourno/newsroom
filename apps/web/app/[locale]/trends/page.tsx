@@ -304,11 +304,27 @@ export default async function TrendsPage({
                           {label}
                         </span>
                       </td>
-                      <td
-                        className="py-2.5 pr-4 font-mono text-xs"
-                        style={{ color: "var(--color-fg-secondary)" }}
-                      >
-                        {t.momentum}
+                      <td className="py-2.5 pr-4">
+                        <div className="flex items-center gap-2" style={{ minWidth: 130 }}>
+                          <div
+                            className="h-2 flex-1 rounded-sm overflow-hidden"
+                            style={{ background: "var(--color-border)" }}
+                          >
+                            <div
+                              style={{
+                                width: `${Math.min(100, t.momentum)}%`,
+                                height: "100%",
+                                background: color,
+                              }}
+                            />
+                          </div>
+                          <span
+                            className="font-mono text-xs"
+                            style={{ color: "var(--color-fg-secondary)" }}
+                          >
+                            {t.momentum}
+                          </span>
+                        </div>
                       </td>
                       <td
                         className="py-2.5 pr-4 text-xs font-semibold"
