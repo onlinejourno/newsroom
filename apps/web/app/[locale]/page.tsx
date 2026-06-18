@@ -303,8 +303,8 @@ export default async function Home({
               },
               {
                 k: "User Needs",
-                s: "BBC / smartocto · six needs",
-                d: "Why a reader comes to a story — the six user needs: Update me (the facts, fast) · Keep me on trend (what everyone's discussing) · Give me perspective (the why, the angles) · Educate me (the background to follow it) · Divert me (a moment's relief — human, surprising) · Inspire me (what lifts and moves). Every signal is classified by need, and coverage is audited for balance — so the desk sees if it over-produces 'Update me' and under-serves the growth needs, 'Educate me' and 'Inspire me'.",
+                s: "BBC / smartocto · four drivers",
+                d: "Why a reader comes to a story — the four user-need drivers (ADR 0049): Know (the facts, fast) · Understand (the why, the angles, the background) · Feel (human, surprising, moving) · Do (useful, actionable, service). Every signal is classified by need, and coverage is audited for balance — so the desk sees if it over-produces 'Know' (update) and under-serves the growth needs, Understand, Feel and Do. Extensible per newsroom to the fuller smartocto taxonomy (eight needs under the four drivers).",
               },
               {
                 k: "SEJ Periodic Table",

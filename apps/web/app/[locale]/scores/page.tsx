@@ -310,7 +310,7 @@ export default async function ScoresPage({
           scored for their fair chance on each surface — Discover · News ·
           Search — and, with probity on, whether the page is honest to the
           reader: trackers, consent, weight (ADR 0052). {rows.length} of{" "}
-          {all.length} shown.
+          {all.length} scored.
         </p>
       </header>
 
@@ -324,7 +324,7 @@ export default async function ScoresPage({
             name="url"
             required
             defaultValue={url ?? ""}
-            placeholder="https://www.thehindu.com/…/article…ece"
+            placeholder="https://example.com/…/article"
             className="flex-1 min-w-64 border px-3 py-2 text-sm"
             style={{
               borderColor: "var(--color-rule)",
