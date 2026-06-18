@@ -1551,3 +1551,120 @@ export async function storyClusters(
   );
   return rows;
 }
+
+// ── Phase B: competitive standings ───────────────────────────────────────────
+
+export type Peer = { domain: string; name: string; tier: string };
+
+/** The tenant's peer set from config (vendor-neutral — never hardcoded).
+ *  config.peers = [{domain, name, tier}]. Empty array when unset. */
+export async function tenantPeers(tenantId: string): Promise<Peer[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ peers: Peer[] | null }>(
+    "select config->'peers' as peers from tenants where id = $1",
+    [tenantId],
+  );
+  const raw = rows[0]?.peers;
+  return Array.isArray(raw) ? raw.filter((p) => p && typeof p.domain === "string") : [];
+}
+
+export type OwnStanding = {
+  topic: string;
+  ownRecent: number;
+  ownCombative: number;
+  ownExplanatory: number;
+  nOwn: number;
+};
+
+/** Per-topic own-coverage from the tenant's published stories in the window.
+ *  Topic match is headline ILIKE — stories may not carry the analyse-entity
+ *  array that signals do. Framing group from stories.enrichment->'framing'. */
+export async function ownTopicStandings(
+  tenantId: string,
+  topics: string[],
+  windowHours: number,
+): Promise<Map<string, OwnStanding>> {
+  if (topics.length === 0) return new Map();
+  const pool = getPool();
+  const { rows } = await pool.query<OwnStanding>(
+    `
+    select t.topic,
+           count(st.id)::int as "ownRecent",
+           count(*) filter (where st.enrichment->'framing'->>'frame_group' = 'combative')::int   as "ownCombative",
+           count(*) filter (where st.enrichment->'framing'->>'frame_group' = 'explanatory')::int as "ownExplanatory",
+           count(*) filter (where st.enrichment->'framing' is not null)::int as "nOwn"
+      from unnest($2::text[]) as t(topic)
+      left join stories st
+        on st.tenant_id = $1
+       and st.status = 'published'
+       and st.headline ilike '%' || t.topic || '%'
+       and coalesce(st.published_at, st.created_at)
+           >= now() - make_interval(hours => $3)
+     group by t.topic
+    `,
+    [tenantId, topics, windowHours],
+  );
+  return new Map(rows.map((r) => [r.topic, r]));
+}
+
+export type PeerStanding = {
+  topic: string;
+  peerRecent: number;
+  peerCount: number;
+  perDomain: number[]; // per-peer mention counts (for the median)
+  peerCombative: number;
+  peerExplanatory: number;
+  nPeer: number;
+};
+
+/** Per-topic peer-coverage from signals whose raw_payload.domain is in the
+ *  peer set. Topic match uses the analyse-entity array (as topicMomentum does).
+ *  perDomain feeds the median computed in the page. */
+export async function peerTopicStandings(
+  tenantId: string,
+  topics: string[],
+  windowHours: number,
+  peerDomains: string[],
+): Promise<Map<string, PeerStanding>> {
+  if (topics.length === 0 || peerDomains.length === 0) return new Map();
+  const pool = getPool();
+  const { rows } = await pool.query<{
+    topic: string;
+    peerRecent: number;
+    peerCount: number;
+    perDomain: number[];
+    peerCombative: number;
+    peerExplanatory: number;
+    nPeer: number;
+  }>(
+    `
+    with hits as (
+      select t.topic,
+             s.raw_payload->>'domain' as domain,
+             s.enrichment->'framing'->>'frame_group' as frame_group,
+             (s.enrichment->'framing' is not null) as coded
+        from unnest($2::text[]) as t(topic)
+        join signals s
+          on s.tenant_id = $1
+         and s.raw_payload->>'domain' = any($4::text[])
+         and s.enrichment->'analyse'->'entities' @> to_jsonb(array[t.topic])
+         and coalesce(s.published_at, s.fetched_at)
+             >= now() - make_interval(hours => $3)
+    ),
+    per_domain as (
+      select topic, domain, count(*)::int as n from hits group by topic, domain
+    )
+    select h.topic,
+           count(*)::int as "peerRecent",
+           count(distinct h.domain)::int as "peerCount",
+           coalesce((select array_agg(pd.n) from per_domain pd where pd.topic = h.topic), '{}')::int[] as "perDomain",
+           count(*) filter (where h.frame_group = 'combative')::int as "peerCombative",
+           count(*) filter (where h.frame_group = 'explanatory')::int as "peerExplanatory",
+           count(*) filter (where h.coded)::int as "nPeer"
+      from hits h
+     group by h.topic
+    `,
+    [tenantId, topics, windowHours, peerDomains],
+  );
+  return new Map(rows.map((r) => [r.topic, r]));
+}
