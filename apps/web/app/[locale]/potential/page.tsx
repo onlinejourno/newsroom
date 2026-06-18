@@ -408,8 +408,8 @@ export default async function PotentialPage({
           </p>
           <p className="text-sm" style={{ color: "var(--color-fg-secondary)" }}>
             Story Scores ranks your newsroom&rsquo;s published stories (last 48h)
-            against live trends. Connect a corpus — set <code>OJ_DEMO_HOST</code>{" "}
-            (demo: <code>thehindu.com</code>) or your CMS — then run the pipeline.
+            against live trends. Connect your newsroom&rsquo;s CMS or a content
+            source, then run the pipeline.
           </p>
         </div>
       ) : null}

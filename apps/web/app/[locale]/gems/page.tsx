@@ -145,8 +145,8 @@ export default async function GemsPage({
           </p>
           <p className="text-sm" style={{ color: "var(--color-fg-secondary)" }}>
             Hidden Gems resurfaces already-published stories worth re-optimising.
-            Connect a corpus — set <code>OJ_DEMO_HOST</code> (demo:{" "}
-            <code>thehindu.com</code>) or your CMS — then run the pipeline.
+            Connect your newsroom&rsquo;s CMS or a content source, then run the
+            pipeline.
           </p>
         </div>
       ) : null}
