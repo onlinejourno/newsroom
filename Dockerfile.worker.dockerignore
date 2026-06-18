@@ -1,0 +1,14 @@
+# Build context for Dockerfile.worker. Unlike the web .dockerignore, this KEEPS
+# packages/*-py and infra/ (the pipeline needs them) and drops the Node web app.
+**/node_modules
+**/.next
+.git
+.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+apps/web
+**/.DS_Store
+**/*.log
+**/.env*
+.scratch
