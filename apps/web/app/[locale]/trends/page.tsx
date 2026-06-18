@@ -28,7 +28,7 @@ import InterestTrajectory from "@/components/charts/InterestTrajectory";
 
 export const dynamic = "force-dynamic";
 
-const TENANT_SLUG = "self";
+const TENANT_SLUG = process.env.OJ_TENANT_SLUG ?? "self";
 const TOP = 12;
 
 // Indian states and union territories for coarse entity-type classification.
