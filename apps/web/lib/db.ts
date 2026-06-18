@@ -1507,3 +1507,47 @@ export async function outletChannelMarkers(
   );
   return rows;
 }
+
+// Google-News-style narrative clusters: threads (from the `cluster` agent's one
+// LLM pass) with their member signals. Recent, multi-signal threads only — i.e.
+// real developing stories, not singletons.
+export type StoryClusterItem = { headline: string | null; url: string; source: string | null };
+export type StoryCluster = {
+  id: string;
+  title: string;
+  members: number;
+  items: StoryClusterItem[];
+};
+
+export async function storyClusters(
+  tenantId: string,
+  sinceHours = 168,
+  limit = 12,
+): Promise<StoryCluster[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<StoryCluster>(
+    `
+    select t.id::text as id, t.title,
+           count(tl.signal_id)::int as members,
+           coalesce(
+             jsonb_agg(
+               jsonb_build_object('headline', s.headline, 'url', s.url, 'source', src.name)
+               order by coalesce(s.published_at, s.fetched_at) desc
+             ),
+             '[]'::jsonb
+           ) as items
+      from threads t
+      join thread_links tl on tl.thread_id = t.id
+      join signals s on s.id = tl.signal_id
+      left join sources src on src.id = s.source_id
+     where t.tenant_id = $1
+       and t.opened_at >= now() - make_interval(hours => $2)
+     group by t.id, t.title
+    having count(tl.signal_id) >= 2
+     order by members desc, t.opened_at desc
+     limit $3
+    `,
+    [tenantId, sinceHours, limit],
+  );
+  return rows;
+}

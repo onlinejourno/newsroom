@@ -5,6 +5,7 @@ import {
   publishedStoriesForScoring,
   outletChannelMarkers,
   signalsMentioning,
+  storyClusters,
   tenantIdForSlug,
   tenantOutletDomain,
   topicDomains,
@@ -92,9 +93,10 @@ export default async function TrendsPage({
   // Interest Trajectory (#107): per-topic signal-interest series + outlet
   // Google-News / Discover appearance markers, for the top topics.
   const trajTopics = topics.slice(0, 6).map((t) => t.topic);
-  const [trajSeries, chanMarkers] = await Promise.all([
+  const [trajSeries, chanMarkers, clusters] = await Promise.all([
     topicInterestSeries(tenantId, trajTopics, 7),
     outletChannelMarkers(tenantId, 7),
+    storyClusters(tenantId, 168, 12),
   ]);
 
   const [drill, owners] = await Promise.all([
@@ -343,6 +345,81 @@ export default async function TrendsPage({
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      {/* ── Section 1·5: Story Clusters (Google-News-style narrative threads) ── */}
+      <section className="mb-12">
+        <h2
+          className="text-xl font-bold mb-1"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Story Clusters
+        </h2>
+        <p
+          className="text-sm mb-4"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+        >
+          Related signals grouped into developing stories — the narrative threads
+          forming across the inflow. Each cluster is one story; the count is how
+          many signals feed it.
+        </p>
+
+        {clusters.length === 0 ? (
+          <p
+            className="ds-frame p-4 text-sm"
+            style={{ color: "var(--color-fg-secondary)", fontFamily: "var(--font-ui)" }}
+          >
+            No clusters yet — fills on the next pipeline <code>cluster</code> run.
+          </p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {clusters.map((c) => (
+              <div
+                key={c.id}
+                className="ds-panel p-4"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                <div className="flex items-baseline justify-between gap-3 mb-2">
+                  <h3
+                    className="font-semibold text-sm"
+                    style={{ color: "var(--color-fg-primary)" }}
+                  >
+                    {c.title}
+                  </h3>
+                  <span
+                    className="text-xs whitespace-nowrap"
+                    style={{ color: "var(--color-fg-tertiary)" }}
+                  >
+                    {c.members} signals
+                  </span>
+                </div>
+                <ul className="space-y-1">
+                  {c.items.slice(0, 4).map((it, i) => (
+                    <li key={i} className="text-xs leading-snug">
+                      <a
+                        href={it.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                        style={{ color: "var(--color-fg-secondary)" }}
+                      >
+                        {it.headline ?? it.url}
+                      </a>
+                      {it.source ? (
+                        <span style={{ color: "var(--color-fg-tertiary)" }}> · {it.source}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                  {c.items.length > 4 ? (
+                    <li className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
+                      +{c.items.length - 4} more
+                    </li>
+                  ) : null}
+                </ul>
+              </div>
+            ))}
           </div>
         )}
       </section>

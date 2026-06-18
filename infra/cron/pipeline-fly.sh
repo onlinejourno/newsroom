@@ -25,6 +25,7 @@ echo "── $(date -u '+%Y-%m-%dT%H:%M:%SZ') onlinejourno-worker pipeline · te
 step onlinejourno-ingest  onlinejourno-ingest  collect       --tenant "$TENANT"
 step onlinejourno-agents  onlinejourno-agents  enrich        --tenant "$TENANT" --since-hours 48 --limit 80
 step onlinejourno-agents  onlinejourno-agents  frame         --tenant "$TENANT" --since-hours 48 --limit 12
+step onlinejourno-agents  onlinejourno-agents  cluster       --tenant "$TENANT" --since-hours 24
 step onlinejourno-agents  onlinejourno-agents  claim-extract --tenant "$TENANT" --since-hours 48 --limit 12
 step onlinejourno-agents  onlinejourno-agents  calendar-fuse --tenant "$TENANT"
 step onlinejourno-agents  onlinejourno-agents  affinity-log  --tenant "$TENANT"
