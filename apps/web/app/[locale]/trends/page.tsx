@@ -259,9 +259,8 @@ export default async function TrendsPage({
           className="text-sm mb-4"
           style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
         >
-          Topics ranked by momentum in the last {windowHours}h window. Direction
-          compares recent vs prior half-window; prediction reflects momentum
-          band trajectory.
+          Each trending topic above, opened up — the signals driving it and the
+          domains that own the conversation, over the last {windowHours}h.
         </p>
 
         {topics.length === 0 ? (
