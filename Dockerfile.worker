@@ -19,5 +19,9 @@ COPY packages ./packages
 COPY infra/cron/pipeline-fly.sh ./infra/cron/pipeline-fly.sh
 RUN uv sync --frozen --no-dev
 
+# Put the baked venv on PATH so the entrypoint runs console scripts directly —
+# no `uv run` at runtime, so no per-invocation re-sync / playwright re-download.
+ENV PATH="/app/.venv/bin:$PATH"
+
 # One pipeline pass, then exit (the Fly schedule re-runs it daily).
 ENTRYPOINT ["bash", "infra/cron/pipeline-fly.sh"]

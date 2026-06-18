@@ -40,7 +40,7 @@ jobs:
       - name: Ping health endpoint
         id: ping
         env:
-          TARGET_URL: https://app.onlinejourno.com/api/health
+          TARGET_URL: https://app.onlinejourno.com/api/ready
         run: |
           set +e
           # Capture HTTP status code and total time.
