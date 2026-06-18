@@ -9,6 +9,7 @@ import {
 } from "@/lib/db";
 import { getOrFetchOutletKeywords } from "@/lib/outletKeywords";
 import { momentumLabel, topicMomentum } from "@/lib/trends";
+import MomentumBar from "@/components/charts/MomentumBar";
 
 export const dynamic = "force-dynamic";
 
@@ -314,6 +315,45 @@ export default async function TrendsPage({
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      {/* ── Section 1b: Topic Momentum Score (chart) ── */}
+      <section className="mb-12">
+        <h2
+          className="text-xl font-bold mb-1"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Topic Momentum Score
+        </h2>
+        <p
+          className="text-sm mb-4"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+        >
+          The same topics, as a chart — bar length is momentum (0–100), colour is
+          trend direction. Hover for the editorial signal and recent vs prior
+          mentions; the dashed line marks 50 = average.
+        </p>
+        {topics.length === 0 ? (
+          <div
+            className="ds-frame p-4 text-sm"
+            style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+          >
+            No trending topics in the current window yet.
+          </div>
+        ) : (
+          <div className="ds-frame p-2">
+            <MomentumBar
+              data={topics.map((t) => ({
+                topic: t.topic,
+                momentum: t.momentum,
+                signal: momentumLabel(t.momentum),
+                trajectory: t.trajectory,
+                recent: t.recent,
+                prior: t.prior,
+              }))}
+            />
           </div>
         )}
       </section>
