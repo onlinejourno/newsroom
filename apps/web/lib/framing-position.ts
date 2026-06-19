@@ -28,8 +28,11 @@ export type Position = {
 
 // Trajectory strings (lib/trends.ts predictTrajectory) that mean the topic has
 // crested. Everything else among live topics is treated as rising.
+// PEAK = a topic that has genuinely crested (declining or plateaued). NOT
+// "near peak — may plateau": predictTrajectory returns that for any topic at
+// its max heat (peakRatio≈1), i.e. an ASCENDING topic — that belongs in the
+// ON IT / BEHIND coverage check, not PEAK.
 const PEAKED = new Set<string>([
-  "near peak — may plateau",
   "at peak — watch for plateau",
   "fading fast — post-peak",
   "cooling — interest declining",

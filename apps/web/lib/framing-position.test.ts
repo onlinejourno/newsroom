@@ -2,9 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { derivePosition, implicationFor, type PositionInputs } from "./framing-position";
 
+// "near peak — may plateau" is what predictTrajectory returns for an ASCENDING
+// topic at its max heat (peakRatio≈1) — the common live case, and NOT a PEAK.
 const base: PositionInputs = {
   ownRecent: 3, peerRecent: 10, peerCount: 4, peerMedian: 2,
-  trajectory: "still building — peak not yet reached",
+  trajectory: "near peak — may plateau",
   ownCombative: 1, ownExplanatory: 2,
   peerCombative: 8, peerExplanatory: 1,
   nOwn: 6, nPeer: 40,
@@ -18,6 +20,25 @@ test("NO ANGLE when own coverage is zero and peers cover it", () => {
 test("PEAK when own covers and trajectory has peaked", () => {
   const p = derivePosition({ ...base, trajectory: "at peak — watch for plateau" });
   assert.equal(p.tag, "PEAK");
+});
+
+test("only declining trajectories are PEAK; ascending/steady are not (regression)", () => {
+  for (const traj of [
+    "at peak — watch for plateau",
+    "fading fast — post-peak",
+    "cooling — interest declining",
+  ]) {
+    assert.equal(derivePosition({ ...base, ownRecent: 5, trajectory: traj }).tag, "PEAK");
+  }
+  // ascending (max-heat) topic — must fall through to the coverage ladder, not PEAK
+  assert.equal(
+    derivePosition({ ...base, ownRecent: 5, peerMedian: 2, trajectory: "near peak — may plateau" }).tag,
+    "ON_IT",
+  );
+  assert.equal(
+    derivePosition({ ...base, ownRecent: 5, peerMedian: 2, trajectory: "momentum holding steady" }).tag,
+    "ON_IT",
+  );
 });
 
 test("BEHIND when rising and own is below the peer median", () => {
