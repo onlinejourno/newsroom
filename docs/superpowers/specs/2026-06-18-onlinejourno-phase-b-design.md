@@ -213,3 +213,5 @@ Define success; loop until verified.
   `coded_articles`). Demo pattern: `infra/seeds/demo_sources.sql`.
 - ADR 0046 (canonical data model; the competitive layer fold-in), ADR 0061 (charting).
 - Tracker: #107 (Trends parity). Supersedes nothing; extends Phase A.
+- **User + reference guide:** `docs/guides/where-you-stand.md` (tag meanings, data flow,
+  derivation, peer config, troubleshooting). Shipped via PR #109.
