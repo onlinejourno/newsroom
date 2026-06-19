@@ -1551,3 +1551,75 @@ export async function storyClusters(
   );
   return rows;
 }
+
+// ── BRIEF·Today ──────────────────────────────────────────────────────────────
+
+export type TodayLead = {
+  id: string;
+  title: string;
+  beat: string | null;
+  importance: string;
+  status: string;
+  trend_score: number | null;
+  note: string | null;
+  created_at: Date | string;
+  trend_reason: string | null;
+  user_need: string | null;
+  sources: number;
+};
+
+/** Open leads (idea/pitched/assigned) ranked by importance then trend_score.
+ *  sources = signals whose analyse-entities contain the lead topic (else the
+ *  linked signal counts as 1). */
+export async function openLeadsRanked(tenantId: string, limit: number): Promise<TodayLead[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<TodayLead>(
+    `
+    select l.id, l.title, l.beat, l.importance, l.status, l.trend_score, l.note,
+           l.created_at, s.trend_reason,
+           s.enrichment->'classify'->>'user_need' as user_need,
+           greatest(
+             coalesce((select count(*) from signals s2
+                        where s2.tenant_id = l.tenant_id and l.topic is not null
+                          and s2.enrichment->'analyse'->'entities' @> to_jsonb(array[l.topic]))::int, 0),
+             case when l.signal_id is not null then 1 else 0 end
+           ) as sources
+      from story_leads l
+      left join signals s on s.id = l.signal_id
+     where l.tenant_id = $1
+       and l.status in ('idea','pitched','assigned')
+     order by case l.importance
+                when 'urgent' then 0 when 'high' then 1 when 'normal' then 2 else 3 end,
+              l.trend_score desc nulls last,
+              l.created_at desc
+     limit $2
+    `,
+    [tenantId, limit],
+  );
+  return rows;
+}
+
+export type NowCountsRow = {
+  signalsIn: number;
+  leadsNeedingDecision: number;
+  sourcesLive: number;
+  publishedToday: number;
+};
+
+export async function newsroomNowCounts(tenantId: string): Promise<NowCountsRow> {
+  const pool = getPool();
+  const { rows } = await pool.query<NowCountsRow>(
+    `
+    select
+      (select count(*) from signals where tenant_id = $1
+         and coalesce(published_at, fetched_at) >= now() - interval '24 hours')::int as "signalsIn",
+      (select count(*) from story_leads where tenant_id = $1
+         and status in ('idea','pitched','assigned'))::int as "leadsNeedingDecision",
+      (select count(*) from sources where tenant_id = $1 and enabled)::int as "sourcesLive",
+      (select count(*) from stories where tenant_id = $1 and status = 'published'
+         and published_at >= date_trunc('day', now() at time zone 'Asia/Kolkata'))::int as "publishedToday"
+    `,
+    [tenantId],
+  );
+  return rows[0] ?? { signalsIn: 0, leadsNeedingDecision: 0, sourcesLive: 0, publishedToday: 0 };
+}
