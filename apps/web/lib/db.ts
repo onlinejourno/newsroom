@@ -1750,3 +1750,13 @@ export async function newsroomNowCounts(tenantId: string): Promise<NowCountsRow>
   );
   return rows[0] ?? { signalsIn: 0, leadsNeedingDecision: 0, sourcesLive: 0, publishedToday: 0 };
 }
+
+/** The install's newsroom — the oldest non-archived tenant. Fallback when there's
+ *  no session (one-newsroom-per-install). Null on a fresh, unseeded DB. */
+export async function defaultTenantId(): Promise<string | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ id: string }>(
+    "select id from tenants where archived_at is null order by created_at asc limit 1",
+  );
+  return rows[0]?.id ?? null;
+}
