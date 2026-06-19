@@ -1077,6 +1077,16 @@ export async function tenantOutletDomain(tenantId: string): Promise<string> {
   return rows[0]?.domain ?? "";
 }
 
+/** The newsroom's city from tenant config (vendor-neutral; empty when unset). */
+export async function tenantCity(tenantId: string): Promise<string> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ city: string | null }>(
+    "select config->>'city' as city from tenants where id = $1",
+    [tenantId],
+  );
+  return rows[0]?.city ?? "";
+}
+
 // A story row pre-shaped for scorePotential (published stories only).
 export type ScorableStoryRow = {
   id: string;
