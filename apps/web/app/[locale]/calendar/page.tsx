@@ -1,6 +1,7 @@
 import CalendarApp, { type CalEvent, type Beat } from "@/components/calendar/CalendarApp";
-import { istToday, toCalendarDate } from "@/lib/calendar";
-import { fetchCalendarEvents, tenantIdForSlug } from "@/lib/db";
+import CalendarHeader, { type NextDue } from "@/components/calendar/CalendarHeader";
+import { istToday, toCalendarDate, classify, deadlineCountdown, calendarSummary } from "@/lib/calendar";
+import { fetchCalendarEvents, tenantIdForSlug, tenantCity } from "@/lib/db";
 
 import type { Route } from "next";
 import { redirect } from "next/navigation";
@@ -92,6 +93,25 @@ export default async function CalendarPage({
     canCommission ? assignableReporters(tenantId) : Promise.resolve([] as { id: string; name: string }[]),
   ]);
 
+  const today = istToday();
+  const summary = calendarSummary(rows, today);
+  const city = await tenantCity(tenantId);
+  const nextDue: NextDue[] = rows
+    .filter((r) => r.outcome === null && r.target_date !== null)
+    .slice(0, 3)
+    .map((r) => {
+      const t = toCalendarDate(r.target_date!);
+      return {
+        what: r.what,
+        who: r.who ?? "",
+        countdown: deadlineCountdown(r.precision, t, today),
+        overdue: classify(t, today).status === "past_due",
+      };
+    });
+  const dateLabel = new Intl.DateTimeFormat("en-GB", {
+    weekday: "short", day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata",
+  }).format(new Date());
+
   const events: CalEvent[] = rows.map((r) => ({
     id: r.id,
     who: r.who ?? "",
@@ -122,14 +142,17 @@ export default async function CalendarPage({
   }
 
   return (
-    <CalendarApp
-      events={events}
-      beats={[...beatMap.values()]}
-      todayISO={todayISO}
-      locale={locale}
-      canCommission={canCommission}
-      commission={commissionEvent}
-      reporters={reporters}
-    />
+    <main className="min-h-screen max-w-6xl mx-auto p-6 md:p-10">
+      <CalendarHeader summary={summary} nextDue={nextDue} dateLabel={dateLabel} city={city} />
+      <CalendarApp
+        events={events}
+        beats={[...beatMap.values()]}
+        todayISO={todayISO}
+        locale={locale}
+        canCommission={canCommission}
+        commission={commissionEvent}
+        reporters={reporters}
+      />
+    </main>
   );
 }
