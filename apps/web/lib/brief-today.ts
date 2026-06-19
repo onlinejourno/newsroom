@@ -92,8 +92,8 @@ export function newsroomNow(c: NowCounts): NowStat[] {
 
 export const TONE_COLOR: Record<Tone, string> = {
   neutral: "var(--color-fg-tertiary)",
-  good: "var(--ioj-green-600)",
+  good: "var(--color-ioj-green-600)",
   info: "var(--color-brand)",
-  warn: "var(--amber-600)",
+  warn: "var(--color-amber-600)",
   accent: "var(--color-brand)",
 };
