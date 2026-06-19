@@ -4,8 +4,14 @@ import {
   fetchSignalUrls,
   listBeats,
   tenantIdForSlug,
+  openLeadsRanked,
+  newsroomNowCounts,
+  publishedPerDay,
+  tenantCity,
 } from "@/lib/db";
 import { getAccount } from "@/lib/auth";
+import TodayHome from "@/components/brief/TodayHome";
+import { leadToCard, newsroomNow } from "@/lib/brief-today";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +66,26 @@ export default async function BriefPage({
       ? userBeatSlug
       : null);
   const brief = tenantId ? await fetchLatestBrief(tenantId, pick) : null;
+
+  const tid = tenantId ?? "";
+  const [leads, counts, published7d] = await Promise.all([
+    tid ? openLeadsRanked(tid, 8) : Promise.resolve([]),
+    tid ? newsroomNowCounts(tid) : Promise.resolve({ signalsIn: 0, leadsNeedingDecision: 0, sourcesLive: 0, publishedToday: 0 }),
+    tid ? publishedPerDay(tid, 7) : Promise.resolve([]),
+  ]);
+  const cards = leads.map((l) =>
+    leadToCard(
+      l,
+      l.trend_reason || l.user_need ? { trend_reason: l.trend_reason, user_need: l.user_need } : null,
+      l.sources,
+    ),
+  );
+  const stats = newsroomNow(counts);
+  const city = tid ? ((await tenantCity(tid)) || null) : null;
+  const firstName = (account?.display_name ?? account?.email ?? "there").split("@")[0].split(" ")[0];
+  const dateLabel = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata",
+  }).format(new Date());
 
   const beatPicker = beats.length ? (
     <form
@@ -127,8 +153,23 @@ export default async function BriefPage({
   const beat = (brief.content?.meta?.beat as string) ?? "desk";
 
   return (
-    <main className="min-h-screen max-w-3xl mx-auto p-6 md:p-10">
-      {beatPicker}
+    <>
+      <TodayHome
+        firstName={firstName}
+        dateLabel={dateLabel}
+        city={city}
+        cards={cards}
+        stats={stats}
+        windowLabel="last 24h"
+        published7d={published7d}
+      />
+      <div className="max-w-5xl mx-auto px-6 md:px-10">
+        <hr style={{ borderColor: "var(--color-rule)", margin: "8px 0 24px" }} />
+        <h2 className="ds-h2" id="todays-brief">Today&rsquo;s composed brief</h2>
+      </div>
+      {/* existing composed-digest JSX unchanged below */}
+      <main className="min-h-screen max-w-3xl mx-auto p-6 md:p-10">
+        {beatPicker}
       <header className="mb-8">
         <p className="ds-label mb-2">OnlineJourno · Morning Brief</p>
         <h1
@@ -206,5 +247,6 @@ export default async function BriefPage({
         </div>
       )}
     </main>
+    </>
   );
 }

@@ -1623,3 +1623,13 @@ export async function newsroomNowCounts(tenantId: string): Promise<NowCountsRow>
   );
   return rows[0] ?? { signalsIn: 0, leadsNeedingDecision: 0, sourcesLive: 0, publishedToday: 0 };
 }
+
+/** Newsroom city from tenant config (vendor-neutral; "" when unset). */
+export async function tenantCity(tenantId: string): Promise<string> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ city: string | null }>(
+    "select config->>'city' as city from tenants where id = $1",
+    [tenantId],
+  );
+  return rows[0]?.city ?? "";
+}
