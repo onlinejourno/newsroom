@@ -1066,7 +1066,7 @@ export async function tenantRegion(tenantId: string): Promise<string> {
 }
 
 /** The outlet's primary domain from tenant config (vendor-neutral — no hardcoded
- *  masthead; the demo tenant sets this to thehindu.com via demo_sources.sql).
+ *  masthead; the demo tenant's value is seeded via demo_sources.sql).
  *  Empty string when unset, so callers degrade gracefully. */
 export async function tenantOutletDomain(tenantId: string): Promise<string> {
   const pool = getPool();
