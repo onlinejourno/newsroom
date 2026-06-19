@@ -95,5 +95,5 @@ export const TONE_COLOR: Record<Tone, string> = {
   good: "var(--color-ioj-green-600)",
   info: "var(--color-brand)",
   warn: "var(--color-amber-600)",
-  accent: "var(--color-brand)",
+  accent: "var(--color-urgent)",
 };

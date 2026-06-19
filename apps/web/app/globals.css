@@ -314,14 +314,14 @@ a:hover {
 @media (max-width: 880px) { .today-grid { grid-template-columns: 1fr; } }
 .lead-card { display: flex; gap: 0; border: 1px solid var(--color-rule); background: var(--color-paper-card); margin-bottom: 12px; }
 .lead-card__sev { width: 4px; flex: 0 0 4px; }
-.lead-card__sev--high { background: var(--color-brand); }
+.lead-card__sev--high { background: var(--color-urgent); }
 .lead-card__sev--med { background: var(--color-amber-600); }
 .lead-card__sev--low { background: var(--color-rule); }
 .lead-card__body { padding: 14px 16px; flex: 1; }
 .lead-card__top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-family: var(--font-ui); font-size: 12px; color: var(--color-fg-tertiary); }
 .lead-card__time { font-family: var(--font-mono); }
 .tag { padding: 2px 8px; border: 1px solid var(--color-rule); font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.02em; }
-.tag--pot { color: var(--color-brand); border-color: var(--color-brand); }
+.tag--pot { color: var(--color-urgent); border-color: var(--color-urgent); }
 .lead-card__hl { font-family: var(--font-display); font-size: 17px; font-weight: 600; margin: 0 0 4px; }
 .lead-card__why { font-family: var(--font-ui); font-size: 13px; color: var(--color-fg-secondary); margin: 0 0 10px; }
 .lead-card__actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
