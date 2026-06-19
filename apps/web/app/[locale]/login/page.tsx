@@ -2,16 +2,16 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import {
-  accountByEmail,
   roomForRole,
   startSession,
+  userByEmail,
   verifyPassword,
 } from "@/lib/auth";
-import { listJournalists, tenantIdForSlug } from "@/lib/db";
+import { listJournalists } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-const TENANT_SLUG = "self";
 const DEMO = process.env.DEMO_SIGNIN === "1";
 
 export default async function LoginPage({
@@ -23,17 +23,15 @@ export default async function LoginPage({
 }) {
   const { locale } = await params;
   const { error } = await searchParams;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const demoAccounts =
     DEMO && tenantId ? await listJournalists(tenantId) : [];
 
   async function login(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
-    if (!tenantId) return;
     const email = String(formData.get("email") ?? "").trim();
     const pw = String(formData.get("password") ?? "");
-    const acct = await accountByEmail(tenantId, email);
+    const acct = await userByEmail(email);
     if (!acct || !verifyPassword(pw, acct.password_hash)) {
       redirect(`/${locale}/login?error=bad` as Route);
     }
@@ -45,10 +43,8 @@ export default async function LoginPage({
   async function demoLogin(formData: FormData) {
     "use server";
     if (!DEMO) return;
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
-    if (!tenantId) return;
     const email = String(formData.get("who") ?? "");
-    const acct = await accountByEmail(tenantId, email);
+    const acct = await userByEmail(email);
     if (!acct) return;
     await startSession(acct.id);
     redirect(`/${locale}/${roomForRole(acct.role, acct.profile_slug)}` as Route);

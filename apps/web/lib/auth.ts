@@ -104,17 +104,15 @@ export async function accountByEmail(
 }
 
 /** Resolve a login by email across all tenants (one-newsroom-per-install: emails
- *  are globally unique in practice). Returns the credential + the user's tenant. */
+ *  are globally unique in practice). Returns the full account + credential, so the
+ *  caller has role/profile_slug/tenant_id for the post-login redirect. */
 export async function userByEmail(
   email: string,
-): Promise<{ id: string; tenant_id: string; status: string; password_hash: string | null } | null> {
-  const { rows } = await pool().query<{
-    id: string;
-    tenant_id: string;
-    status: string;
-    password_hash: string | null;
-  }>(
-    "select id, tenant_id, status, password_hash from users where lower(email) = lower($1) order by created_at limit 1",
+): Promise<(Account & { password_hash: string | null }) | null> {
+  const { rows } = await pool().query(
+    `${SELECT.replace("j.region", "j.region, u.password_hash")}
+       where lower(u.email) = lower($1)
+       order by u.created_at asc limit 1`,
     [email],
   );
   return rows[0] ?? null;
