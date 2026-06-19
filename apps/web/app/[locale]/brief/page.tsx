@@ -131,19 +131,27 @@ export default async function BriefPage({
   ) : null;
 
   if (!brief) {
+    // Today is the primary home — it renders even with no composed digest yet.
     return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-xl text-center">
+      <>
+        <TodayHome
+          firstName={firstName}
+          dateLabel={dateLabel}
+          city={city}
+          cards={cards}
+          stats={stats}
+          windowLabel="last 24h"
+          published7d={published7d}
+        />
+        <div className="max-w-5xl mx-auto px-6 md:px-10">
+          <hr style={{ borderColor: "var(--color-rule)", margin: "8px 0 24px" }} />
+          <h2 className="ds-h2" id="todays-brief">Today&rsquo;s composed brief</h2>
           {beatPicker}
-          <p className="ds-label mb-2">OnlineJourno · Brief</p>
-          <h1 className="text-3xl font-bold mb-4" style={{ fontFamily: "var(--font-display)" }}>
-            No brief yet.
-          </h1>
-          <p className="text-base" style={{ fontFamily: "var(--font-body)", color: "var(--color-fg-2)" }}>
-            Run <code>onlinejourno-agents shortlist</code> then <code>brief</code> to compose one.
+          <p className="empty-note" style={{ marginTop: 12 }}>
+            No brief composed yet — run <code>onlinejourno-agents shortlist</code> then <code>brief</code>.
           </p>
         </div>
-      </main>
+      </>
     );
   }
 
