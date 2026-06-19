@@ -110,3 +110,81 @@ export function classify(target: Date, today: Date): CalendarStatus {
     actionable: daysOut <= 90,
   };
 }
+
+// ── Editorial Calendar surface helpers (PLAN·Calendar) ───────────────────────
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function addDays(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+}
+
+/** Monday (local midnight) of the week containing `d`. */
+function weekStart(d: Date): Date {
+  const off = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
+  return addDays(new Date(d.getFullYear(), d.getMonth(), d.getDate()), -off);
+}
+
+/** A precision-honest deadline label. Promises carry day/month/quarter/… precision
+ * and no time-of-day, so coarse precisions never get a fake day count. */
+export function deadlineCountdown(precision: string, target: Date, today: Date): string {
+  const s = classify(target, today);
+  if (s.status === "past_due") {
+    if (precision === "day") {
+      return s.daysOverdue === 1 ? "overdue by 1 day" : `overdue by ${s.daysOverdue} days`;
+    }
+    return "overdue";
+  }
+  if (s.status === "due_today") return "today";
+  switch (precision) {
+    case "day":
+      return s.daysOut === 1 ? "tomorrow" : `in ${s.daysOut} days`;
+    case "month":
+      return `by end of ${MONTHS[target.getMonth()]}`;
+    case "quarter":
+      return "this quarter";
+    case "fiscal_year":
+      return "this fiscal year";
+    case "year":
+      return `in ${target.getFullYear()}`;
+    default:
+      return "date TBD";
+  }
+}
+
+export type CalSummaryInput = {
+  target_date: Date | string | null;
+  precision: string;
+  outcome: string | null;
+  lead_id: string | null;
+};
+export type CalSummary = {
+  promisesThisWeek: number;
+  atRisk: number;
+  unassigned: number;
+  readyToFile: number;
+};
+
+/** Promise-health counts for the Calendar summary line. Open = outcome null. */
+export function calendarSummary(events: CalSummaryInput[], today: Date): CalSummary {
+  const ws = weekStart(today);
+  const we = addDays(ws, 6);
+  let promisesThisWeek = 0;
+  let atRisk = 0;
+  let unassigned = 0;
+  let readyToFile = 0;
+  for (const e of events) {
+    if (e.outcome !== null) continue; // closed promise
+    if (e.lead_id === null) unassigned++;
+    if (!e.target_date) continue;
+    const t = toCalendarDate(e.target_date);
+    const s = classify(t, today);
+    if (t >= ws && t <= we) promisesThisWeek++;
+    if (s.status === "past_due" || s.status === "due_today") atRisk++;
+    if (e.lead_id !== null && s.daysOut >= 0 && s.daysOut <= 7) readyToFile++;
+  }
+  return { promisesThisWeek, atRisk, unassigned, readyToFile };
+}
