@@ -111,10 +111,15 @@ frame groups, never from the (empty) `benchmark_scores` table.
 Decided top-down per topic. Thresholds anchored to existing bands
 (`lib/trends.ts` `momentumLabel` / `predictTrajectory`) — not arbitrary.
 
-- **PEAKED trajectory set** = `predictTrajectory` ∈ {`near peak — may plateau`,
-  `at peak — watch for plateau`, `fading fast — post-peak`, `cooling — interest declining`}.
-- **RISING** = the complement among live topics (`still building — peak not yet reached`,
-  `momentum holding steady`).
+- **PEAKED trajectory set** (a topic that has crested) = `predictTrajectory` ∈
+  {`at peak — watch for plateau`, `fading fast — post-peak`, `cooling — interest declining`}.
+  **NOT** `near peak — may plateau` — `predictTrajectory` returns that for any topic at its
+  max heat (peakRatio≈1), i.e. still ASCENDING; treating it as PEAK made PEAK swallow the
+  coverage ladder (corrected during verification, 2026-06-19).
+- **ASCENDING / steady** (→ fall through to the coverage ladder, not PEAK) =
+  `near peak — may plateau`, `momentum holding steady`. (`still building — peak not yet
+  reached` is unreachable in `predictTrajectory`: it needs slope>2 ∧ peakRatio<0.75, which
+  contradict — so it must never be used as a test fixture.)
 - **peerMedian** = median of per-peer mention counts on the topic in the window.
 
 | Order | Condition | Tag | Implication (templated, fact-slotted) |

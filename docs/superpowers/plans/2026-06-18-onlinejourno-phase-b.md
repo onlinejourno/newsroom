@@ -12,6 +12,8 @@
 
 **Refinement vs spec (reconciled):** the spec's data-flow loosely wrote `ownRecent = TopicTrend.recent` (signals) and "broaden card set to own∪peer." The correct, simpler mechanism: **own coverage comes from `stories`** (the tenant's own published work — that is what "your angle" means), while the existing field-momentum topic set (built from signal entities) already spans peer-covered topics. So `NO ANGLE` fires naturally when own-stories = 0 on a trending topic; no separate set-union is needed. Spec patched to match.
 
+**Post-implementation correction (2026-06-19, from verification):** Task 1's `PEAKED` set below lists `near peak — may plateau`, but verification on seeded data showed `predictTrajectory` returns that string for any topic at its max heat (peakRatio≈1) — an *ascending* topic — so PEAK swallowed ON IT/BEHIND. The shipped code (commit `009430f`) drops `near peak — may plateau` from `PEAKED` (only `at peak` / `fading` / `cooling` are PEAK). The Task 1 test fixture's `still building — peak not yet reached` is also unreachable in `predictTrajectory` and was replaced. Treat the shipped `framing-position.ts` + spec as canonical over the Task 1 snippet here.
+
 ---
 
 ## File Structure
