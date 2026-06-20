@@ -8,13 +8,11 @@ import {
   archiveMatches,
   journalistsForSignal,
   signalById,
-  tenantIdForSlug,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import { STATUS_META, assignableReporters, createLead, leadForSignal } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 function formatDate(value: Date | null): string {
   if (!value) return "—";
@@ -58,7 +56,7 @@ export default async function SignalDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const signal = tenantId ? await signalById(tenantId, id) : null;
 
   if (!signal) {
@@ -75,7 +73,7 @@ export default async function SignalDetailPage({
 
   async function commission(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     const sig = tenantId ? await signalById(tenantId, id) : null;
     if (!tenantId || !me || !sig) return;
@@ -104,7 +102,7 @@ export default async function SignalDetailPage({
   // It lands as an assigned-to-you lead; write it, then file.
   async function takeUp() {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     const sig = tenantId ? await signalById(tenantId, id) : null;
     if (!tenantId || !me || !sig) return;

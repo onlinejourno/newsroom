@@ -1,10 +1,9 @@
-import { listSources, tenantIdForSlug } from "@/lib/db";
+import { listSources } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import { deleteSourceAction, toggleSourceAction } from "./actions";
 import SourceForm from "./SourceForm";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 export default async function SourcesAdminPage({
   params,
@@ -12,7 +11,7 @@ export default async function SourcesAdminPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const sources = tenantId ? await listSources(tenantId) : [];
 
   return (

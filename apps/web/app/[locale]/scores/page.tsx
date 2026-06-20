@@ -4,8 +4,8 @@ import {
   storiesWithScores,
   storyClassifications,
   storyCount,
-  tenantIdForSlug,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import {
   ROLE_META,
   subscriptionRole,
@@ -13,8 +13,6 @@ import {
 } from "@/lib/differentiation";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 // The Differentiation Ratio (ADR 0054-B): share of own output that is
 // conversion/renewal-driver content vs the commodity AI summarises for free —
@@ -260,7 +258,7 @@ export default async function ScoresPage({
   await params;
   const { section, sort, url, need, hours, probity } = await searchParams;
   const sinceHours = hours && Number(hours) > 0 ? Number(hours) : null;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
 
   const [all, classes, total] = tenantId
     ? await Promise.all([

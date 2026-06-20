@@ -1,8 +1,8 @@
 import {
   entityWindows,
   storiesWithScores,
-  tenantIdForSlug,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import {
   AGE_BUCKETS,
   SIGNAL_META,
@@ -14,7 +14,6 @@ import { topicMomentum } from "@/lib/trends";
 
 export const dynamic = "force-dynamic";
 
-const TENANT_SLUG = "self";
 const TREND_WINDOW_HOURS = 48;
 const SHOW = 60;
 
@@ -38,7 +37,7 @@ export default async function GemsPage({
   searchParams: Promise<{ filter?: string; band?: string; sort?: string }>;
 }) {
   const { filter, band, sort } = await searchParams;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return null;
 
   const [stories, recent, prior] = await Promise.all([

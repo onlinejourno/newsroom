@@ -7,11 +7,9 @@ import {
   setPassword,
   verifyPassword,
 } from "@/lib/auth";
-import { tenantIdForSlug } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 export default async function AccountPage({
   params,
@@ -29,7 +27,7 @@ export default async function AccountPage({
     "use server";
     const me = await getAccount();
     if (!me) redirect(`/${locale}/login` as Route);
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     if (!tenantId) return;
 
     const current = String(formData.get("current") ?? "");

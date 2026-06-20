@@ -1,10 +1,9 @@
-import { listConnectors, tenantIdForSlug } from "@/lib/db";
+import { listConnectors } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import { deleteConnectorAction, toggleConnectorAction } from "./actions";
 import ConnectorForm from "./ConnectorForm";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 export default async function ConnectorsAdminPage({
   params,
@@ -12,7 +11,7 @@ export default async function ConnectorsAdminPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const connectors = tenantId ? await listConnectors(tenantId) : [];
 
   return (

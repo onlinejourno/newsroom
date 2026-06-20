@@ -2,7 +2,7 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import { getAccount } from "@/lib/auth";
-import { tenantIdForSlug } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import {
   STATUS_META,
   type Lead,
@@ -18,7 +18,6 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const TENANT_SLUG = "self";
 const COLUMNS: Status[] = ["idea", "pitched", "assigned", "filed", "approved", "published"];
 // "idea" renders as the "Suggested" intake lane (calendar + commission origin).
 const COLUMN_LABEL: Record<string, string> = { idea: "Suggested" };
@@ -65,7 +64,7 @@ export default async function NewslistPage({
 }) {
   const { locale } = await params;
   const { bureau, mine } = await searchParams;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const me = await getAccount();
   if (!tenantId || !me) redirect(`/${locale}/login` as Route);
 
@@ -81,7 +80,7 @@ export default async function NewslistPage({
 
   async function addLead(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     if (!tenantId || !me) return;
     const title = String(formData.get("title") ?? "").trim();
@@ -101,7 +100,7 @@ export default async function NewslistPage({
 
   async function move(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     if (!tenantId || !me) return;
     await transition(
@@ -115,7 +114,7 @@ export default async function NewslistPage({
 
   async function assign(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     if (!tenantId || !me) return;
     await assignLead(
@@ -131,7 +130,7 @@ export default async function NewslistPage({
   // Sets assignee_id = actor.id → status "assigned"; attributed to that journalist.
   async function selfAssign(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     if (!tenantId || !me) return;
     await takeUpLead(tenantId, me, String(formData.get("id")));

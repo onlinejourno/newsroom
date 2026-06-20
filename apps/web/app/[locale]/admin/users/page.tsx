@@ -2,11 +2,9 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import { getAccount, listAccounts, setAccountStatus } from "@/lib/auth";
-import { tenantIdForSlug } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 const STATUS_COLOR: Record<string, string> = {
   pending: "#d97706",
@@ -28,7 +26,7 @@ export default async function AdminUsersPage({
     // tab itself enforces the tier (ADR 0055 §7).
     redirect(`/${locale}/signals` as Route);
   }
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const accounts = tenantId ? await listAccounts(tenantId) : [];
   const pending = accounts.filter((a) => a.status === "pending").length;
 
@@ -36,7 +34,7 @@ export default async function AdminUsersPage({
     "use server";
     const me = await getAccount();
     if (!me || me.role !== "admin") return;
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     if (!tenantId) return;
     await setAccountStatus(
       tenantId,

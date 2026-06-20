@@ -1,10 +1,9 @@
-import { listSurfaces, tenantIdForSlug } from "@/lib/db";
+import { listSurfaces } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import { deleteSurfaceAction, toggleSurfaceAction } from "./actions";
 import SurfaceForm from "./SurfaceForm";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 export default async function SurfacesAdminPage({
   params,
@@ -12,7 +11,7 @@ export default async function SurfacesAdminPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const surfaces = tenantId ? await listSurfaces(tenantId) : [];
 
   return (

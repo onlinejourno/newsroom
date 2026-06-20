@@ -3,19 +3,17 @@ import {
   fetchLatestBrief,
   fetchSignalUrls,
   listBeats,
-  tenantIdForSlug,
   openLeadsRanked,
   newsroomNowCounts,
   publishedPerDay,
   tenantCity,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import { getAccount } from "@/lib/auth";
 import TodayHome from "@/components/brief/TodayHome";
 import { leadToCard, newsroomNow } from "@/lib/brief-today";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 function formatDate(value: Date | string | null): string {
   if (!value) return "—";
@@ -49,7 +47,7 @@ export default async function BriefPage({
   searchParams: Promise<{ beat?: string }>;
 }) {
   const { beat: beatParam } = await searchParams;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const beats = tenantId ? await listBeats(tenantId) : [];
   // Default: the signed-in journalist's first beat, if a brief desk exists
   // for it; else the explicit ?beat=; else the latest brief of any desk.
