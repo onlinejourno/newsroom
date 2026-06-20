@@ -1,8 +1,7 @@
-import { coverageMatrix, tenantIdForSlug } from "@/lib/db";
+import { coverageMatrix } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 // Status rules (documented, deterministic):
 // 🟢 Complete — at least one enabled primary source AND ≥5 signals in 7 days.
@@ -21,7 +20,7 @@ function statusOf(r: {
 }
 
 export default async function CoveragePage() {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return null;
   const rows = await coverageMatrix(tenantId);
   const gaps = rows.filter((r) => statusOf(r).label === "Gap").length;

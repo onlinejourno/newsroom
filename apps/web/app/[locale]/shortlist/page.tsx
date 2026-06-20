@@ -1,12 +1,10 @@
 import {
   fetchShortlistRanked,
   type ShortlistSort,
-  tenantIdForSlug,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 const SORTS: { key: ShortlistSort; label: string; hint: string }[] = [
   { key: "importance", label: "Importance", hint: "highest AI score" },
   { key: "recency", label: "Recency", hint: "newest news first" },
@@ -35,7 +33,7 @@ export default async function ShortlistPage({
     ? (sp.sort as ShortlistSort)
     : "importance";
 
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const items = tenantId ? await fetchShortlistRanked(tenantId, { sort }) : [];
 
   return (

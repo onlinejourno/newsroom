@@ -6,13 +6,11 @@ import { getAccount } from "@/lib/auth";
 import {
   journalistBySlug,
   signalsForJournalist,
-  tenantIdForSlug,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import { createLead } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 const SINCE_HOURS = 100000; // test corpus is sparse; tighten when collect runs on a schedule
 const LIMIT = 30;
 
@@ -31,12 +29,12 @@ export default async function FeedPage({
   params: Promise<{ locale: string; journalist: string }>;
 }) {
   const { locale, journalist: slug } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const journalist = tenantId ? await journalistBySlug(tenantId, slug) : null;
 
   async function pitch(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     if (!tenantId || !me) return;
     await createLead({
@@ -54,7 +52,7 @@ export default async function FeedPage({
   // Take it up yourself — no commission needed; lands assigned to you.
   async function takeUp(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     const me = await getAccount();
     if (!tenantId || !me) return;
     await createLead({

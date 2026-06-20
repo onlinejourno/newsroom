@@ -1,8 +1,7 @@
-import { regionCoverage, tenantIdForSlug } from "@/lib/db";
+import { regionCoverage } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 type Status = {
   label: string;
@@ -19,7 +18,7 @@ function statusOf(signals: number, reporters: number): Status {
 }
 
 export default async function GapsPage() {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return null;
   const rows = await regionCoverage(tenantId);
   const uncovered = rows.filter(

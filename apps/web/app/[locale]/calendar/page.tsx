@@ -1,7 +1,8 @@
 import CalendarApp, { type CalEvent, type Beat } from "@/components/calendar/CalendarApp";
 import CalendarHeader, { type NextDue } from "@/components/calendar/CalendarHeader";
 import { istToday, toCalendarDate, classify, deadlineCountdown, calendarSummary } from "@/lib/calendar";
-import { fetchCalendarEvents, tenantIdForSlug, tenantCity } from "@/lib/db";
+import { fetchCalendarEvents, tenantCity } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 import type { Route } from "next";
 import { redirect } from "next/navigation";
@@ -10,8 +11,6 @@ import { getAccount } from "@/lib/auth";
 import { assignableReporters, commissionFromCalendarEvent } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -70,7 +69,7 @@ export default async function CalendarPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return <SetupNotice />;
 
   const me = await getAccount();
@@ -78,7 +77,7 @@ export default async function CalendarPage({
 
   async function commissionEvent(formData: FormData) {
     "use server";
-    const tid = await tenantIdForSlug(TENANT_SLUG);
+    const tid = await currentTenantId();
     const who = await getAccount();
     if (!tid || !who) return;
     // assigneeId is supplied by the T2 reporter selector; null when not chosen.

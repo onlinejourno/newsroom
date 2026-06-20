@@ -4,19 +4,17 @@ import { revalidatePath } from "next/cache";
 import {
   deleteConnector,
   setConnectorEnabled,
-  tenantIdForSlug,
   upsertConnector,
   type ConnectorInput,
 } from "@/lib/db";
-
-const TENANT_SLUG = "self";
+import { currentTenantId } from "@/lib/tenant";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
 }
 
 export async function addConnectorAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
 
   const config: Record<string, unknown> = {};
@@ -40,7 +38,7 @@ export async function addConnectorAction(formData: FormData): Promise<void> {
 }
 
 export async function toggleConnectorAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
   await setConnectorEnabled(
     tenantId,
@@ -51,7 +49,7 @@ export async function toggleConnectorAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteConnectorAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
   await deleteConnector(tenantId, str(formData, "id"));
   revalidatePath(`/${str(formData, "locale") || "en"}/admin/connectors`);

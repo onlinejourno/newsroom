@@ -3,12 +3,10 @@ import {
   distinctSignalBeats,
   fetchLatestSignals,
   needMixCounts,
-  tenantIdForSlug,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 const LIMIT = 20;
 const BODY_TRUNCATE_CHARS = 280;
 const MIX_WINDOW_HOURS = 168;
@@ -132,7 +130,7 @@ export default async function SignalsPage({
   const { beat, msm } = await searchParams;
   // Original sources dominate by default (ADR 0050); MSM test feeds opt-in.
   const primaryOnly = msm !== "1";
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
 
   if (!tenantId) {
     return (
@@ -183,7 +181,7 @@ export default async function SignalsPage({
             color: "var(--color-fg-secondary)",
           }}
         >
-          Tenant: <code>{TENANT_SLUG}</code> · {signals.length} most recent.
+          {signals.length} most recent.
           Each signal is enriched by the Analyse + Classify layers — beat,
           place, entities, and the{" "}
           <strong>reader need</strong> it serves (Know · Understand · Feel ·

@@ -8,7 +8,6 @@ import {
   outletChannelMarkers,
   signalsMentioning,
   storyClusters,
-  tenantIdForSlug,
   tenantOutletDomain,
   tenantPeers,
   topicDomains,
@@ -25,10 +24,10 @@ import {
 } from "@/lib/framing-position";
 import MomentumBar from "@/components/charts/MomentumBar";
 import InterestTrajectory from "@/components/charts/InterestTrajectory";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-const TENANT_SLUG = process.env.OJ_TENANT_SLUG ?? "self";
 const TOP = 12;
 
 // Indian states and union territories for coarse entity-type classification.
@@ -93,7 +92,7 @@ export default async function TrendsPage({
   const { window: w, region } = await searchParams;
   const windowHours = Math.max(1, Number(w) || 24);
   const regionPick = region || null;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return null;
 
   // ── base data ──────────────────────────────────────────────────────────────

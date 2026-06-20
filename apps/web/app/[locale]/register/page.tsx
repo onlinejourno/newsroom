@@ -6,11 +6,9 @@ import {
   createPendingAccount,
   tenantEmailDomain,
 } from "@/lib/auth";
-import { tenantIdForSlug } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 const ROLES = ["reporter", "desk", "editor", "viewer"];
 
 export default async function RegisterPage({
@@ -22,12 +20,12 @@ export default async function RegisterPage({
 }) {
   const { locale } = await params;
   const { error } = await searchParams;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const domain = tenantId ? await tenantEmailDomain(tenantId) : null;
 
   async function register(formData: FormData) {
     "use server";
-    const tenantId = await tenantIdForSlug(TENANT_SLUG);
+    const tenantId = await currentTenantId();
     if (!tenantId) return;
     const email = String(formData.get("email") ?? "")
       .trim()

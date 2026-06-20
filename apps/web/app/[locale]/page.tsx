@@ -6,14 +6,13 @@ import {
   entityWindows,
   publishedPerDay,
   storiesWithScores,
-  tenantIdForSlug,
 } from "@/lib/db";
 import { endSession, getAccount, roomForRole } from "@/lib/auth";
+import { currentTenantId } from "@/lib/tenant";
 import { Sparkline } from "@/components/Sparkline";
 import { topicMomentum } from "@/lib/trends";
 import { LIFECYCLE, WORKFLOW_EXTRA } from "@/lib/nav";
 
-const TENANT_SLUG = "self";
 const SNAPSHOT_HOURS = 12;
 
 function composite(scores: Record<string, { score: number }>): number {
@@ -60,7 +59,7 @@ export default async function Home({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const account = await getAccount();
   const user = account
     ? {

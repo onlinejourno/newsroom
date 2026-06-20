@@ -19,6 +19,7 @@ function pool(): Pool {
 
 export type Account = {
   id: string;
+  tenant_id: string;
   email: string;
   display_name: string | null;
   role: "admin" | "editor" | "desk" | "reporter" | "viewer";
@@ -72,7 +73,7 @@ export async function endSession(): Promise<void> {
 }
 
 const SELECT = `
-  select u.id, u.email, u.display_name, u.role, u.status, u.bureau,
+  select u.id, u.tenant_id, u.email, u.display_name, u.role, u.status, u.bureau,
          j.slug as profile_slug,
          coalesce(array(select jsonb_array_elements_text(j.beats)), '{}') as beats,
          j.region
@@ -98,6 +99,21 @@ export async function accountByEmail(
     `${SELECT.replace("j.region", "j.region, u.password_hash")}
        where u.tenant_id = $1 and lower(u.email) = lower($2)`,
     [tenantId, email],
+  );
+  return rows[0] ?? null;
+}
+
+/** Resolve a login by email across all tenants (one-newsroom-per-install: emails
+ *  are globally unique in practice). Returns the full account + credential, so the
+ *  caller has role/profile_slug/tenant_id for the post-login redirect. */
+export async function userByEmail(
+  email: string,
+): Promise<(Account & { password_hash: string | null }) | null> {
+  const { rows } = await pool().query(
+    `${SELECT.replace("j.region", "j.region, u.password_hash")}
+       where lower(u.email) = lower($1)
+       order by u.created_at asc limit 1`,
+    [email],
   );
   return rows[0] ?? null;
 }
