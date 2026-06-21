@@ -20,6 +20,7 @@ function pool(): Pool {
 export type Account = {
   id: string;
   tenant_id: string;
+  demo: boolean;
   email: string;
   display_name: string | null;
   role: "admin" | "editor" | "desk" | "reporter" | "viewer";
@@ -73,7 +74,7 @@ export async function endSession(): Promise<void> {
 }
 
 const SELECT = `
-  select u.id, u.tenant_id, u.email, u.display_name, u.role, u.status, u.bureau,
+  select u.id, u.tenant_id, u.demo, u.email, u.display_name, u.role, u.status, u.bureau,
          j.slug as profile_slug,
          coalesce(array(select jsonb_array_elements_text(j.beats)), '{}') as beats,
          j.region
@@ -199,4 +200,37 @@ export function roomForRole(role: string, slug: string | null): string {
     default:
       return "signals";
   }
+}
+
+// ── read-only demo (public showcase, 2b) ──────────────────────────────────
+/** Thrown when a read-only demo session attempts a write. */
+export class ReadOnlyDemoError extends Error {
+  constructor() {
+    super("This is a read-only demo. Request full access to make changes.");
+    this.name = "ReadOnlyDemoError";
+  }
+}
+
+/** Guard for mutating server actions: throws on a demo or absent session.
+ *  Narrows `account` to a writable Account on success. */
+export function assertWritable(account: Account | null): asserts account is Account {
+  if (!account || account.demo) throw new ReadOnlyDemoError();
+}
+
+/** Start a session as the demo-viewer account for the given tenant slug (public
+ *  showcase). Returns the locale-room to land on, or null if no demo viewer exists. */
+export async function startDemoSession(tenantSlug = "demo"): Promise<string | null> {
+  const { rows } = await pool().query<{ id: string; role: string; profile_slug: string | null }>(
+    `select u.id, u.role, j.slug as profile_slug
+       from users u
+       join tenants t on t.id = u.tenant_id
+       left join journalist_profiles j on j.id = u.profile_id
+      where t.slug = $1 and u.demo = true and u.status = 'approved'
+      order by u.created_at limit 1`,
+    [tenantSlug],
+  );
+  const v = rows[0];
+  if (!v) return null;
+  await startSession(v.id);
+  return roomForRole(v.role, v.profile_slug);
 }
