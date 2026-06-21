@@ -3,7 +3,7 @@ import { locales, defaultLocale } from "@/lib/locale";
 import { SESSION_COOKIE, verifyToken } from "@/lib/session-token";
 
 // Paths (after the /{locale} prefix) reachable without a session (ADR 0055).
-const OPEN = ["login", "register", "accept", "pending"];
+const OPEN = ["login", "register", "accept", "pending", "showcase"];
 
 // Pick best supported locale from Accept-Language, else default.
 function negotiate(req: NextRequest): string {
