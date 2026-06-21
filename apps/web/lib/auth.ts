@@ -206,9 +206,13 @@ export function roomForRole(role: string, slug: string | null): string {
 // Guard lives in a pure module (no Next imports) so it's unit-testable.
 export { ReadOnlyDemoError, assertWritable } from "@/lib/writable";
 
-/** Start a session as the demo-viewer account for the given tenant slug (public
- *  showcase). Returns the locale-room to land on, or null if no demo viewer exists. */
-export async function startDemoSession(tenantSlug = "demo"): Promise<string | null> {
+/** Resolve the demo-viewer account for a tenant slug (public showcase). Returns
+ *  the account id + the locale-room to land on, or null. Does NOT set a cookie —
+ *  the /showcase Route Handler sets the session cookie on its redirect response
+ *  (Next forbids cookie writes during a page render). */
+export async function demoViewerSession(
+  tenantSlug = "demo",
+): Promise<{ accountId: string; room: string } | null> {
   const { rows } = await pool().query<{ id: string; role: string; profile_slug: string | null }>(
     `select u.id, u.role, j.slug as profile_slug
        from users u
@@ -220,6 +224,5 @@ export async function startDemoSession(tenantSlug = "demo"): Promise<string | nu
   );
   const v = rows[0];
   if (!v) return null;
-  await startSession(v.id);
-  return roomForRole(v.role, v.profile_slug);
+  return { accountId: v.id, room: roomForRole(v.role, v.profile_slug) };
 }
