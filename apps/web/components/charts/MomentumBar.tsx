@@ -34,16 +34,16 @@ export type MomentumDatum = {
   prior: number;
 };
 
-// Concrete hex mirrors the ADR 0013 design tokens — Plotly renders colours as
+// Concrete hex mirrors the OJDS tokens (ADR 0063) — Plotly renders colours as
 // SVG attributes and cannot resolve CSS `var(--…)`, so the values are inlined.
 const C = {
-  green: "#2d7a4f",
-  red: "#d32b2b",
-  amber: "#b35d00",
-  ink: "#1a1a1a",
-  fg2: "#666666",
-  rule: "#d4cfc6",
-  grey: "#888888",
+  green: "#2e7d46",
+  red: "#c0392b",
+  amber: "#9a6a14",
+  ink: "#181610",
+  fg2: "#514a3c",
+  rule: "#c5bda9",
+  grey: "#6f6757",
 } as const;
 
 function colorFor(trajectory: string): string {
