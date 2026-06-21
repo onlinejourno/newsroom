@@ -173,10 +173,10 @@ export default async function RootLayout({
       <body suppressHydrationWarning>
         {/* Privacy-first analytics (Umami): cookieless, no PII, honors DNT.
             Env-gated — renders only when the deploy configures its own Umami. */}
-        {process.env.NEXT_PUBLIC_UMAMI_SRC && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+        {process.env.UMAMI_SRC && process.env.UMAMI_WEBSITE_ID && (
           <Script
-            src={process.env.NEXT_PUBLIC_UMAMI_SRC}
-            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            src={process.env.UMAMI_SRC}
+            data-website-id={process.env.UMAMI_WEBSITE_ID}
             data-do-not-track="true"
             strategy="afterInteractive"
           />
