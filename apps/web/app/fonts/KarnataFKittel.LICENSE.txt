@@ -1,0 +1,19 @@
+Karnata F Kittel
+================
+
+Display typeface used for OnlineJourno's wordmark and editorial display headlines.
+
+Copyright: Sanchaya (and contributors).
+Source:    https://github.com/sanchaya/karnata-f-kittel-font
+License:    SIL Open Font License, Version 1.1 (OFL-1.1)
+
+This font is licensed under the SIL Open Font License, Version 1.1.
+The full license text is available at: https://scripts.sil.org/OFL
+
+Permitted under the OFL: use, study, embed, redistribute, and bundle the font
+with software (as done here — self-hosted via next/font/local). The font is
+provided "as is", without warranty. The Reserved Font Name "Karnata F Kittel"
+may not be used to promote derivative fonts.
+
+Bundled with the OnlineJourno platform per OFL §2 (redistribution with the
+accompanying license notice). See docs/IP-PROVENANCE.md.
