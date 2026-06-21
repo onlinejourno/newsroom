@@ -203,19 +203,8 @@ export function roomForRole(role: string, slug: string | null): string {
 }
 
 // ── read-only demo (public showcase, 2b) ──────────────────────────────────
-/** Thrown when a read-only demo session attempts a write. */
-export class ReadOnlyDemoError extends Error {
-  constructor() {
-    super("This is a read-only demo. Request full access to make changes.");
-    this.name = "ReadOnlyDemoError";
-  }
-}
-
-/** Guard for mutating server actions: throws on a demo or absent session.
- *  Narrows `account` to a writable Account on success. */
-export function assertWritable(account: Account | null): asserts account is Account {
-  if (!account || account.demo) throw new ReadOnlyDemoError();
-}
+// Guard lives in a pure module (no Next imports) so it's unit-testable.
+export { ReadOnlyDemoError, assertWritable } from "@/lib/writable";
 
 /** Start a session as the demo-viewer account for the given tenant slug (public
  *  showcase). Returns the locale-room to land on, or null if no demo viewer exists. */
