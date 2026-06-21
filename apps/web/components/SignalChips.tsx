@@ -9,22 +9,22 @@ export const NEED_META: Record<
 > = {
   know: {
     label: "Know · the facts",
-    color: "#2563eb",
+    color: "var(--color-info)",
     gloss: "Know — the reader wants the facts, fast: what happened, who, when. Breaking news and updates.",
   },
   understand: {
     label: "Understand · the why",
-    color: "#7c3aed",
+    color: "var(--color-magenta)",
     gloss: "Understand — the reader wants context and explanation: why it matters, how it works, what's behind it.",
   },
   feel: {
     label: "Feel · the human story",
-    color: "#ea580c",
+    color: "var(--color-amber-accent)",
     gloss: "Feel — the reader wants emotional connection: human stories, voices, the lived experience.",
   },
   do: {
     label: "Do · act on it",
-    color: "#16a34a",
+    color: "var(--color-ioj-green-600)",
     gloss: "Do — the reader wants to act: a service, a how-to, something useful they can use or decide on.",
   },
 };
@@ -33,11 +33,11 @@ const CHIP = "text-xs px-2 py-0.5 rounded-full whitespace-nowrap";
 
 // PEJ frame groups (m-framing-pej), colour-coded by narrative family.
 const FRAME_GROUP_COLOR: Record<string, string> = {
-  combative: "#dc2626",
-  explanatory: "#0d9488",
-  straight: "#6b7280",
-  policy: "#4f46e5",
-  other: "#a16207",
+  combative: "var(--color-framing-combative)",
+  explanatory: "var(--color-framing-explanatory)",
+  straight: "var(--color-framing-straight)",
+  policy: "var(--color-framing-policy)",
+  other: "var(--color-framing-other)",
 };
 
 // Editorial display names for PEJ frames whose codebook label reads loaded
@@ -151,11 +151,11 @@ export function TagLegend() {
         <div>
           <p className="ds-label mb-1">Narrative frame (how it&rsquo;s told · PEJ)</p>
           <ul className="space-y-1 text-xs" style={{ color: "var(--color-fg-secondary)" }}>
-            <li><span className="font-semibold" style={{ color: "#dc2626" }}>Combative</span> — conflict, standings, wrongdoing, scrutiny of an institution.</li>
-            <li><span className="font-semibold" style={{ color: "#0d9488" }}>Explanatory</span> — process, trends, historical context.</li>
-            <li><span className="font-semibold" style={{ color: "#6b7280" }}>Straight</span> — just the facts, no interpretive lens.</li>
-            <li><span className="font-semibold" style={{ color: "#4f46e5" }}>Policy</span> — the substance of a policy examined.</li>
-            <li><span className="font-semibold" style={{ color: "#a16207" }}>Other</span> — reaction, consensus, conjecture, profile.</li>
+            <li><span className="font-semibold" style={{ color: "var(--color-framing-combative)" }}>Combative</span> — conflict, standings, wrongdoing, scrutiny of an institution.</li>
+            <li><span className="font-semibold" style={{ color: "var(--color-framing-explanatory)" }}>Explanatory</span> — process, trends, historical context.</li>
+            <li><span className="font-semibold" style={{ color: "var(--color-framing-straight)" }}>Straight</span> — just the facts, no interpretive lens.</li>
+            <li><span className="font-semibold" style={{ color: "var(--color-framing-policy)" }}>Policy</span> — the substance of a policy examined.</li>
+            <li><span className="font-semibold" style={{ color: "var(--color-framing-other)" }}>Other</span> — reaction, consensus, conjecture, profile.</li>
           </ul>
         </div>
       </div>

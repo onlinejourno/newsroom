@@ -66,6 +66,16 @@
   --color-amber-accent: #d97f0c;
   --color-magenta: #8e2c8c;
   --brand-gradient: linear-gradient(135deg, #f39a1b 0%, #d6312a 48%, #8e2c8c 100%);
+  --color-text-inverse: #f7f4ed;
+
+  /* Slice 2 — info/blue + framing-category palette (OJDS-harmonized) */
+  --color-info: #2b5fb0;
+  --color-info-bg: #e9eff8;
+  --color-framing-combative: var(--color-red-600);   /* vermilion — conflict */
+  --color-framing-explanatory: #0e8a7e;               /* teal — process/context */
+  --color-framing-straight: var(--color-ink-500);     /* stone — just the facts */
+  --color-framing-policy: var(--color-info);          /* blue — policy substance */
+  --color-framing-other: var(--color-amber-600);      /* gold — reaction/profile */
 
   /* Type stacks (OJDS — Latin defaults; per-script Noto set in layout.tsx) */
   --font-display: var(--font-kittel), Georgia, "Times New Roman", serif;
