@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import {
   Playfair_Display,
   Source_Sans_3,
@@ -170,6 +171,16 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
+        {/* Privacy-first analytics (Umami): cookieless, no PII, honors DNT.
+            Env-gated — renders only when the deploy configures its own Umami. */}
+        {process.env.NEXT_PUBLIC_UMAMI_SRC && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+          <Script
+            src={process.env.NEXT_PUBLIC_UMAMI_SRC}
+            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            data-do-not-track="true"
+            strategy="afterInteractive"
+          />
+        )}
         {account?.demo && (
           <div className="ds-meta" style={{ background: "var(--color-frame)", color: "var(--color-paper)", textAlign: "center", padding: "4px" }}>
             DEMO · read-only — <a href={`/${locale}/register`} style={{ textDecoration: "underline" }}>Request full access</a>
