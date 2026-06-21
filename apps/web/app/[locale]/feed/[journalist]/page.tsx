@@ -2,7 +2,7 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import { SignalChips } from "@/components/SignalChips";
-import { getAccount } from "@/lib/auth";
+import { assertWritable, getAccount } from "@/lib/auth";
 import {
   journalistBySlug,
   signalsForJournalist,
@@ -36,7 +36,8 @@ export default async function FeedPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
-    if (!tenantId || !me) return;
+    assertWritable(me);
+    if (!tenantId) return;
     await createLead({
       tenantId,
       actor: me,
@@ -54,7 +55,8 @@ export default async function FeedPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
-    if (!tenantId || !me) return;
+    assertWritable(me);
+    if (!tenantId) return;
     await createLead({
       tenantId,
       actor: me,

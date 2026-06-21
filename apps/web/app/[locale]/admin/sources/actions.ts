@@ -7,6 +7,7 @@ import {
   setSourceEnabled,
   type SourceInput,
 } from "@/lib/db";
+import { assertWritable, getAccount } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 
 function str(fd: FormData, key: string): string {
@@ -14,6 +15,8 @@ function str(fd: FormData, key: string): string {
 }
 
 export async function addSourceAction(formData: FormData): Promise<void> {
+  const me = await getAccount();
+  assertWritable(me);
   const tenantId = await currentTenantId();
   if (!tenantId) return;
 
@@ -56,6 +59,8 @@ export async function addSourceAction(formData: FormData): Promise<void> {
 }
 
 export async function toggleSourceAction(formData: FormData): Promise<void> {
+  const me = await getAccount();
+  assertWritable(me);
   const tenantId = await currentTenantId();
   if (!tenantId) return;
   await setSourceEnabled(
@@ -67,6 +72,8 @@ export async function toggleSourceAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteSourceAction(formData: FormData): Promise<void> {
+  const me = await getAccount();
+  assertWritable(me);
   const tenantId = await currentTenantId();
   if (!tenantId) return;
   await deleteSource(tenantId, str(formData, "id"));

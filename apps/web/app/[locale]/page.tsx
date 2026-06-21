@@ -7,7 +7,7 @@ import {
   publishedPerDay,
   storiesWithScores,
 } from "@/lib/db";
-import { endSession, getAccount, roomForRole } from "@/lib/auth";
+import { assertWritable, endSession, getAccount, roomForRole } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 import { Sparkline } from "@/components/Sparkline";
 import { topicMomentum } from "@/lib/trends";
@@ -73,6 +73,8 @@ export default async function Home({
 
   async function signOut() {
     "use server";
+    const me = await getAccount();
+    assertWritable(me);
     await endSession();
   }
 

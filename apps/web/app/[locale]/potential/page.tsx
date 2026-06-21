@@ -8,6 +8,7 @@ import {
   tenantRegion,
   upsertTopicDomains,
 } from "@/lib/db";
+import { assertWritable, getAccount } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 import {
   WEIGHTS,
@@ -178,6 +179,8 @@ export default async function PotentialPage({
   // On-demand warm action: fetch GDELT for top WARM_CAP distinct trends shown.
   async function refreshCompetitorData(_formData: FormData) {
     "use server";
+    const me = await getAccount();
+    assertWritable(me);
     const tid = await currentTenantId();
     if (!tid) return;
 

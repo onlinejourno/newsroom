@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import {
   accountByEmail,
+  assertWritable,
   getAccount,
   setPassword,
   verifyPassword,
@@ -26,7 +27,7 @@ export default async function AccountPage({
   async function change(formData: FormData) {
     "use server";
     const me = await getAccount();
-    if (!me) redirect(`/${locale}/login` as Route);
+    assertWritable(me);
     const tenantId = await currentTenantId();
     if (!tenantId) return;
 

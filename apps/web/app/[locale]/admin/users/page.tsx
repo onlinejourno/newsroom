@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
-import { getAccount, listAccounts, setAccountStatus } from "@/lib/auth";
+import { assertWritable, getAccount, listAccounts, setAccountStatus } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,8 @@ export default async function AdminUsersPage({
   async function setStatus(formData: FormData) {
     "use server";
     const me = await getAccount();
-    if (!me || me.role !== "admin") return;
+    assertWritable(me);
+    if (me.role !== "admin") return;
     const tenantId = await currentTenantId();
     if (!tenantId) return;
     await setAccountStatus(
