@@ -15,7 +15,10 @@ export async function GET(
   const { locale } = await params;
   const dv = await demoViewerSession("demo");
   const dest = dv ? `/${locale}/${dv.room}` : `/${locale}/login`;
-  const res = NextResponse.redirect(new URL(dest, req.url));
+  // Relative Location → the browser resolves it against the public host. Avoids
+  // NextResponse.redirect(new URL(dest, req.url)), where req.url is Fly's internal
+  // bind (0.0.0.0:3000) behind the proxy.
+  const res = new NextResponse(null, { status: 307, headers: { Location: dest } });
   if (dv) {
     res.cookies.set(SESSION_COOKIE, await signToken(dv.accountId), {
       httpOnly: true,
