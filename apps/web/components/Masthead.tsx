@@ -34,7 +34,8 @@ export default async function Masthead({
       className="flex items-center gap-x-6 px-6 py-3 border-b sticky top-0 z-10 flex-wrap"
       style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}
     >
-      <a href={role ? href("") : `/${locale}/login`} className="flex items-center gap-2 no-underline">
+      {/* Logo → the product homepage (onlinejourno.com), per brand. */}
+      <a href="https://onlinejourno.com" className="flex items-center gap-2 no-underline">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/mark.png" alt="" width={28} height={24} />
         <span className="text-lg font-extrabold tracking-tight"

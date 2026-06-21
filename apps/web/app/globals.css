@@ -360,3 +360,16 @@ a:hover {
 .mini-frame__title { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 0 0 2px; }
 .mini-frame__sub { font-family: var(--font-ui); font-size: 12px; color: var(--color-fg-tertiary); margin: 0; }
 .empty-note { font-family: var(--font-ui); font-size: 13px; color: var(--color-fg-tertiary); font-style: italic; }
+
+/* ── Mobile pass (OJDS responsive) ─────────────────────────────────────────
+   Tighter gutters + fluid display type on phones; a scroll wrapper so wide
+   tables/charts pan instead of clipping. The today-grid already collapses. */
+@media (max-width: 640px) {
+  .ds-page,
+  .ds-page-narrow { padding: 16px 16px 56px; }
+  .ds-h1 { font-size: clamp(1.6rem, 7vw, 2rem); }
+  .ds-lead { font-size: clamp(1.8rem, 8vw, 2.4rem); }
+  .ds-mast { font-size: 1.4rem; }
+}
+/* Wrap wide tables / Plotly charts in this so they pan, not clip, on phones. */
+.ds-scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
