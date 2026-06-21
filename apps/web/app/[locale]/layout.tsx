@@ -170,6 +170,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
+        {account?.demo && (
+          <div className="ds-meta" style={{ background: "var(--color-frame)", color: "var(--color-paper)", textAlign: "center", padding: "4px" }}>
+            DEMO · read-only — <a href={`/${locale}/register`} style={{ textDecoration: "underline" }}>Request full access</a>
+          </div>
+        )}
         <Masthead
           locale={locale}
           role={account?.role ?? null}
