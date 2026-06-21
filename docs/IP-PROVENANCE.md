@@ -46,6 +46,16 @@ Filled at first install. Each row must include name, version, license, and link.
 | Anthropic API (Claude) | Agent reasoning | Yes | Per-newsroom cost tagged |
 | _others filled as added_ | | | |
 
+## Fonts & design assets
+
+| Asset | Source | License | Used in |
+|-------|--------|---------|---------|
+| Karnata F Kittel (display serif) | github.com/sanchaya/karnata-f-kittel-font | SIL OFL 1.1 | Vendored `apps/web/app/fonts/KarnataFKittel.otf` (+ `.LICENSE.txt`); wordmark + display headlines (ADR 0063) |
+| Source Serif 4 (body) | Google Fonts (Adobe) | SIL OFL 1.1 | `next/font/google`, self-hosted at build; body/reading |
+| IBM Plex Sans (UI) | Google Fonts (IBM) | SIL OFL 1.1 | `next/font/google`; kickers, nav, UI chrome |
+| IBM Plex Mono (data) | Google Fonts (IBM) | SIL OFL 1.1 | `next/font/google`; clocks, timestamps, data |
+| OnlineJourno Design System bundle | Founder-supplied (Subhash Rai) | Proprietary (own IP) | ADR 0063; tokens applied in `apps/web/app/globals.css` |
+
 ## Editorial / framework attribution
 
 These are public methodologies; their use is non-exclusive and citation-only.
@@ -59,3 +69,4 @@ These are public methodologies; their use is non-exclusive and citation-only.
 ## Audit log
 
 - 2026-06-01: File initialized; Subhash Rai confirmed sole authorship of all reused code; no THGP IP claim.
+- 2026-06-21: OJDS adopted (ADR 0063). Vendored Karnata F Kittel (OFL 1.1, + LICENSE); Source Serif 4 + IBM Plex Sans/Mono via next/font (OFL 1.1, self-hosted at build).

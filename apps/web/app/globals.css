@@ -4,48 +4,53 @@
    Inherits from packages/spine but locked here for the web app's Tailwind theme. */
 
 @theme {
-  /* Brand greens */
+  /* ── OnlineJourno Design System (ADR 0063) — warm newsprint, prism accents.
+     Token NAMES preserved from ADR 0013; VALUES repointed to OJDS so every
+     surface re-skins via the tokens. Green = functional/positive only;
+     ink = primary; vermilion/prism = the brand accent. ──────────────────── */
+
+  /* Functional green (positive / go / commission; inline links) */
   --color-ioj-green-900: #143d26;
   --color-ioj-green-800: #1f5c38;
-  --color-ioj-green-600: #2d7a4f;
+  --color-ioj-green-600: #2e7d46;
   --color-ioj-green-400: #48a870;
-  --color-ioj-green-100: #e6f5ec;
+  --color-ioj-green-100: #e6f0e8;
 
-  /* Semantic reds (urgency / past-due / breaking) */
-  --color-red-700: #b01e1e;
-  --color-red-600: #d32b2b;
-  --color-red-500: #e84040;
-  --color-red-100: #fdeaea;
+  /* Vermilion (prism red — urgency / kicker / emphasis) */
+  --color-red-700: #a32a22;
+  --color-red-600: #c0392b;
+  --color-red-500: #d6312a;
+  --color-red-100: #f7e3e0;
 
-  /* Amber (mid lead-time / warning) */
-  --color-amber-600: #b35d00;
-  --color-amber-100: #f7ecd9;
+  /* Gold (mid lead-time / warning) */
+  --color-amber-600: #9a6a14;
+  --color-amber-100: #f6efe0;
 
-  /* Neutrals */
-  --color-ink-950: #0d0d0d;
-  --color-ink-900: #1a1a1a;
-  --color-ink-800: #333333;
-  --color-ink-700: #4d4d4d;
-  --color-ink-600: #666666;
-  --color-ink-500: #888888;
-  --color-ink-400: #aaaaaa;
-  --color-ink-300: #cccccc;
-  --color-ink-200: #e0e0e0;
-  --color-ink-100: #f0f0ee;
-  --color-ink-50: #f5f5f2;
+  /* Warm stone neutrals (paper → ink) */
+  --color-ink-950: #0c0b08;
+  --color-ink-900: #181610;
+  --color-ink-800: #26221b;
+  --color-ink-700: #3a352a;
+  --color-ink-600: #514a3c;
+  --color-ink-500: #6f6757;
+  --color-ink-400: #9d9482;
+  --color-ink-300: #c5bda9;
+  --color-ink-200: #ddd6c5;
+  --color-ink-100: #eee9dc;
+  --color-ink-50: #f7f4ed;
 
-  /* Paper + rule lines */
-  --color-paper: #f0ece4;
+  /* Paper + rule lines (warm cream) */
+  --color-paper: #efe9dd;
   --color-paper-card: #ffffff;
-  --color-rule: #d4cfc6;
-  --color-rule-soft: #e6e0d4;
-  --color-frame: #111111; /* thick broadsheet frame (near-black) */
+  --color-rule: #c5bda9;
+  --color-rule-soft: #ddd6c5;
+  --color-frame: #181610; /* warm ink — card frame / black bands */
 
   /* Semantic role aliases */
-  --color-brand: var(--color-ioj-green-600);
-  --color-brand-dark: var(--color-ioj-green-800);
+  --color-brand: var(--color-ink-900);          /* primary = ink (OJDS) */
+  --color-brand-dark: var(--color-ink-950);
   --color-brand-bg: var(--color-ioj-green-100);
-  --color-urgent: var(--color-red-600);
+  --color-urgent: var(--color-red-600);          /* vermilion */
   --color-urgent-bg: var(--color-red-100);
   --color-bg: var(--color-paper);
   --color-bg-card: var(--color-paper-card);
@@ -53,14 +58,20 @@
   --color-fg-secondary: var(--color-ink-600);
   --color-fg-tertiary: var(--color-ink-400);
   --color-border: var(--color-ink-200);
-  --color-link: var(--color-ioj-green-800);
+  --color-link: var(--color-ioj-green-800);      /* links stay green (OJDS) */
   --color-link-hover: var(--color-ioj-green-900);
 
-  /* Type stacks */
-  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
-  --font-body: var(--font-noto-serif), Georgia, serif;
-  --font-ui: var(--font-source-sans), "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Courier New", Courier, monospace;
+  /* Prism accent system (from the logo: amber → vermilion → magenta) */
+  --color-accent: var(--color-red-600);
+  --color-amber-accent: #d97f0c;
+  --color-magenta: #8e2c8c;
+  --brand-gradient: linear-gradient(135deg, #f39a1b 0%, #d6312a 48%, #8e2c8c 100%);
+
+  /* Type stacks (OJDS — Latin defaults; per-script Noto set in layout.tsx) */
+  --font-display: var(--font-kittel), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-source-serif), Georgia, serif;
+  --font-ui: var(--font-ibm-plex-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, Menlo, monospace;
 
   /* Letter spacing */
   --tracking-tight: -0.02em;
@@ -150,7 +161,7 @@ a:hover {
 /* Display type roles (Playfair). */
 .ds-mast {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   font-size: 1.7rem;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -158,7 +169,7 @@ a:hover {
 }
 .ds-h1 {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   font-size: clamp(2rem, 4vw, 2.8rem);
   line-height: 1.08;
   letter-spacing: -0.02em;
@@ -166,7 +177,7 @@ a:hover {
 }
 .ds-h2 {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   font-size: 1.4rem;
   line-height: 1.2;
   color: var(--color-fg-primary);
@@ -255,7 +266,7 @@ a:hover {
 /* Big broadsheet stat number. */
 .ds-stat {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   font-size: 1.9rem;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -270,7 +281,7 @@ a:hover {
 /* Big narrative lead (the "Where coverage is heading." headline). */
 .ds-lead {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   font-size: clamp(2.4rem, 5vw, 3.4rem);
   line-height: 1.04;
   letter-spacing: -0.02em;
@@ -299,7 +310,7 @@ a:hover {
 }
 .ds-tag-behind   { color: var(--color-urgent); }          /* red — you're behind */
 .ds-tag-noangle  { color: var(--color-urgent); }          /* red — no angle yet */
-.ds-tag-onit     { color: var(--color-brand); }           /* green — on it */
+.ds-tag-onit     { color: var(--color-ioj-green-600); }   /* green — on it (positive) */
 .ds-tag-peak     { color: #fff; background: var(--color-urgent); border-color: var(--color-urgent); }
 
 /* Momentum bar — 0–100 fill. */
