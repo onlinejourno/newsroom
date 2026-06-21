@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
-import { getAccount } from "@/lib/auth";
+import { assertWritable, getAccount } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 import {
   STATUS_META,
@@ -82,7 +82,8 @@ export default async function NewslistPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
-    if (!tenantId || !me) return;
+    assertWritable(me);
+    if (!tenantId) return;
     const title = String(formData.get("title") ?? "").trim();
     if (!title) return;
     const desk = ["admin", "editor", "desk"].includes(me.role);
@@ -102,7 +103,8 @@ export default async function NewslistPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
-    if (!tenantId || !me) return;
+    assertWritable(me);
+    if (!tenantId) return;
     await transition(
       tenantId,
       me,
@@ -116,7 +118,8 @@ export default async function NewslistPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
-    if (!tenantId || !me) return;
+    assertWritable(me);
+    if (!tenantId) return;
     await assignLead(
       tenantId,
       me,
@@ -132,7 +135,8 @@ export default async function NewslistPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
-    if (!tenantId || !me) return;
+    assertWritable(me);
+    if (!tenantId) return;
     await takeUpLead(tenantId, me, String(formData.get("id")));
     redirect(`/${locale}/newslist` as Route);
   }

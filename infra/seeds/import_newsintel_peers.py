@@ -265,7 +265,15 @@ def main(sqlite_path: str) -> None:
                 (tenant_id, slug, name, f"{slug}@demo.onlinejourno.com", city, city, region, Json([beat]), role),
             )
 
-        # 9. score demo own-stories so Score·Audit / Potential / Gems render.
+        # 9. demo-viewer: the read-only identity the public /showcase logs in as.
+        cur.execute("delete from users where tenant_id = %s and demo = true", (tenant_id,))
+        cur.execute(
+            "insert into users (tenant_id, email, display_name, role, status, demo) "
+            "values (%s, 'demo-viewer@demo.onlinejourno.com', 'Demo Visitor', 'viewer', 'approved', true)",
+            (tenant_id,),
+        )
+
+        # 10. score demo own-stories so Score·Audit / Potential / Gems render.
         # Schema: distribution_fit_scores has story_id NOT NULL (no signal_id column).
         cur.execute("select id from stories where tenant_id = %s and cms_ref like 'demo:%%'", (tenant_id,))
         story_ids = [r[0] for r in cur.fetchall()]

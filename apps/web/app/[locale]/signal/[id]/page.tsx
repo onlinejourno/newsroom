@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignalChips } from "@/components/SignalChips";
-import { getAccount } from "@/lib/auth";
+import { assertWritable, getAccount } from "@/lib/auth";
 import {
   archiveMatches,
   journalistsForSignal,
@@ -75,8 +75,9 @@ export default async function SignalDetailPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
+    assertWritable(me);
     const sig = tenantId ? await signalById(tenantId, id) : null;
-    if (!tenantId || !me || !sig) return;
+    if (!tenantId || !sig) return;
     if (!["admin", "editor", "desk"].includes(me.role)) return;
     // assigneeId is supplied by the T2 reporter selector; null when not chosen.
     const assigneeId = String(formData.get("assigneeId") ?? "").trim() || null;
@@ -104,8 +105,9 @@ export default async function SignalDetailPage({
     "use server";
     const tenantId = await currentTenantId();
     const me = await getAccount();
+    assertWritable(me);
     const sig = tenantId ? await signalById(tenantId, id) : null;
-    if (!tenantId || !me || !sig) return;
+    if (!tenantId || !sig) return;
     await createLead({
       tenantId,
       actor: me,

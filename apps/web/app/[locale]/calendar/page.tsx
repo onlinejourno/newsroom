@@ -7,7 +7,7 @@ import { currentTenantId } from "@/lib/tenant";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
-import { getAccount } from "@/lib/auth";
+import { assertWritable, getAccount } from "@/lib/auth";
 import { assignableReporters, commissionFromCalendarEvent } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
@@ -79,7 +79,8 @@ export default async function CalendarPage({
     "use server";
     const tid = await currentTenantId();
     const who = await getAccount();
-    if (!tid || !who) return;
+    assertWritable(who);
+    if (!tid) return;
     // assigneeId is supplied by the T2 reporter selector; null when not chosen.
     const assigneeId = String(formData.get("assigneeId") ?? "").trim() || null;
     await commissionFromCalendarEvent(tid, who, String(formData.get("eventId")), assigneeId);
