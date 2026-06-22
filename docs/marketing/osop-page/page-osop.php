@@ -1,10 +1,10 @@
 <?php
 /**
- * Template Name: OSOP Landing
+ * Template Name: OEOP Landing
  *
- * Landing page for the OnlineJourno Story Optimisation Platform (OSOP).
+ * Landing page for the OnlineJourno Editorial Optimisation Platform (OEOP).
  * Drop this file into the OnlineJourno theme: wp-content/themes/onlinejourno/page-osop.php
- * Then create a Page in WP and choose Template → "OSOP Landing".
+ * Then create a Page in WP and choose Template → "OEOP Landing".
  *
  * Uses the theme's design tokens + enqueued fonts (Kittel / Source Serif 4 /
  * IBM Plex). Brand-neutral: no outlet named. Pre-release "coming soon" CTA.
@@ -35,7 +35,7 @@ get_header(); ?>
   <section style="background:var(--paper); border-bottom:1px solid var(--border-subtle);">
     <div class="wrap grid2" style="padding:70px 28px 60px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:52px; align-items:center;">
       <div>
-        <span class="kicker">OnlineJourno · Story Optimisation Platform</span>
+        <span class="kicker">OnlineJourno · Editorial Optimisation Platform</span>
         <h1 class="h-display">Give every story a <span style="color:var(--accent)">fair chance</span> across every surface.</h1>
         <p class="lead" style="max-width:48ch; margin-top:22px;">Audit any story for Google Discover, Search &amp; News, AI Overviews, AI assistants and YouTube — with the fixes, the schema, and the <em>why</em>. Free, open-source, self-hosted.</p>
         <div style="display:flex; gap:12px; margin-top:30px;">
