@@ -26,11 +26,13 @@ const SHOW = 30;
 /** Max distinct trends to warm per on-demand refresh (avoid GDELT storms). */
 const WARM_CAP = 8;
 
+// Heat scale (higher = more urgent), per ScoreBadge README — NOT a quality
+// ScoreBadge; OJDS-tokenized.
 const LABEL_COLOR: Record<string, string> = {
-  HIGH: "#dc2626",
-  MEDIUM: "#ca8a04",
-  LOW: "#ea580c",
-  "VERY LOW": "#6b7280",
+  HIGH: "var(--color-urgent)",
+  MEDIUM: "var(--color-amber-600)",
+  LOW: "var(--color-amber-accent)",
+  "VERY LOW": "var(--color-ink-500)",
 };
 
 function formatDate(value: Date | null): string {

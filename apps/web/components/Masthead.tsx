@@ -54,9 +54,9 @@ export default async function Masthead({
       <a href="https://onlinejourno.com" className="flex items-center gap-2 no-underline">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/mark.png" alt="" width={28} height={24} />
-        <span className="text-lg font-extrabold tracking-tight"
+        <span className="text-lg tracking-tight"
               style={{ fontFamily: "var(--font-display)", color: "var(--color-fg-primary)" }}>
-          OnlineJourno
+          OnlineJourno<span style={{ color: "var(--color-urgent)" }}>.</span>
         </span>
       </a>
 

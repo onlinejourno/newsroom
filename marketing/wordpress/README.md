@@ -33,7 +33,7 @@ The theme footer already links to these slugs.
 - **Logo** — Appearance ▸ Customize ▸ Site Identity: upload the prism mark (or it falls back to the
   bundled `assets/img/mark.png`). The logo links to the homepage.
 - **Primary menu** — Appearance ▸ Menus: add About + your post categories as desired.
-- **Homepage** — Settings ▸ Reading: set your front page.
+- **Homepage** — the theme ships `front-page.php` (a marketing hero + feature grid), so the front page renders automatically on activation. To show your blog instead, delete/rename `front-page.php`.
 
 ## Confirm before publishing
 
