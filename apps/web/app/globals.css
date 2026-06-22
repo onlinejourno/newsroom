@@ -373,3 +373,11 @@ a:hover {
 }
 /* Wrap wide tables / Plotly charts in this so they pan, not clip, on phones. */
 .ds-scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Site footer (cross-property IA) ───────────────────────────────────────── */
+.site-footer__grid { display: grid; grid-template-columns: 1.7fr 1fr 1fr 1fr; gap: 28px; }
+.site-footer__col-title { font-family: var(--font-ui); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; margin: 0 0 10px; }
+.site-footer a { color: inherit; opacity: 0.8; text-decoration: none; display: block; margin: 7px 0; font-family: var(--font-ui); font-size: 14px; }
+.site-footer a:hover { opacity: 1; text-decoration: underline; }
+.site-footer__base { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 28px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.14); font-family: var(--font-mono); font-size: 12px; opacity: 0.6; }
+@media (max-width: 640px) { .site-footer__grid { grid-template-columns: 1fr 1fr; } }

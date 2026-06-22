@@ -20,6 +20,7 @@ import localFont from "next/font/local";
 import "../globals.css";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Masthead from "@/components/Masthead";
+import SiteFooter from "@/components/SiteFooter";
 import { getAccount } from "@/lib/auth";
 import { locales, dirOf, isLocale, defaultLocale, meta } from "@/lib/locale";
 
@@ -210,6 +211,7 @@ export default async function RootLayout({
         />
         {account ? <Breadcrumbs /> : null}
         {children}
+        <SiteFooter />
       </body>
     </html>
   );
