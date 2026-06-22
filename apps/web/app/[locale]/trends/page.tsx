@@ -67,21 +67,21 @@ function predictionBand(momentum: number): string {
 }
 
 const LABEL_COLOR: Record<string, string> = {
-  "🔥": "#dc2626",
-  "↑": "#ea580c",
-  "→": "#2563eb",
-  "~": "#6b7280",
-  "↓": "#0d9488",
+  "🔥": "var(--color-urgent)",
+  "↑": "var(--color-amber-accent)",
+  "→": "var(--color-info)",
+  "~": "var(--color-ink-500)",
+  "↓": "var(--color-framing-explanatory)",
 };
 
 function labelColor(label: string): string {
-  return LABEL_COLOR[label.slice(0, 2).trim()] ?? "#6b7280";
+  return LABEL_COLOR[label.slice(0, 2).trim()] ?? "var(--color-ink-500)";
 }
 
 const DIR_COLOR: Record<string, string> = {
-  Rising: "#16a34a",
-  Falling: "#dc2626",
-  Stable: "#6b7280",
+  Rising: "var(--color-ioj-green-600)",
+  Falling: "var(--color-urgent)",
+  Stable: "var(--color-ink-500)",
 };
 
 export default async function TrendsPage({
