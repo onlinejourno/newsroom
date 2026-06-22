@@ -37,3 +37,19 @@ export function deriveNavSignals(counts: NavCounts): {
   }
   return { byPath, nowPath };
 }
+
+export type StageEmphasis = "focus" | "recede" | "normal";
+
+/** Step 3 (focus + recede): the now-stage is "focus" (boxed); a stage with no
+ *  live signal that you're not currently on "recede"s (dims); everything else is
+ *  "normal". Order is never changed — only visual weight, so the plan→score
+ *  reading sequence is preserved. */
+export function stageEmphasis(args: {
+  isNow: boolean;
+  hasSignal: boolean;
+  isActive: boolean;
+}): StageEmphasis {
+  if (args.isNow) return "focus";
+  if (!args.hasSignal && !args.isActive) return "recede";
+  return "normal";
+}

@@ -1,13 +1,15 @@
 // Site masthead — story-lifecycle IA (redesign Phase A, supersedes ADR 0060).
 // Renders six verb·noun stages (Plan·Calendar → Score·Audit); active stage gets
 // an underline; role-gated stages hidden; admin gets a Surfaces dropdown.
+import type { CSSProperties } from "react";
+
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { endSession } from "@/lib/auth";
 import { LIFECYCLE, ADMIN, stageVisible, type Stage } from "@/lib/nav";
 import { navStageCounts } from "@/lib/db";
-import { deriveNavSignals } from "@/lib/nav-signals";
+import { deriveNavSignals, stageEmphasis } from "@/lib/nav-signals";
 import { currentTenantId } from "@/lib/tenant";
 import { Badge } from "@/components/ui/badge";
 
@@ -63,17 +65,27 @@ export default async function Masthead({
           {stages.map((s: Stage) => {
             const active = s.path.split("/")[0] === seg;
             const sig = navSig.byPath[s.path];
+            const isNow = s.path === navSig.nowPath;
+            const emph = stageEmphasis({ isNow, hasSignal: !!sig, isActive: active });
+            // Focus = boxed (the one stage to look at now); recede = dimmed (no
+            // activity, not where you are). Order is never changed.
+            const aStyle: CSSProperties =
+              emph === "focus"
+                ? { background: "var(--color-urgent-bg)", border: "0.5px solid var(--color-urgent)", borderRadius: "4px", padding: "1px 8px" }
+                : { borderBottom: `2px solid ${active ? "var(--color-urgent)" : "transparent"}`, opacity: emph === "recede" ? 0.45 : 1 };
             return (
               <a key={s.path} href={href(s.path)} title={s.blurb}
                  className="no-underline group flex flex-col leading-none pb-1"
-                 style={{ borderBottom: `2px solid ${active ? "var(--color-urgent)" : "transparent"}` }}>
-                <span className="ds-meta" style={{ color: "var(--color-fg-tertiary)" }}>{s.verb}</span>
+                 style={aStyle}>
+                <span className="ds-meta" style={{ color: isNow ? "var(--color-urgent)" : "var(--color-fg-tertiary)" }}>
+                  {isNow ? `${s.verb} · now` : s.verb}
+                </span>
                 <span className="text-[15px] font-semibold flex items-center gap-1.5"
                       style={{ fontFamily: "var(--font-display)",
-                               color: active ? "var(--color-fg-primary)" : "var(--color-fg-secondary)" }}>
+                               color: active || isNow ? "var(--color-fg-primary)" : "var(--color-fg-secondary)" }}>
                   {s.label}
                   {sig && (
-                    <Badge tone={sig.tone} dot={s.path === navSig.nowPath}>
+                    <Badge tone={sig.tone} dot={isNow}>
                       {sig.count}
                     </Badge>
                   )}

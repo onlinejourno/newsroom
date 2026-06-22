@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { deriveNavSignals } from "./nav-signals";
+import { deriveNavSignals, stageEmphasis } from "./nav-signals";
 
 test("nowPath = highest-priority non-zero stage (brief before signals)", () => {
   const r = deriveNavSignals({ calendar: 0, brief: 3, signals: 10, newslist: 0, potential: 2 });
@@ -32,4 +32,20 @@ test("counts are carried through", () => {
   const r = deriveNavSignals({ calendar: 0, brief: 0, signals: 7, newslist: 0, potential: 0 });
   assert.equal(r.nowPath, "signals");
   assert.equal(r.byPath.signals.count, 7);
+});
+
+test("stageEmphasis: the now-stage is focus", () => {
+  assert.equal(stageEmphasis({ isNow: true, hasSignal: true, isActive: false }), "focus");
+});
+
+test("stageEmphasis: empty + not-current stage recedes", () => {
+  assert.equal(stageEmphasis({ isNow: false, hasSignal: false, isActive: false }), "recede");
+});
+
+test("stageEmphasis: the active route never recedes", () => {
+  assert.equal(stageEmphasis({ isNow: false, hasSignal: false, isActive: true }), "normal");
+});
+
+test("stageEmphasis: a stage with a signal stays normal", () => {
+  assert.equal(stageEmphasis({ isNow: false, hasSignal: true, isActive: false }), "normal");
 });
