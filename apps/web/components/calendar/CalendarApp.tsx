@@ -2,8 +2,8 @@
 
 // CalendarApp — the Predictive Editorial Calendar surface (ADR 0057), ported
 // from the "Journalism Agentic" design handoff onto the live calendar_event
-// data. IOJ broadsheet voice: warm off-white, thick black frames, Playfair
-// display, IOJ green system accent, Hindu red for urgency / past-due.
+// data. OJDS broadsheet voice: warm newsprint, ink frames, Kittel display,
+// green system accent, vermilion for urgency / past-due.
 //
 // Four views (Forward Calendar Gantt · Event Feed · Past-due · Pipeline), a
 // filter strip (beat · horizon · confidence · search) and a slide-in event
@@ -42,8 +42,8 @@ const C = {
   ink3: "var(--color-ink-500)",
   rule: "var(--color-rule)",
   ruleSoft: "var(--color-rule-soft)",
-  iojGreen: "var(--color-brand)",
-  hinduRed: "var(--color-urgent)",
+  green: "var(--color-brand)",
+  accent: "var(--color-urgent)",
   amber: "var(--color-amber-600)",
 } as const;
 
@@ -62,11 +62,11 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 const PHASE_BUCKETS = [
-  { id: "imminent", label: "Commission now", sub: "7 days or less", min: 0, max: 7, color: "#b01e1e", strip: "#fdeaea" },
-  { id: "soon", label: "In the lead-time window", sub: "8 – 14 days", min: 8, max: 14, color: "#b35d00", strip: "#f7ecd9" },
-  { id: "month", label: "This month", sub: "15 – 30 days", min: 15, max: 30, color: "#7a4f00", strip: "#f3eddd" },
-  { id: "quarter", label: "Foreseeable horizon", sub: "31 – 90 days", min: 31, max: 90, color: "#2D7A4F", strip: "#eaf0ea" },
-  { id: "beyond", label: "Beyond horizon", sub: "90+ days", min: 91, max: 99999, color: "#666", strip: "#efece4" },
+  { id: "imminent", label: "Commission now", sub: "7 days or less", min: 0, max: 7, color: "#c0392b", strip: "#f7e3e0" },
+  { id: "soon", label: "In the lead-time window", sub: "8 – 14 days", min: 8, max: 14, color: "#d97f0c", strip: "#f6efe0" },
+  { id: "month", label: "This month", sub: "15 – 30 days", min: 15, max: 30, color: "#9a6a14", strip: "#f6efe0" },
+  { id: "quarter", label: "Foreseeable horizon", sub: "31 – 90 days", min: 31, max: 90, color: "#2e7d46", strip: "#e6f0e8" },
+  { id: "beyond", label: "Beyond horizon", sub: "90+ days", min: 91, max: 99999, color: "#6f6757", strip: "#eee9dc" },
 ];
 type Bucket = (typeof PHASE_BUCKETS)[number];
 
@@ -207,7 +207,7 @@ function TimelineRow({
       </div>
 
       <div style={{ position: "relative", height: 58, alignSelf: "center" }}>
-        <div style={{ position: "absolute", left: 0, right: 0, top: 26, height: 6, background: "#efece4", borderTop: `1px solid ${C.ruleSoft}`, borderBottom: `1px solid ${C.ruleSoft}` }} />
+        <div style={{ position: "absolute", left: 0, right: 0, top: 26, height: 6, background: "var(--color-ink-100)", borderTop: `1px solid ${C.ruleSoft}`, borderBottom: `1px solid ${C.ruleSoft}` }} />
         <div
           style={{
             position: "absolute",
@@ -277,7 +277,7 @@ function TimeAxis({ horizon, todayISO }: { horizon: number; todayISO: string }) 
               fontFamily: UI,
               fontSize: 10,
               fontWeight: 700,
-              color: t === 0 ? C.hinduRed : "#666",
+              color: t === 0 ? C.accent : "#666",
             }}
           >
             <div style={{ letterSpacing: ".05em" }}>{t === 0 ? "TODAY" : `+${t}d`}</div>
@@ -307,7 +307,7 @@ function TimelineView({ events, horizon, beats, todayISO, onSelect }: ViewProps)
     <div style={{ background: C.surface, border: `1px solid ${C.ink}`, padding: "0 24px 20px", position: "relative" }}>
       <TimeAxis horizon={horizon} todayISO={todayISO} />
       <div style={{ position: "absolute", left: "calc(180px + 16px + 24px)", right: "calc(230px + 16px + 24px)", top: 40, bottom: 0, pointerEvents: "none", zIndex: 1 }}>
-        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, background: C.hinduRed, opacity: 0.95 }} />
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, background: C.accent, opacity: 0.95 }} />
       </div>
       <div style={{ position: "relative", zIndex: 2 }}>
         {grouped.map(({ bucket, items }) =>
@@ -382,7 +382,7 @@ function ListView({ events, beats, todayISO, onSelect, undated }: ViewProps & { 
 
       {undated.length > 0 && (
         <div style={{ borderTop: `2px solid ${C.ink}` }}>
-          <div style={{ padding: "10px 24px", background: "#efece4", fontFamily: UI, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.amber }}>
+          <div style={{ padding: "10px 24px", background: "var(--color-ink-100)", fontFamily: UI, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.amber }}>
             Undated promises · {undated.length} · a deadline was claimed but couldn&#39;t be resolved to a date
           </div>
           {undated.map((e) => (
@@ -413,13 +413,13 @@ function PastDueView({ events, beats, todayISO, onSelect }: ViewProps) {
 
   return (
     <div>
-      <div style={{ background: "#fdeaea", border: `1px solid ${C.hinduRed}`, padding: "14px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        <div style={{ background: C.hinduRed, color: "#fff", padding: "4px 10px", fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em" }}>ACCOUNTABILITY</div>
-        <div style={{ fontFamily: BODY, fontSize: 14, color: "#1A1A1A", fontStyle: "italic" }}>
+      <div style={{ background: "var(--color-urgent-bg)", border: `1px solid ${C.accent}`, padding: "14px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ background: C.accent, color: "#fff", padding: "4px 10px", fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em" }}>ACCOUNTABILITY</div>
+        <div style={{ fontFamily: BODY, fontSize: 14, color: "var(--color-frame)", fontStyle: "italic" }}>
           Promised by someone — delivered? These have crossed their deadline. Assign a reporter to verify.
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 14 }}>
-          <Counter n={overdue} label="overdue" color={C.hinduRed} />
+          <Counter n={overdue} label="overdue" color={C.accent} />
           <Counter n={unverified} label="unverified" color="#666" />
         </div>
       </div>
@@ -428,11 +428,11 @@ function PastDueView({ events, beats, todayISO, onSelect }: ViewProps) {
         {items.length === 0 && <EmptyRow text="Nothing past-due. Every tracked promise is still ahead of its deadline." />}
         {items.map((e) => {
           const over = Math.abs(daysBetween(todayISO, e.deadline!));
-          const stat = deliveredOf(e) === "overdue" ? { color: C.hinduRed, label: "Overdue · investigate" } : { color: "#666", label: "Status not verified" };
+          const stat = deliveredOf(e) === "overdue" ? { color: C.accent, label: "Overdue · investigate" } : { color: "#666", label: "Status not verified" };
           return (
             <button key={e.id} onClick={() => onSelect(e)} style={{ display: "grid", gridTemplateColumns: "140px 1fr 200px", gap: 16, padding: "16px 24px", borderBottom: `1px solid ${C.ruleSoft}`, background: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
               <div>
-                <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.hinduRed }}>{over}d past-due</div>
+                <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.accent }}>{over}d past-due</div>
                 <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 800, color: C.ink, marginTop: 4, lineHeight: 1.1 }}>{fmtShort(e.deadline!)}</div>
                 <div style={{ fontFamily: UI, fontSize: 10, color: C.ink3, marginTop: 1 }}>was due</div>
               </div>
@@ -500,7 +500,7 @@ function PipelineView({ counts }: { counts: { total: number; forward: number; pa
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 18, padding: "10px 14px", background: "#eaf0ea", border: `1px solid ${C.iojGreen}`, fontFamily: BODY, fontStyle: "italic", fontSize: 13, color: "#1f5c38", lineHeight: 1.55 }}>
+          <div style={{ marginTop: 18, padding: "10px 14px", background: "var(--color-ioj-green-100)", border: `1px solid ${C.green}`, fontFamily: BODY, fontStyle: "italic", fontSize: 13, color: "var(--color-ioj-green-800)", lineHeight: 1.55 }}>
             The LLM agent runs only on items that pass the cheap temporal-cue Gate — not on every story. Everything else — fetching, date arithmetic, scheduling, storage — is plain Python.
           </div>
         </div>
@@ -510,9 +510,9 @@ function PipelineView({ counts }: { counts: { total: number; forward: number; pa
           <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.ink3, marginBottom: 12 }}>Eight modules</div>
           {modules.map((m) => (
             <div key={m.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: `1px solid ${C.ruleSoft}` }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.iojGreen }} />
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.green }} />
               <div style={{ fontFamily: UI, fontSize: 13, fontWeight: 700, color: C.ink, flex: 1 }}>{m.name}</div>
-              <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: m.kind === "LLM agent" ? C.iojGreen : C.ink3 }}>{m.kind}</div>
+              <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: m.kind === "LLM agent" ? C.green : C.ink3 }}>{m.kind}</div>
             </div>
           ))}
         </div>
@@ -549,7 +549,7 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
         <div style={{ padding: "24px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <BeatTag beats={beats} beat={event.beat} />
-            <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: isPast ? C.hinduRed : bucket.color, padding: "3px 8px", background: isPast ? "#fdeaea" : bucket.strip, border: `1px solid ${isPast ? C.hinduRed : bucket.color}` }}>
+            <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: isPast ? C.accent : bucket.color, padding: "3px 8px", background: isPast ? "var(--color-urgent-bg)" : bucket.strip, border: `1px solid ${isPast ? C.accent : bucket.color}` }}>
               {!dated ? "UNDATED" : isPast ? `${Math.abs(d)}d past-due` : daysOutLabel(d).toUpperCase()}
             </div>
           </div>
@@ -581,7 +581,7 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
                   const prev = markers[i + 1]?.days ?? 0;
                   const isCurrent = m.days >= d && prev < d;
                   return (
-                    <div key={m.days} style={{ padding: "8px 6px", textAlign: "center", background: m.passed ? "#efece4" : isCurrent ? bucket.strip : "#fff", border: `1px solid ${m.passed ? C.rule : isCurrent ? bucket.color : C.rule}`, opacity: m.passed ? 0.55 : 1 }}>
+                    <div key={m.days} style={{ padding: "8px 6px", textAlign: "center", background: m.passed ? "var(--color-ink-100)" : isCurrent ? bucket.strip : "#fff", border: `1px solid ${m.passed ? C.rule : isCurrent ? bucket.color : C.rule}`, opacity: m.passed ? 0.55 : 1 }}>
                       <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 800, color: m.passed ? C.ink3 : isCurrent ? bucket.color : C.ink, lineHeight: 1 }}>{m.days}d</div>
                       <div style={{ fontFamily: UI, fontSize: 9, color: C.ink3, marginTop: 3 }}>{fmtShort(m.date)}</div>
                       {m.passed && <div style={{ fontFamily: UI, fontSize: 8, color: C.ink3, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", marginTop: 2 }}>passed</div>}
@@ -596,7 +596,7 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
           {event.originalText && (
             <>
               <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.ink3, marginBottom: 6 }}>Original claim — extracted text</div>
-              <blockquote style={{ fontFamily: BODY, fontSize: 15, lineHeight: 1.65, color: "#1A1A1A", fontStyle: "italic", borderLeft: `3px solid ${C.iojGreen}`, paddingLeft: 14, marginBottom: 18 }}>
+              <blockquote style={{ fontFamily: BODY, fontSize: 15, lineHeight: 1.65, color: "var(--color-frame)", fontStyle: "italic", borderLeft: `3px solid ${C.green}`, paddingLeft: 14, marginBottom: 18 }}>
                 &ldquo;{event.originalText}&rdquo;
               </blockquote>
             </>
@@ -622,16 +622,16 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
           </div>
 
           {isPast && (
-            <div style={{ marginBottom: 18, padding: "12px 14px", background: "#fdeaea", border: `1px solid ${C.hinduRed}` }}>
-              <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.hinduRed }}>Delivered?</div>
-              <div style={{ fontFamily: BODY, fontStyle: "italic", fontSize: 14, color: "#1A1A1A", marginTop: 4, lineHeight: 1.55 }}>
+            <div style={{ marginBottom: 18, padding: "12px 14px", background: "var(--color-urgent-bg)", border: `1px solid ${C.accent}` }}>
+              <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.accent }}>Delivered?</div>
+              <div style={{ fontFamily: BODY, fontStyle: "italic", fontSize: 14, color: "var(--color-frame)", marginTop: 4, lineHeight: 1.55 }}>
                 The deadline has passed. Assign a reporter to confirm whether it was delivered and write the accountability story.
               </div>
             </div>
           )}
 
           {event.leadId ? (
-            <a href={`/${locale}/newslist`} style={{ display: "block", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.iojGreen, color: "#fff", textDecoration: "none", padding: "11px 0", letterSpacing: ".04em" }}>
+            <a href={`/${locale}/newslist`} style={{ display: "block", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.green, color: "#fff", textDecoration: "none", padding: "11px 0", letterSpacing: ".04em" }}>
               On the Newslist →
             </a>
           ) : canCommission && dated ? (
@@ -743,7 +743,7 @@ export default function CalendarApp({ events, beats, todayISO, locale, canCommis
                   {t.label}
                   {n !== null ? <span style={{ color: C.ink3, fontWeight: 600 }}> · {n}</span> : null}
                 </div>
-                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: active ? C.iojGreen : C.ink3, marginTop: 1 }}>{t.sub}</div>
+                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: active ? C.green : C.ink3, marginTop: 1 }}>{t.sub}</div>
               </button>
             );
           })}
@@ -773,7 +773,7 @@ export default function CalendarApp({ events, beats, todayISO, locale, canCommis
           <div style={{ width: 1, height: 22, background: C.rule }} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <span style={{ fontFamily: UI, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.ink3 }}>Min confidence</span>
-            <input type="range" min={0} max={100} step={5} value={minConfidence * 100} onChange={(e) => setMinConfidence(Number(e.target.value) / 100)} style={{ width: 100, accentColor: C.iojGreen }} />
+            <input type="range" min={0} max={100} step={5} value={minConfidence * 100} onChange={(e) => setMinConfidence(Number(e.target.value) / 100)} style={{ width: 100, accentColor: C.green }} />
             <span style={{ fontFamily: UI, fontSize: 12, fontWeight: 700, color: C.ink, minWidth: 36, textAlign: "right" }}>{Math.round(minConfidence * 100)}%</span>
           </div>
           <div style={{ flex: 1 }} />
