@@ -10,6 +10,13 @@ implement this — the **tools** and **editorial-optimiser** apps should match i
 - **Platform** — https://app.onlinejourno.com
 - **Tools** — https://tools.onlinejourno.com (web-bloat-checker, crawl-budget-analyser)
 - **Editorial Optimiser** — https://editorial-optimiser.onlinejourno.com
+- **News Ranking** *(forthcoming — separate session)* — reverse-engineers how news stories get
+  ranked; suggested subdomain `https://ranking.onlinejourno.com`. Joins the nav + footer as a **5th
+  top-level property** when it ships.
+
+**Adding a property is one line.** Platform: add to `apps/web/lib/site-nav.ts` `SITE` + `PRODUCTS`.
+WordPress: add an `<a>` to the footer Product column + the header nav fallback in
+`marketing/wordpress/theme/onlinejourno/{footer,header}.php`. Nothing else changes.
 
 ## Header nav (same set + order, every property)
 

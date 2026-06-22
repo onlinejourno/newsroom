@@ -23,6 +23,9 @@ export const PRODUCTS: NavLink[] = [
   { label: "Platform", href: SITE.app },
   { label: "Tools", href: SITE.tools },
   { label: "Editorial Optimiser", href: SITE.optimiser },
+  // Forthcoming (separate session) — News Ranking, which reverse-engineers
+  // news-story ranking. When it ships, add `ranking: "https://ranking.onlinejourno.com"`
+  // to SITE above, then: { label: "News Ranking", href: SITE.ranking }.
 ];
 
 // The open-source funnel.
