@@ -12,7 +12,7 @@ export const SITE = {
   app: "https://app.onlinejourno.com",
   tools: "https://tools.onlinejourno.com",
   optimiser: "https://editorial-optimiser.onlinejourno.com",
-  github: "https://github.com/onlinejourno",
+  github: "https://github.com/onlinejourno/platform",
 } as const;
 
 export type NavLink = { label: string; href: string };

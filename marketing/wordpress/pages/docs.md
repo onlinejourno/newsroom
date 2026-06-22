@@ -25,5 +25,5 @@ to any outlet. Your masthead, your sources, your beats.
 ## More
 
 - Full guide: `SELF-HOST.md` in the repository.
-- Source code &amp; issues: https://github.com/onlinejourno
+- Source code &amp; issues: https://github.com/onlinejourno/platform
 - Licence: site content under CC BY 4.0; code under the repository `LICENSE`.
