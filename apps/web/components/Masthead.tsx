@@ -12,6 +12,7 @@ import { navStageCounts } from "@/lib/db";
 import { deriveNavSignals, stageEmphasis } from "@/lib/nav-signals";
 import { currentTenantId } from "@/lib/tenant";
 import { Badge } from "@/components/ui/badge";
+import { PRODUCTS } from "@/lib/site-nav";
 
 export default async function Masthead({
   locale = "en",
@@ -59,6 +60,22 @@ export default async function Masthead({
           OnlineJourno<span style={{ color: "var(--color-urgent)" }}>.</span>
         </span>
       </a>
+
+      {/* Cross-property "Products" menu — the OnlineJourno ecosystem. */}
+      <details className="relative">
+        <summary className="ds-meta cursor-pointer list-none select-none" style={{ color: "var(--color-fg-tertiary)" }}>
+          Products ▾
+        </summary>
+        <div className="absolute left-0 mt-2 flex flex-col gap-1.5 border p-3 min-w-52"
+             style={{ background: "var(--color-bg-card)", borderColor: "var(--color-frame)", zIndex: 20 }}>
+          {PRODUCTS.map((p) => (
+            <a key={p.href} href={p.href} className="no-underline hover:underline text-sm"
+               style={{ color: "var(--color-fg-secondary)" }}>
+              {p.label}
+            </a>
+          ))}
+        </div>
+      </details>
 
       {role ? (
         <nav className="flex items-center gap-x-6 flex-wrap md:ml-auto">
