@@ -15,10 +15,12 @@ export default async function Masthead({
   locale = "en",
   role = null,
   userName = null,
+  beats = null,
 }: {
   locale?: string;
   role?: string | null;
   userName?: string | null;
+  beats?: string[] | null;
 }) {
   const href = (p: string) => `/${locale}/${p}`;
   // Active stage: first path segment after the locale.
@@ -34,8 +36,10 @@ export default async function Masthead({
   const stages = LIFECYCLE.filter((s) => stageVisible(s, role));
   // Living masthead: per-stage live counts + the one stage that needs attention now.
   const tenantId = role ? await currentTenantId() : null;
+  // Reporters see their beats' load; desk/editor/admin see the whole newsroom.
+  const scopeBeats = role === "reporter" && beats?.length ? beats : null;
   const counts = tenantId
-    ? await navStageCounts(tenantId)
+    ? await navStageCounts(tenantId, scopeBeats)
     : { calendar: 0, brief: 0, signals: 0, newslist: 0, potential: 0 };
   const navSig = deriveNavSignals(counts);
 
