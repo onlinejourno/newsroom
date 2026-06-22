@@ -23,7 +23,8 @@
 		<div>
 			<h4>Project</h4>
 			<a href="https://github.com/onlinejourno" rel="noopener">Source on GitHub</a>
-			<a href="<?php echo esc_url( home_url( '/about/' ) ); ?>">Self-host</a>
+			<a href="<?php echo esc_url( home_url( '/products/' ) ); ?>">Products</a>
+			<a href="<?php echo esc_url( home_url( '/docs/' ) ); ?>">Docs &amp; self-host</a>
 		</div>
 		<div>
 			<h4>Legal</h4>

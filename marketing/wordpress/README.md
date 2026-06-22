@@ -25,6 +25,8 @@ content (the block editor converts the Markdown), then **Publish**:
 | `privacy.md` | Privacy Policy | `privacy-policy` |
 | `contact.md` | Contact | `contact` |
 | `license-attribution.md` | License & Attribution | `license-attribution` |
+| `products.md` | Products | `products` |
+| `docs.md` | Docs & self-hosting | `docs` |
 
 The theme footer already links to these slugs.
 
