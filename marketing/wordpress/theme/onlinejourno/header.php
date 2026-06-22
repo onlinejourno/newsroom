@@ -38,6 +38,7 @@
 				echo '<a href="https://app.onlinejourno.com/">Platform</a>';
 				echo '<a href="https://tools.onlinejourno.com/">Tools</a>';
 				echo '<a href="https://editorial-optimiser.onlinejourno.com/">Editorial Optimiser</a>';
+				echo '<a href="' . esc_url( home_url( '/docs/' ) ) . '">Docs</a>';
 				echo '<a href="' . esc_url( home_url( '/about/' ) ) . '">About</a>';
 			}
 			?>

@@ -42,6 +42,23 @@ get_header();
 		</div>
 	</section>
 
+	<hr class="rule" style="margin-top:40px;">
+	<p class="kicker">The suite</p>
+	<section class="home-features" style="margin-top:18px;">
+		<div class="feature">
+			<h3><a href="https://app.onlinejourno.com/" style="color:inherit;text-decoration:none;">The Platform &rarr;</a></h3>
+			<p>The editorial-intelligence app: sources, framing, briefs, calendar, story scores.</p>
+		</div>
+		<div class="feature">
+			<h3><a href="https://tools.onlinejourno.com/" style="color:inherit;text-decoration:none;">Tools &rarr;</a></h3>
+			<p>Free standalone tools &mdash; web bloat checker, crawl-budget analyser, and more.</p>
+		</div>
+		<div class="feature">
+			<h3><a href="https://editorial-optimiser.onlinejourno.com/" style="color:inherit;text-decoration:none;">Editorial Optimiser &rarr;</a></h3>
+			<p>Optimise a story for distribution and a fair chance in discovery.</p>
+		</div>
+	</section>
+
 	<section class="band" style="margin-top:40px;">
 		<p class="next">The ethic</p>
 		<p style="font-family:var(--font-display);font-size:28px;line-height:1.3;margin:0;">The machine surfaces. The journalist decides. It never publishes.</p>
