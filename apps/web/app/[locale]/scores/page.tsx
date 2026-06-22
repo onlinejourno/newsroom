@@ -93,15 +93,15 @@ const SURFACE_SHORT: Record<string, string> = {
 };
 
 function band(score: number): { label: string; color: string } {
-  if (score >= 75) return { label: "HIGH", color: "#16a34a" };
-  if (score >= 50) return { label: "MEDIUM", color: "#2563eb" };
-  return { label: "LOW", color: "#b45309" };
+  if (score >= 75) return { label: "HIGH", color: "var(--color-ioj-green-600)" };
+  if (score >= 50) return { label: "MEDIUM", color: "var(--color-info)" };
+  return { label: "LOW", color: "var(--color-amber-600)" };
 }
 
 function cellColor(score: number): string {
-  if (score >= 75) return "#16a34a";
-  if (score >= 50) return "#2563eb";
-  return "#b45309";
+  if (score >= 75) return "var(--color-ioj-green-600)";
+  if (score >= 50) return "var(--color-info)";
+  return "var(--color-amber-600)";
 }
 
 function composite(scores: Record<string, { score: number }>): number {
@@ -114,7 +114,7 @@ function composite(scores: Record<string, { score: number }>): number {
 function AnalyzePanel({ res }: { res: AnalyzeResult }) {
   if (res.error) {
     return (
-      <p className="text-sm mt-3" style={{ color: "#b91c1c" }}>
+      <p className="text-sm mt-3" style={{ color: "var(--color-red-700)" }}>
         {res.error}
       </p>
     );
@@ -156,7 +156,7 @@ function AnalyzePanel({ res }: { res: AnalyzeResult }) {
         ))}
       </ul>
       {res.top_fix ? (
-        <p className="mt-2 font-semibold" style={{ color: "#b45309" }}>
+        <p className="mt-2 font-semibold" style={{ color: "var(--color-amber-600)" }}>
           Fix first: {res.top_fix}
         </p>
       ) : null}
@@ -174,9 +174,9 @@ const PROBITY_DIMS: Record<string, string> = {
   performance: "Performance",
 };
 function probityColor(n: number): string {
-  if (n >= 75) return "#16a34a";
-  if (n >= 50) return "#d97706";
-  return "#dc2626";
+  if (n >= 75) return "var(--color-ioj-green-600)";
+  if (n >= 50) return "var(--color-amber-accent)";
+  return "var(--color-urgent)";
 }
 function ProbityCard({ p }: { p: ProbityResult }) {
   if (p.error) {
@@ -186,7 +186,7 @@ function ProbityCard({ p }: { p: ProbityResult }) {
         style={{ borderColor: "var(--color-rule)", fontFamily: "var(--font-ui)" }}
       >
         <p className="ds-meta mb-1">Probity — honest to the reader</p>
-        <p style={{ color: "#b91c1c" }}>{p.error}</p>
+        <p style={{ color: "var(--color-red-700)" }}>{p.error}</p>
       </div>
     );
   }
@@ -215,7 +215,7 @@ function ProbityCard({ p }: { p: ProbityResult }) {
         ))}
       </ul>
       {p.flags?.length ? (
-        <p className="mt-2" style={{ color: "#b45309" }}>
+        <p className="mt-2" style={{ color: "var(--color-amber-600)" }}>
           {p.flags.length} flag{p.flags.length === 1 ? "" : "s"}:{" "}
           {p.flags
             .slice(0, 3)
@@ -510,10 +510,10 @@ export default async function ScoresPage({
                         const checks = ch.signals ?? [];
                         const sev = (c: { value: number; max: number }) =>
                           c.value >= c.max
-                            ? { icon: "✓", color: "#16a34a", bg: "transparent" }
+                            ? { icon: "✓", color: "var(--color-ioj-green-600)", bg: "transparent" }
                             : c.value === 0
-                              ? { icon: "✗", color: "#dc2626", bg: "#dc262611" }
-                              : { icon: "⚠", color: "#b45309", bg: "#d9770611" };
+                              ? { icon: "✗", color: "var(--color-urgent)", bg: "color-mix(in srgb, var(--color-urgent) 7%, transparent)" }
+                              : { icon: "⚠", color: "var(--color-amber-600)", bg: "color-mix(in srgb, var(--color-amber-accent) 7%, transparent)" };
                         const label = k
                           .split("_")
                           .pop()!
