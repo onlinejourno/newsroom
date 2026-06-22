@@ -126,6 +126,11 @@ img { max-width: 100%; height: auto; }
 .pagination a, .pagination .current { font: 500 14px/1 var(--font-sans); padding: 8px 13px; border: 1px solid var(--border-default); text-decoration: none; color: var(--text-secondary); }
 .pagination .current { background: var(--ink); color: #f7f4ed; border-color: var(--ink); }
 
+/* ============================================================ Home features */
+.home-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px 32px; padding: 10px 0 18px; }
+.feature h3 { font: 600 22px/1.2 var(--font-serif); margin: 0 0 8px; letter-spacing: -0.01em; }
+.feature p { color: var(--text-secondary); margin: 0; font-size: 16px; }
+
 /* ============================================================ Mobile
    The nav is never hidden — it wraps (tablet) then horizontally scrolls
    (phone) so navigation stays reachable without JS. */
@@ -144,6 +149,7 @@ img { max-width: 100%; height: auto; }
   .page-head h1 { font-size: 32px; }
   .single article { padding: 22px 16px; }
   .single .entry-title { font-size: 34px; }
+  .home-features { grid-template-columns: 1fr; }
   .site-footer .container { grid-template-columns: 1fr; gap: 20px; }
   .footer-base .container { flex-direction: column; gap: 8px; }
 }
