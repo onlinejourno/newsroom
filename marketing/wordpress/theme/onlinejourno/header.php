@@ -33,10 +33,11 @@
 					'depth'          => 1,
 				) );
 			} else {
-				// Fallback menu mirroring the live product surfaces.
-				echo '<a href="' . esc_url( home_url( '/' ) ) . '">Today</a>';
-				echo '<a href="' . esc_url( home_url( '/category/sources/' ) ) . '">Sources</a>';
-				echo '<a href="' . esc_url( home_url( '/category/analysis/' ) ) . '">Analyse</a>';
+				// Fallback menu — the cross-property ecosystem nav.
+				echo '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>';
+				echo '<a href="https://app.onlinejourno.com/">Platform</a>';
+				echo '<a href="https://tools.onlinejourno.com/">Tools</a>';
+				echo '<a href="https://editorial-optimiser.onlinejourno.com/">Editorial Optimiser</a>';
 				echo '<a href="' . esc_url( home_url( '/about/' ) ) . '">About</a>';
 			}
 			?>
