@@ -40,8 +40,8 @@ The theme footer already links to these slugs.
 ## Confirm before publishing
 
 - **Contact email** — the pages use `hello@onlinejourno.com`. Change it if you use a different address.
-- **GitHub link** — the License page points at `github.com/onlinejourno`; update it to the public repo
-  URL once the project is public (the repo is currently private).
+- **GitHub link** — the License page + footer point at `github.com/onlinejourno/platform`; make sure
+  the repo is public there (move/transfer it to the `onlinejourno` org if it isn't already).
 
 ## Mobile
 

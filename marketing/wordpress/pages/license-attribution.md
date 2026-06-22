@@ -20,7 +20,7 @@ If you are a rights-holder with a concern about how your material has been used,
 
 ## The software
 
-The OnlineJourno platform software is licensed separately — see the `LICENSE` in the [project repository](https://github.com/onlinejourno). Bundled fonts (Karnata F Kittel, Source Serif 4, IBM Plex Sans & Mono) are used under the **SIL Open Font License 1.1**.
+The OnlineJourno platform software is licensed separately — see the `LICENSE` in the [project repository](https://github.com/onlinejourno/platform). Bundled fonts (Karnata F Kittel, Source Serif 4, IBM Plex Sans & Mono) are used under the **SIL Open Font License 1.1**.
 
 ## Trademarks
 

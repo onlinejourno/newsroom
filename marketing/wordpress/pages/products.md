@@ -9,7 +9,7 @@ The editorial-intelligence app: source monitoring, framing analysis (the PEJ fra
 predictive planning calendar, daily desk briefs, "where you stand" competitive context, and
 distribution-fit story scores. Multi-tenant, multilingual, bring-your-own-LLM.
 
-→ Open the app: https://app.onlinejourno.com · Source: https://github.com/onlinejourno
+→ Open the app: https://app.onlinejourno.com · Source: https://github.com/onlinejourno/platform
 
 ## Tools
 
@@ -31,4 +31,4 @@ Give a story a fair chance — optimise its headline, structure, and distributio
 Everything here is open source. Download from GitHub, run it with Docker Compose, configure your own
 sources and signals, and own your data.
 
-→ [Docs &amp; self-hosting](/docs/) · GitHub: https://github.com/onlinejourno
+→ [Docs &amp; self-hosting](/docs/) · GitHub: https://github.com/onlinejourno/platform
