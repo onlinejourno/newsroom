@@ -90,7 +90,7 @@ get_header(); ?>
   <section style="background:var(--ink-band);">
     <div class="wrap" style="max-width:920px; padding:72px 28px; text-align:center;">
       <span class="kicker" style="color:rgba(255,255,255,.55);">The ethic</span>
-      <p style="font:400 35px/1.28 var(--font-serif); color:#fff; margin:22px 0 0; letter-spacing:-0.01em;">The machine surfaces. The journalist decides. It <span style="color:#e6726a;">teaches</span> as it audits — built from a journalist, for journalists.</p>
+      <p style="font:400 35px/1.28 var(--font-serif); color:#fff; margin:22px 0 0; letter-spacing:-0.01em;">The machine surfaces. The journalist decides. It <span style="color:#e6726a;">teaches</span> as it audits — built by journalists, for journalists.</p>
     </div>
   </section>
 
