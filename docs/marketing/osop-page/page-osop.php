@@ -143,4 +143,6 @@ get_header(); ?>
 
 </div>
 
+<script defer src="https://onlinejourno-umami.fly.dev/script.js" data-website-id="123f1428-af88-498b-a1fb-50a060ec7ddd"></script>
+
 <?php get_footer(); ?>
