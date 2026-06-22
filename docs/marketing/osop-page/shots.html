@@ -173,5 +173,31 @@ body{margin:0;background:#cfc7b4;font-family:var(--serif);color:var(--ink);paddi
   </div>
 </div>
 
+<!-- ════════ SCREEN 4 — REAL CLI (today) ════════ -->
+<div class="shot" id="cli">
+  <div class="win" style="background:#0b0a07;border-color:#2a2620">
+    <div class="winbar" style="background:#1a1610;border-bottom-color:#2a2620">
+      <span class="dot" style="background:#e0625b"></span><span class="dot" style="background:#e6b34a"></span><span class="dot" style="background:#8bbf6e"></span>
+      <span class="urlbar" style="background:#0b0a07;border-color:#2a2620;color:#9d9482">story-optimiser — terminal</span>
+    </div>
+    <div style="padding:22px 26px;font-family:var(--mono);color:#e7e2d6">
+      <div style="font:400 14px/1.6 var(--mono);color:#9d9482">$ <span style="color:#8bbf6e">story-optimiser</span> audit https://en.wikipedia.org/wiki/Monsoon</div>
+      <pre style="margin:12px 0 0;font:400 13.5px/1.62 var(--mono);color:#e7e2d6;white-space:pre-wrap">{
+  "url": "https://en.wikipedia.org/wiki/Monsoon",
+  "overall_score": <span style="color:#e6b34a">42.0</span>,
+  "grade": <span style="color:#e6b34a">"D"</span>,
+  "surfaces": {
+    "google_search": { "score": <span style="color:#8bbf6e">73.0</span> },
+    "google_news":   { "score": <span style="color:#e6b34a">50.0</span> },
+    "discover":      { "score": <span style="color:#e0625b">31.0</span> }
+  },
+  "potential":      { "label": "VERY LOW" },
+  "cwv":            { "available": <span style="color:#e0625b">false</span>, "reason": "no PAGESPEED_API_KEY" }
+}</pre>
+      <div style="color:#6f6757;margin-top:14px;font:400 12.5px/1.5 var(--mono)">— real output, lightly trimmed for legibility · run it yourself: <span style="color:#9fc88a">docker compose up</span></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
