@@ -1,5 +1,8 @@
 import Sparkline from "./Sparkline";
 import FramingFingerprintStub from "./FramingFingerprintStub";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Tag } from "@/components/ui/tag";
 import { type LeadCard, type NowStat, TONE_COLOR } from "@/lib/brief-today";
 
 const SEV_LABEL = { high: "high", med: "medium", low: "low" } as const;
@@ -46,9 +49,9 @@ export default function TodayHome({
               <div className="lead-card__body">
                 <div className="lead-card__top">
                   <span className="lead-card__time">{c.ts}</span>
-                  <span className="tag tag--beat">{c.beat}</span>
-                  {c.need && <span className="tag tag--need">{c.need}</span>}
-                  {c.potential && <span className="tag tag--pot">● Story potential</span>}
+                  <Tag>{c.beat}</Tag>
+                  {c.need && <Tag>{c.need}</Tag>}
+                  {c.potential && <Badge tone="critical" dot>Story potential</Badge>}
                 </div>
                 <h3 className="lead-card__hl">{c.headline}</h3>
                 {c.why && <p className="lead-card__why">{c.why}</p>}
@@ -63,11 +66,7 @@ export default function TodayHome({
         </section>
 
         <aside className="today-side">
-          <div className="side-panel">
-            <div className="side-panel__head">
-              <span className="ds-label">The newsroom now</span>
-              <span className="ds-meta">{windowLabel}</span>
-            </div>
+          <Card eyebrow="The newsroom now" action={<span className="ds-meta">{windowLabel}</span>} className="mb-4">
             <div className="now-stats">
               {stats.map((s) => (
                 <div className="now-stat" key={s.key}>
@@ -83,7 +82,7 @@ export default function TodayHome({
               <span className="ds-meta">Stories · last 7 days</span>
               <Sparkline data={published7d} />
             </div>
-          </div>
+          </Card>
           <FramingFingerprintStub />
         </aside>
       </div>

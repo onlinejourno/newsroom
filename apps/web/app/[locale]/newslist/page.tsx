@@ -22,10 +22,10 @@ const COLUMNS: Status[] = ["idea", "pitched", "assigned", "filed", "approved", "
 // "idea" renders as the "Suggested" intake lane (calendar + commission origin).
 const COLUMN_LABEL: Record<string, string> = { idea: "Suggested" };
 const IMPORTANCE_COLOR: Record<string, string> = {
-  urgent: "#dc2626",
-  high: "#d97706",
-  normal: "#6b7280",
-  low: "#9ca3af",
+  urgent: "var(--color-urgent)",
+  high: "var(--color-amber-accent)",
+  normal: "var(--color-ink-500)",
+  low: "var(--color-ink-400)",
 };
 // How a lead entered the board (origin), in plain words.
 const ORIGIN_LABEL: Record<string, string> = {
@@ -159,7 +159,7 @@ export default async function NewslistPage({
             }}
           />
           {l.trend_score != null ? (
-            <span className="text-xs" style={{ color: "#dc2626" }}>
+            <span className="text-xs" style={{ color: "var(--color-urgent)" }}>
               🔥 {l.trend_score}
             </span>
           ) : null}
@@ -325,9 +325,9 @@ export default async function NewslistPage({
       >
         <span className="ds-meta">How to read a card</span>
         <span className="flex items-center gap-1.5">
-          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "#dc2626", display: "inline-block" }} /> urgent
-          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "#d97706", display: "inline-block", marginLeft: 6 }} /> high
-          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "#6b7280", display: "inline-block", marginLeft: 6 }} /> normal
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "var(--color-urgent)", display: "inline-block" }} /> urgent
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "var(--color-amber-accent)", display: "inline-block", marginLeft: 6 }} /> high
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "var(--color-ink-500)", display: "inline-block", marginLeft: 6 }} /> normal
           <span style={{ color: "var(--color-fg-tertiary)" }}>— importance</span>
         </span>
         <span>🔥 <span style={{ color: "var(--color-fg-tertiary)" }}>trend score — riding a moving topic</span></span>
