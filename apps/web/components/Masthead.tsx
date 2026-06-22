@@ -6,6 +6,10 @@ import { headers } from "next/headers";
 
 import { endSession } from "@/lib/auth";
 import { LIFECYCLE, ADMIN, stageVisible, type Stage } from "@/lib/nav";
+import { navStageCounts } from "@/lib/db";
+import { deriveNavSignals } from "@/lib/nav-signals";
+import { currentTenantId } from "@/lib/tenant";
+import { Badge } from "@/components/ui/badge";
 
 export default async function Masthead({
   locale = "en",
@@ -28,6 +32,12 @@ export default async function Masthead({
   }
 
   const stages = LIFECYCLE.filter((s) => stageVisible(s, role));
+  // Living masthead: per-stage live counts + the one stage that needs attention now.
+  const tenantId = role ? await currentTenantId() : null;
+  const counts = tenantId
+    ? await navStageCounts(tenantId)
+    : { calendar: 0, brief: 0, signals: 0, newslist: 0, potential: 0 };
+  const navSig = deriveNavSignals(counts);
 
   return (
     <header
@@ -48,15 +58,21 @@ export default async function Masthead({
         <nav className="flex items-center gap-x-6 flex-wrap md:ml-auto">
           {stages.map((s: Stage) => {
             const active = s.path.split("/")[0] === seg;
+            const sig = navSig.byPath[s.path];
             return (
               <a key={s.path} href={href(s.path)} title={s.blurb}
                  className="no-underline group flex flex-col leading-none pb-1"
                  style={{ borderBottom: `2px solid ${active ? "var(--color-urgent)" : "transparent"}` }}>
                 <span className="ds-meta" style={{ color: "var(--color-fg-tertiary)" }}>{s.verb}</span>
-                <span className="text-[15px] font-semibold"
+                <span className="text-[15px] font-semibold flex items-center gap-1.5"
                       style={{ fontFamily: "var(--font-display)",
                                color: active ? "var(--color-fg-primary)" : "var(--color-fg-secondary)" }}>
                   {s.label}
+                  {sig && (
+                    <Badge tone={sig.tone} dot={s.path === navSig.nowPath}>
+                      {sig.count}
+                    </Badge>
+                  )}
                 </span>
               </a>
             );

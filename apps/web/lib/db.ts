@@ -1751,6 +1751,38 @@ export async function newsroomNowCounts(tenantId: string): Promise<NowCountsRow>
   return rows[0] ?? { signalsIn: 0, leadsNeedingDecision: 0, sourcesLive: 0, publishedToday: 0 };
 }
 
+export type NavCountsRow = {
+  calendar: number;
+  brief: number;
+  signals: number;
+  newslist: number;
+  potential: number;
+};
+
+/** Live per-stage counts for the living masthead (lib/nav-signals.ts). One
+ *  batched round-trip of cheap, tenant-scoped counts. */
+export async function navStageCounts(tenantId: string): Promise<NavCountsRow> {
+  const pool = getPool();
+  const { rows } = await pool.query<NavCountsRow>(
+    `
+    select
+      (select count(*) from calendar_event where tenant_id = $1
+         and outcome is null and target_date is not null
+         and target_date <= now() + interval '7 days')::int as "calendar",
+      (select count(*) from story_leads where tenant_id = $1
+         and status in ('idea','pitched','assigned'))::int as "brief",
+      (select count(*) from signals where tenant_id = $1
+         and coalesce(published_at, fetched_at) >= now() - interval '24 hours')::int as "signals",
+      (select count(*) from story_leads where tenant_id = $1
+         and status in ('filed','approved'))::int as "newslist",
+      (select count(*) from stories where tenant_id = $1
+         and status = 'published' and published_at >= now() - interval '7 days')::int as "potential"
+    `,
+    [tenantId],
+  );
+  return rows[0] ?? { calendar: 0, brief: 0, signals: 0, newslist: 0, potential: 0 };
+}
+
 /** The install's newsroom — the oldest non-archived tenant. Fallback when there's
  *  no session (one-newsroom-per-install). Null on a fresh, unseeded DB. */
 export async function defaultTenantId(): Promise<string | null> {
