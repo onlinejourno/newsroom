@@ -206,6 +206,7 @@ export default async function RootLayout({
           locale={locale}
           role={account?.role ?? null}
           userName={account?.display_name ?? null}
+          beats={account?.beats ?? null}
         />
         {account ? <Breadcrumbs /> : null}
         {children}

@@ -1761,24 +1761,36 @@ export type NavCountsRow = {
 
 /** Live per-stage counts for the living masthead (lib/nav-signals.ts). One
  *  batched round-trip of cheap, tenant-scoped counts. */
-export async function navStageCounts(tenantId: string): Promise<NavCountsRow> {
+export async function navStageCounts(
+  tenantId: string,
+  beats: string[] | null = null,
+): Promise<NavCountsRow> {
   const pool = getPool();
+  // When beats is a non-empty array, scope each count to those beats (calendar
+  // keys on `topic`). null/empty → newsroom-wide. The `$2::text[] is null or …`
+  // guard keeps a single query for both cases.
+  const b = beats && beats.length ? beats : null;
   const { rows } = await pool.query<NavCountsRow>(
     `
     select
       (select count(*) from calendar_event where tenant_id = $1
          and outcome is null and target_date is not null
-         and target_date <= now() + interval '7 days')::int as "calendar",
+         and target_date <= now() + interval '7 days'
+         and ($2::text[] is null or topic = any($2)))::int as "calendar",
       (select count(*) from story_leads where tenant_id = $1
-         and status in ('idea','pitched','assigned'))::int as "brief",
+         and status in ('idea','pitched','assigned')
+         and ($2::text[] is null or beat = any($2)))::int as "brief",
       (select count(*) from signals where tenant_id = $1
-         and coalesce(published_at, fetched_at) >= now() - interval '24 hours')::int as "signals",
+         and coalesce(published_at, fetched_at) >= now() - interval '24 hours'
+         and ($2::text[] is null or beat = any($2)))::int as "signals",
       (select count(*) from story_leads where tenant_id = $1
-         and status in ('filed','approved'))::int as "newslist",
+         and status in ('filed','approved')
+         and ($2::text[] is null or beat = any($2)))::int as "newslist",
       (select count(*) from stories where tenant_id = $1
-         and status = 'published' and published_at >= now() - interval '7 days')::int as "potential"
+         and status = 'published' and published_at >= now() - interval '7 days'
+         and ($2::text[] is null or beat = any($2)))::int as "potential"
     `,
-    [tenantId],
+    [tenantId, b],
   );
   return rows[0] ?? { calendar: 0, brief: 0, signals: 0, newslist: 0, potential: 0 };
 }
