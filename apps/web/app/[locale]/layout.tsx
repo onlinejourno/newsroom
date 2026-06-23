@@ -20,6 +20,7 @@ import localFont from "next/font/local";
 import "../globals.css";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Masthead from "@/components/Masthead";
+import ProjectBar from "@/components/ProjectBar";
 import SiteFooter from "@/components/SiteFooter";
 import { getAccount } from "@/lib/auth";
 import { locales, dirOf, isLocale, defaultLocale, meta } from "@/lib/locale";
@@ -198,6 +199,7 @@ export default async function RootLayout({
             strategy="afterInteractive"
           />
         )}
+        <ProjectBar current="Platform" />
         {account?.demo && (
           <div className="ds-meta" style={{ background: "var(--color-frame)", color: "var(--color-paper)", textAlign: "center", padding: "4px" }}>
             DEMO · read-only — <a href={`/${locale}/register`} style={{ textDecoration: "underline" }}>Request full access</a>

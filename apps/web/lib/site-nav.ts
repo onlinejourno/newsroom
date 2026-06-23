@@ -28,6 +28,15 @@ export const PRODUCTS: NavLink[] = [
   // to SITE above, then: { label: "News Ranking", href: SITE.ranking }.
 ];
 
+// The uniform cross-property project bar — identical six items + order on every
+// .com property (portal, platform, tools, editorial-optimiser). Each emphasises
+// its own. Self-hosted installs can trim this; the demo shows the full suite.
+export const PROJECT_NAV: NavLink[] = [
+  ...PRODUCTS,
+  { label: "Docs", href: `${SITE.portal}/docs` },
+  { label: "About", href: `${SITE.portal}/about` },
+];
+
 // The open-source funnel.
 export const PROJECT: NavLink[] = [
   { label: "Source on GitHub", href: SITE.github },
