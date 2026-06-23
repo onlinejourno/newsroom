@@ -1,6 +1,6 @@
-# OnlineJourno Story Optimisation Platform — Design Spec
+# OnlineJourno Editorial Optimisation Platform — Design Spec
 
-**Product:** OnlineJourno Story Optimisation Platform
+**Product:** OnlineJourno Editorial Optimisation Platform
 **Tagline:** From a Journalist, for Journalists
 **Status:** Design — approved in brainstorming, pre-plan
 **Date:** 2026-06-21
@@ -12,7 +12,7 @@
 
 A **standalone, vendor-neutral, downloadable** tool that any newsroom — big or small — grabs from GitHub, points at its own site, and uses to **optimise its stories across every discovery surface**: Google Discover, Search, News, AI Overviews, generative-AI answer engines (ChatGPT/Perplexity/Gemini), YouTube, and any surface the newsroom adds.
 
-It listed under "Projects" on onlinejourno.com. It is **independent**: it runs for newsrooms that do **not** use the hosted OnlineJourno Platform. But it is **not a fork** — its scoring brain is the same `onlinejourno-scoring` library the platform uses, consumed as a shared dependency, so logic never diverges.
+It listed under "Projects" on onlinejourno.com. It is **fully independent and self-contained**: it runs for newsrooms that do **not** use the hosted OnlineJourno Platform, and it has **no inter-project dependencies whatsoever** — the scoring engine is **vendored into the repo** (`src/onlinejourno_scoring/`), not consumed as a shared package. A newsroom clones it and runs it alone (all deps are public PyPI). (See the Architecture update in §4.)
 
 Lineage: the scoring brain is ported and decoupled from an earlier single-tenant Streamlit prototype into `packages/scoring-py`. **Brand-neutrality is a hard rule:** no outlet — including any demo origin — is named or hardcoded anywhere: not in source, config defaults, fixtures, tests, or docs. All examples use fictional outlets (e.g. `meridian.example`).
 
@@ -51,12 +51,12 @@ A newsroom can:
 |---------|------------------------|-----------------|
 | Tenancy | Single newsroom | Multi-tenant (row-level) |
 | Store | SQLite default / Postgres optional | Postgres + pgvector |
-| Scoring brain | `onlinejourno-scoring` (shared dep) | `onlinejourno-scoring` (same) |
+| Scoring brain | **vendored** into the repo (`src/onlinejourno_scoring/`) | its own in-tree `packages/scoring-py` |
 | Surfaces | Config-driven registry from `newsroom.yaml` | DB registry per tenant (ADR 0043) |
 | AI tier | `ai-tier` package (store-pluggable, decoupled `agents-py`) | `agents-py` on Postgres |
 | Distribution | Public GitHub, download & run | Hosted at app.onlinejourno.com |
 
-**Shared core, no fork.** `packages/scoring-py` is already a clean, Postgres-free, pip-installable library (deps: requests, beautifulsoup4, lxml, feedparser, dateutil, dotenv; CLI included; hatchling wheel build). It is published as `onlinejourno-scoring` (PyPI or GitHub release) and consumed by both products. Bug fixes flow to both.
+**Architecture update (2026-06-23) — self-contained products, no shared core.** The earlier "shared core, no fork" plan is **superseded**. Per the product principle (each product independently downloadable + installable, **zero inter-project dependencies**), the scoring engine is **vendored** into each product: editorial-optimiser carries its own copy at `src/onlinejourno_scoring/` (all deps public PyPI), and the platform keeps its own in-tree `packages/scoring-py`. A standalone repo `onlinejourno/onlinejourno-scoring` (private, v0.1.0) is **kept as the canonical upstream to vendor from**, but nothing depends on it at runtime. **Trade-off accepted:** the engine is duplicated per product and must be re-vendored when it changes — the deliberate cost of fully independent products.
 
 **Upstream work:** the one piece of `agents-py` reuse the AI tier needs — decoupling it from Postgres into a store-pluggable form — is done **upstream in the platform repo** so both products benefit and drift is avoided. (Confirmed default; revisit only if coordination cost proves too high, in which case vendor a copy.)
 
@@ -66,10 +66,10 @@ A newsroom can:
 
 ### 5.1 Repo shape
 
-New **public** repo, Apache-2.0, "Projects" family. Working name `story-optimiser` (final name TBD).
+New **public** repo, Apache-2.0, "Projects" family. Working name `editorial-optimiser` (final name TBD).
 
 ```
-onlinejourno/story-optimiser
+onlinejourno/editorial-optimiser
   apps/
     api/      FastAPI — wraps onlinejourno-scoring (+ optional AI tier); REST + opt-in MCP
     web/      Next.js (App Router, RSC) — friendly, CWV-grade, single-newsroom UI
@@ -81,7 +81,7 @@ onlinejourno/story-optimiser
   .env.example            optional: LLM provider+key · GSC creds · KE key
   store/                  SQLite (default) | Postgres (optional)
 
-  pip dependency → onlinejourno-scoring     (shared core, from platform)
+  src/onlinejourno_scoring/   vendored engine — no external dep (all deps public PyPI)
 ```
 
 ### 5.2 Two tiers (the locked "hybrid" decision)
@@ -286,8 +286,8 @@ A faithful mockup of the Story Audit screen (platform tokens) was produced and a
 
 ## 17. Open decisions (flag before/early in planning)
 
-1. **Repo name** — `story-optimiser`? `optimise`? something else.
-2. **Shared-core distribution** — publish `onlinejourno-scoring` to PyPI vs GitHub release/tag pin. (Affects how easily the standalone pins a version.)
+1. **Repo name** — `editorial-optimiser`? `optimise`? something else.
+2. ~~Shared-core distribution~~ — **resolved (2026-06-23): vendored.** No external distribution; the engine is copied into the repo. Canonical upstream kept at `onlinejourno/onlinejourno-scoring`.
 3. **`agents-py` decoupling** — confirmed default is upstream-in-platform; reconfirm at planning time.
 
 ---
