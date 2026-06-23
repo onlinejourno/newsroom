@@ -12,7 +12,7 @@ Editorial intelligence **by a journalist, for journalists** — one vendor-neutr
 - `https://onlinejourno.com` — marketing site (WordPress on Bluehost), live since Wed Jun 3.
 - `https://app.onlinejourno.com` — product UI for the design partner editor (Fly.io BOM), Wk 8 onwards.
 - `https://try.onlinejourno.com` — static community playground demo, Wk 12–16 onwards (see `docs/PLAYGROUND-PLAN.md`).
-- `https://github.com/onlinejourno/arena` — currently private; flips public Wk 10–12 per `docs/COMMUNITY-LAUNCH-PLAN.md`.
+- `https://github.com/IOJ-Consulting/arena` — currently private; flips public Wk 10–12 per `docs/COMMUNITY-LAUNCH-PLAN.md`.
 - `https://onlinejournalism.in` — sibling publication (separate brand, same founder, first case study).
 
 ---
@@ -64,7 +64,7 @@ brew services start postgresql@17
 echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zshrc
 exec zsh
 
-git clone https://github.com/onlinejourno/arena.git
+git clone https://github.com/IOJ-Consulting/arena.git
 cd platform
 cp .env.local.example .env
 ln -s ../../.env apps/web/.env   # Next.js reads from apps/web/.env
