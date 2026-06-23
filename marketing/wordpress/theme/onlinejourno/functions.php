@@ -7,6 +7,9 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+// Homepage copy (hero, feature cards, ethic line) editable via Appearance → Customize.
+require get_template_directory() . '/inc/customizer.php';
+
 if ( ! function_exists( 'onlinejourno_setup' ) ) :
 	function onlinejourno_setup() {
 		add_theme_support( 'title-tag' );
