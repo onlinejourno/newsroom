@@ -1,4 +1,4 @@
-# fly.toml — onlinejourno-platform (apps/web, Next.js standalone)
+# fly.toml — Arena / onlinejourno-platform (apps/web, Next.js standalone)
 # Deploys from repo root: fly deploy
 app = "onlinejourno-platform"
 # Primary region: prefer BOM (Mumbai, ~30ms from India). Fell back to
