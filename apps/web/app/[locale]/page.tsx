@@ -12,6 +12,7 @@ import { currentTenantId } from "@/lib/tenant";
 import { Sparkline } from "@/components/Sparkline";
 import { topicMomentum } from "@/lib/trends";
 import { LIFECYCLE, WORKFLOW_EXTRA } from "@/lib/nav";
+import { LANDING } from "@/content/landing";
 
 const SNAPSHOT_HOURS = 12;
 
@@ -90,14 +91,14 @@ export default async function Home({
           className="mx-auto mb-8"
         />
 
-        <p className="ds-label mb-4">OnlineJourno · Platform</p>
+        <p className="ds-label mb-4">{LANDING.hero.eyebrow}</p>
 
         <h1
           className="text-5xl md:text-6xl font-extrabold leading-tight tracking-tight mb-6"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Give every story
-          <br />a fair chance.
+          {LANDING.hero.titleLines[0]}
+          <br />{LANDING.hero.titleLines[1]}
         </h1>
 
         <p
@@ -108,10 +109,7 @@ export default async function Home({
             lineHeight: 1.55,
           }}
         >
-          One place where everyone in the newsroom — rookie to editor — sees
-          what is going on and what needs to be done: the original sources in,
-          the story&rsquo;s fair chance out. About journalism, by journalists,
-          for journalists. Open source.
+          {LANDING.hero.dek}
         </p>
 
         {user && snapshot ? (
@@ -121,20 +119,19 @@ export default async function Home({
           >
             <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
               <p className="ds-label">
-                The newsroom right now · last {SNAPSHOT_HOURS}h of published
-                output
+                {LANDING.snapshot.heading.replace("{h}", String(SNAPSHOT_HOURS))}
               </p>
               <span className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
-                Signed in as <strong>{user.name}</strong> ({user.role ?? "reporter"})
+                {LANDING.snapshot.signedInAs} <strong>{user.name}</strong> ({user.role ?? "reporter"})
               </span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
               {[
-                { n: snapshot.total, l: "published", c: "var(--color-fg-primary)" },
-                { n: snapshot.grade, l: "made the grade", c: "#16a34a" },
-                { n: snapshot.trending, l: "riding a trend", c: "#2563eb" },
-                { n: snapshot.tweak, l: "need tweaking", c: "#d97706" },
-                { n: snapshot.intervene, l: "need intervention", c: "#dc2626" },
+                { n: snapshot.total, l: LANDING.snapshot.stats.total, c: "var(--color-fg-primary)" },
+                { n: snapshot.grade, l: LANDING.snapshot.stats.grade, c: "#16a34a" },
+                { n: snapshot.trending, l: LANDING.snapshot.stats.trending, c: "#2563eb" },
+                { n: snapshot.tweak, l: LANDING.snapshot.stats.tweak, c: "#d97706" },
+                { n: snapshot.intervene, l: LANDING.snapshot.stats.intervene, c: "#dc2626" },
               ].map((k) => (
                 <div key={k.l}>
                   <p className="text-3xl font-extrabold" style={{ color: k.c, fontFamily: "var(--font-display)" }}>
@@ -148,14 +145,12 @@ export default async function Home({
             </div>
             {snapshot.total === 0 ? (
               <p className="text-xs mt-3" style={{ color: "var(--color-fg-tertiary)" }}>
-                No published stories in the last {SNAPSHOT_HOURS}h yet — connect your
-                newsroom&rsquo;s CMS or a content source and run the pipeline to
-                populate published output.
+                {LANDING.snapshot.empty.replace("{h}", String(SNAPSHOT_HOURS))}
               </p>
             ) : null}
             <div className="flex items-center gap-3 mt-4 pt-3 border-t" style={{ borderColor: "var(--color-rule)" }}>
               <span className="text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
-                Published · last 7 days
+                {LANDING.snapshot.trend7dLabel}
               </span>
               <Sparkline points={snapshot.trend} color="#2563eb" />
             </div>
@@ -165,7 +160,7 @@ export default async function Home({
                 className="px-4 py-2 rounded-sm text-sm font-semibold no-underline"
                 style={{ background: "var(--color-brand)", color: "white" }}
               >
-                Go to my room →
+                {LANDING.snapshot.goToRoom}
               </Link>
               <form action={signOut}>
                 <button
@@ -173,7 +168,7 @@ export default async function Home({
                   className="text-xs underline"
                   style={{ color: "var(--color-fg-tertiary)" }}
                 >
-                  Sign out
+                  {LANDING.snapshot.signOut}
                 </button>
               </form>
             </div>
@@ -184,15 +179,14 @@ export default async function Home({
             style={{ fontFamily: "var(--font-ui)" }}
           >
             <p className="text-base mb-3">
-              Sign in to see your newsroom&rsquo;s situation — or join in
-              under two minutes.
+              {LANDING.loggedOut.prompt}
             </p>
             <Link
               href={`/${locale}/onboarding`}
               className="px-4 py-2 rounded-sm text-sm font-semibold no-underline"
               style={{ background: "var(--color-brand)", color: "white" }}
             >
-              Sign in / Join →
+              {LANDING.loggedOut.cta}
             </Link>
           </section>
         )}
@@ -278,47 +272,19 @@ export default async function Home({
         {/* Grounded in journalism scholarship — the platform's intellectual
             spine, made explicit (not a footnote). Three tested lenses. */}
         <section className="ds-frame p-6 text-left">
-          <p className="ds-label mb-1">Grounded in journalism scholarship</p>
-          <h2 className="ds-h2 mb-1">Not vibes — three tested lenses, built in.</h2>
+          <p className="ds-label mb-1">{LANDING.scholarship.eyebrow}</p>
+          <h2 className="ds-h2 mb-1">{LANDING.scholarship.heading}</h2>
           <p
             className="text-sm mb-5"
             style={{ fontFamily: "var(--font-body)", color: "var(--color-fg-secondary)" }}
           >
-            Every score and tag on this platform traces back to established
-            journalism scholarship. Here is what each one means and why it
-            grounds the work.
+            {LANDING.scholarship.intro}
           </p>
           <div
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
             style={{ fontFamily: "var(--font-ui)" }}
           >
-            {[
-              {
-                k: "PEJ framing",
-                s: "Project for Excellence in Journalism",
-                d: "Every story is coded for its dominant narrative frame — combative, explanatory, straight, policy. A desk sees its own framing balance, not just one story at a time.",
-              },
-              {
-                k: "Deuze typology",
-                s: "Mark Deuze · First Monday, 2001",
-                d: "What kind of journalism a source or newsroom practises. It types the record flowing in and anchors how the platform reasons about craft.",
-              },
-              {
-                k: "User Needs",
-                s: "BBC / smartocto · four drivers",
-                d: "Why a reader comes to a story — the four user-need drivers (ADR 0049): Know (the facts, fast) · Understand (the why, the angles, the background) · Feel (human, surprising, moving) · Do (useful, actionable, service). Every signal is classified by need, and coverage is audited for balance — so the desk sees if it over-produces 'Know' (update) and under-serves the growth needs, Understand, Feel and Do. Extensible per newsroom to the fuller smartocto taxonomy (eight needs under the four drivers).",
-              },
-              {
-                k: "SEJ Periodic Table",
-                s: "Search Engine Journal · SEO elements",
-                d: "The periodic table of SEO success factors — content, architecture, HTML, links, trust. The SEO + E-E-A-T audit scores every story against these elements, turning ranking factors into concrete fixes.",
-              },
-              {
-                k: "Search Quality Guidelines",
-                s: "Google Search Quality Evaluator Guidelines",
-                d: "How Google's human raters judge pages — YMYL sensitivity, Page Quality, Needs Met, and E-E-A-T. The audit classifies each story by these and flags the lowest-quality risk signals.",
-              },
-            ].map((g) => (
+            {LANDING.scholarship.lenses.map((g) => (
               <div key={g.k}>
                 <p
                   className="font-bold text-lg"
@@ -350,11 +316,11 @@ export default async function Home({
           >
             <span>
               <strong style={{ color: "var(--color-fg-secondary)" }}>The loop:</strong>{" "}
-              Sources → Analyse → Classify → Route → Alert → Publish → Audit
+              {LANDING.scholarship.loop}
             </span>
             <span>
               <strong style={{ color: "var(--color-fg-secondary)" }}>Licence:</strong>{" "}
-              Apache 2.0 — run it in your newsroom
+              {LANDING.scholarship.licence}
             </span>
           </p>
         </section>
