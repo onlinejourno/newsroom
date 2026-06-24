@@ -1,5 +1,6 @@
-import { storiesWithScores } from "@/lib/db";
+import { storiesWithScores, tenantIdForSlug } from "@/lib/db";
 import { assess, signalsFromStory } from "@/lib/frontmatter";
+import { getAccount } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -23,13 +24,44 @@ function Bar({ value, color }: { value: number; color: string }) {
   );
 }
 
+function hostOf(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+// Where the story is from — the source outlet's favicon + domain. Derived from
+// the story URL (data, not hardcoded), so it works for one outlet or many.
+function SourceTag({ url }: { url: string | null }) {
+  const host = hostOf(url);
+  if (!host) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 text-xs"
+      style={{ color: "var(--color-fg-tertiary)", fontFamily: "var(--font-ui)" }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`https://${host}/favicon.ico`} alt="" width={14} height={14} style={{ borderRadius: 2 }} />
+      {host}
+    </span>
+  );
+}
+
 export default async function FrontmatterPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await currentTenantId();
+  // Logged-in newsrooms see their OWN tenant. Public (anon) visitors see only the
+  // designated showcase tenant — NEVER the real default tenant's private data.
+  const account = await getAccount();
+  const tenantId = account
+    ? await currentTenantId()
+    : await tenantIdForSlug(process.env.OJ_SHOWCASE_TENANT_SLUG ?? "self");
   if (!tenantId) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
@@ -98,6 +130,9 @@ export default async function FrontmatterPage({
               >
                 {st.headline ?? st.url}
               </a>
+              <p className="mt-1">
+                <SourceTag url={st.url} />
+              </p>
 
               {/* merit vs reach */}
               <div
