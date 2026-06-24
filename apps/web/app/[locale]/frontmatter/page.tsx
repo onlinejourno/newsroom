@@ -105,10 +105,10 @@ export default async function FrontmatterPage({
                 style={{ gridTemplateColumns: "auto 1fr auto", fontFamily: "var(--font-ui)" }}
               >
                 <span style={{ color: "var(--color-fg-secondary)" }}>Merit</span>
-                <Bar value={a.merit} color="#2e7d46" />
+                <Bar value={a.merit} color="var(--color-ioj-green-600)" />
                 <span className="font-semibold">{a.merit}</span>
                 <span style={{ color: "var(--color-fg-secondary)" }}>Reach</span>
-                <Bar value={a.reach} color="#c0392b" />
+                <Bar value={a.reach} color="var(--color-ink-400)" />
                 <span className="font-semibold">{a.reach}</span>
               </div>
               <p className="mt-1 text-xs" style={{ color: "var(--color-fg-tertiary)", fontFamily: "var(--font-ui)" }}>
