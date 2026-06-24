@@ -8,7 +8,7 @@
  */
 export const LANDING = {
   hero: {
-    eyebrow: "OnlineJourno · Arena",
+    eyebrow: "OnlineJourno · Masthead",
     // Rendered on two lines (a <br/> between the parts).
     titleLines: ["Give every story", "a fair chance."],
     dek: "One place where everyone in the newsroom — rookie to editor — sees what is going on and what needs to be done: the original sources in, the story’s fair chance out. About journalism, by journalists, for journalists. Open source.",
