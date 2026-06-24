@@ -29,15 +29,15 @@ const Plot = dynamic(() => import("@/components/charts/Plotly"), {
 export type TrajPoint = { topic: string; d: string; n: number };
 export type ChannelMarker = { channel: string; d: string; n: number };
 
-// Concrete hex mirrors the ADR 0013 tokens (Plotly renders colours as SVG
-// attributes and cannot resolve CSS `var(--…)`).
-const INK = "#1a1a1a";
-const RULE = "#d4cfc6";
-const NEWS = "#2b3d8f"; // Google News marker (blue)
-const DISCOVER = "#b35d00"; // Discover marker (gold)
+// Concrete hex mirrors the OJDS tokens (ADR 0063) — Plotly renders colours as SVG
+// attributes and cannot resolve CSS `var(--…)`.
+const INK = "#181610";
+const RULE = "#c5bda9";
+const NEWS = "#2b5fb0"; // Google News marker (blue)
+const DISCOVER = "#9a6a14"; // Discover marker (gold)
 const LINES = [
-  "#2d7a4f", "#2b3d8f", "#b01e1e", "#5a4b9a",
-  "#b35d00", "#2a6e2a", "#7a4f00", "#3a3a8a",
+  "#2e7d46", "#2b5fb0", "#c0392b", "#8e2c8c",
+  "#9a6a14", "#0e8a7e", "#6f6757", "#d97f0c",
 ];
 
 export default function InterestTrajectory({

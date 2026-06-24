@@ -2,13 +2,12 @@ import { redirect } from "next/navigation";
 import type { Route } from "next";
 
 import { getAccount } from "@/lib/auth";
-import { enabledSurfaceKeys, tenantIdForSlug } from "@/lib/db";
+import { enabledSurfaceKeys } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 import { getOrRunSeoAudit } from "@/lib/seoAudit";
 import { AuditView } from "@/components/scores/seo-audit/AuditView";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 const DEFAULT_SURFACES = ["discover", "google_news", "google_search"];
 
@@ -34,7 +33,7 @@ export default async function StoryAnalyserPage({
 
   const { url, need } = await searchParams;
 
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
 
   // Run the audit when a URL is present.
   let audit = null;

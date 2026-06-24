@@ -5,10 +5,11 @@ import {
   cachedTopicDomains,
   entityWindows,
   publishedStoriesForScoring,
-  tenantIdForSlug,
   tenantRegion,
   upsertTopicDomains,
 } from "@/lib/db";
+import { assertWritable, getAccount } from "@/lib/auth";
+import { currentTenantId } from "@/lib/tenant";
 import {
   WEIGHTS,
   scorePotential,
@@ -20,17 +21,18 @@ import { MinScoreSlider } from "@/components/MinScoreSlider";
 
 export const dynamic = "force-dynamic";
 
-const TENANT_SLUG = "self";
 const WINDOW_HOURS = 48;
 const SHOW = 30;
 /** Max distinct trends to warm per on-demand refresh (avoid GDELT storms). */
 const WARM_CAP = 8;
 
+// Heat scale (higher = more urgent), per ScoreBadge README — NOT a quality
+// ScoreBadge; OJDS-tokenized.
 const LABEL_COLOR: Record<string, string> = {
-  HIGH: "#dc2626",
-  MEDIUM: "#ca8a04",
-  LOW: "#ea580c",
-  "VERY LOW": "#6b7280",
+  HIGH: "var(--color-urgent)",
+  MEDIUM: "var(--color-amber-600)",
+  LOW: "var(--color-amber-accent)",
+  "VERY LOW": "var(--color-ink-500)",
 };
 
 function formatDate(value: Date | null): string {
@@ -57,7 +59,7 @@ export default async function PotentialPage({
   const sections = ([] as string[]).concat(sp.section ?? []);
   const minScore = Math.max(0, Number(sp.min) || 0);
   const showAll = sp.all === "1";
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return null;
 
   const [stories, recent, prior, outletRegion] = await Promise.all([
@@ -179,7 +181,9 @@ export default async function PotentialPage({
   // On-demand warm action: fetch GDELT for top WARM_CAP distinct trends shown.
   async function refreshCompetitorData(_formData: FormData) {
     "use server";
-    const tid = await tenantIdForSlug(TENANT_SLUG);
+    const me = await getAccount();
+    assertWritable(me);
+    const tid = await currentTenantId();
     if (!tid) return;
 
     const [recentW, priorW] = await Promise.all([

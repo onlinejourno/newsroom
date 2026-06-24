@@ -2,23 +2,32 @@ import {
   channelAffinity,
   distinctSignalRegions,
   entityWindows,
+  ownTopicStandings,
+  peerTopicStandings,
   publishedStoriesForScoring,
   outletChannelMarkers,
   signalsMentioning,
   storyClusters,
-  tenantIdForSlug,
   tenantOutletDomain,
+  tenantPeers,
   topicDomains,
   topicInterestSeries,
 } from "@/lib/db";
 import { getOrFetchOutletKeywords } from "@/lib/outletKeywords";
 import { momentumLabel, topicMomentum } from "@/lib/trends";
+import {
+  derivePosition,
+  implicationFor,
+  tagClass,
+  tagLabel,
+  type PositionInputs,
+} from "@/lib/framing-position";
 import MomentumBar from "@/components/charts/MomentumBar";
 import InterestTrajectory from "@/components/charts/InterestTrajectory";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-const TENANT_SLUG = "self";
 const TOP = 12;
 
 // Indian states and union territories for coarse entity-type classification.
@@ -42,6 +51,13 @@ function direction(recent: number, prior: number): string {
   return "Stable";
 }
 
+function median(xs: number[]): number {
+  if (xs.length === 0) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
 function predictionBand(momentum: number): string {
   if (momentum >= 80) return "Peak imminent — act now";
   if (momentum >= 65) return "Likely to peak within hours";
@@ -51,21 +67,21 @@ function predictionBand(momentum: number): string {
 }
 
 const LABEL_COLOR: Record<string, string> = {
-  "🔥": "#dc2626",
-  "↑": "#ea580c",
-  "→": "#2563eb",
-  "~": "#6b7280",
-  "↓": "#0d9488",
+  "🔥": "var(--color-urgent)",
+  "↑": "var(--color-amber-accent)",
+  "→": "var(--color-info)",
+  "~": "var(--color-ink-500)",
+  "↓": "var(--color-framing-explanatory)",
 };
 
 function labelColor(label: string): string {
-  return LABEL_COLOR[label.slice(0, 2).trim()] ?? "#6b7280";
+  return LABEL_COLOR[label.slice(0, 2).trim()] ?? "var(--color-ink-500)";
 }
 
 const DIR_COLOR: Record<string, string> = {
-  Rising: "#16a34a",
-  Falling: "#dc2626",
-  Stable: "#6b7280",
+  Rising: "var(--color-ioj-green-600)",
+  Falling: "var(--color-urgent)",
+  Stable: "var(--color-ink-500)",
 };
 
 export default async function TrendsPage({
@@ -76,7 +92,7 @@ export default async function TrendsPage({
   const { window: w, region } = await searchParams;
   const windowHours = Math.max(1, Number(w) || 24);
   const regionPick = region || null;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return null;
 
   // ── base data ──────────────────────────────────────────────────────────────
@@ -89,6 +105,14 @@ export default async function TrendsPage({
   ]);
 
   const topics = topicMomentum(recent, prior).slice(0, TOP);
+
+  const topicNames = topics.map((t) => t.topic);
+  const peers = await tenantPeers(tenantId);
+  const peerDomains = peers.map((p) => p.domain);
+  const [ownStandings, peerStandings] = await Promise.all([
+    ownTopicStandings(tenantId, topicNames, windowHours),
+    peerTopicStandings(tenantId, topicNames, windowHours, peerDomains),
+  ]);
 
   // Interest Trajectory (#107): per-topic signal-interest series + outlet
   // Google-News / Discover appearance markers, for the top topics.
@@ -139,8 +163,7 @@ export default async function TrendsPage({
         <h1 className="ds-lead mb-3">Where coverage is heading.</h1>
         <p className="ds-deck">
           The framing landscape plus what&rsquo;s trending — by topic and by place — measured
-          against your baseline. <span className="ds-amber">Competitive positioning lights up
-          once your peer set is wired (Phase B).</span>
+          against your peer baseline: where you&rsquo;re ahead, behind, or have no angle yet.
         </p>
       </header>
 
@@ -208,6 +231,26 @@ export default async function TrendsPage({
               const label = momentumLabel(t.momentum);
               const color = labelColor(label);
               const dir = direction(t.recent, t.prior);
+              const own = ownStandings.get(t.topic);
+              const peer = peerStandings.get(t.topic);
+              const hasPeerData = (peer?.peerRecent ?? 0) > 0;
+              const inputs: PositionInputs = {
+                ownRecent: own?.ownRecent ?? 0,
+                peerRecent: peer?.peerRecent ?? 0,
+                peerCount: peer?.peerCount ?? 0,
+                peerMedian: median(peer?.perDomain ?? []),
+                trajectory: t.trajectory,
+                ownCombative: own?.ownCombative ?? 0,
+                ownExplanatory: own?.ownExplanatory ?? 0,
+                peerCombative: peer?.peerCombative ?? 0,
+                peerExplanatory: peer?.peerExplanatory ?? 0,
+                nOwn: own?.nOwn ?? 0,
+                nPeer: peer?.nPeer ?? 0,
+              };
+              const pos = hasPeerData ? derivePosition(inputs) : null;
+              const implication = pos
+                ? implicationFor(pos, { momentum: t.momentum, peerCount: inputs.peerCount })
+                : null;
               return (
                 <div key={t.topic} className="ds-card">
                   <div className="flex items-baseline justify-between gap-3 mb-2">
@@ -217,10 +260,29 @@ export default async function TrendsPage({
                     >
                       {t.topic}
                     </h3>
-                    <span className="ds-tag" style={{ color: "var(--color-fg-tertiary)" }}>
-                      baseline pending
-                    </span>
+                    {pos ? (
+                      <span
+                        className={`ds-tag ${tagClass(pos.tag)}${pos.confidence === "amber" ? " ds-amber" : ""}`}
+                      >
+                        {tagLabel(pos.tag)}
+                      </span>
+                    ) : (
+                      <span className="ds-tag" style={{ color: "var(--color-fg-tertiary)" }}>
+                        no peer data
+                      </span>
+                    )}
                   </div>
+                  {implication && (
+                    <p
+                      className="text-sm mb-2"
+                      style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+                    >
+                      {implication}
+                      {pos?.confidence === "amber" && (
+                        <span className="ds-amber"> · low confidence</span>
+                      )}
+                    </p>
+                  )}
                   <p className="text-sm mb-2" style={{ fontFamily: "var(--font-ui)" }}>
                     <span className="font-bold" style={{ color: "var(--color-brand)" }}>
                       {Math.round(t.momentum)}

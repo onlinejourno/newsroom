@@ -5,10 +5,9 @@ import {
   createSurface,
   deleteSurface,
   setSurfaceEnabled,
-  tenantIdForSlug,
 } from "@/lib/db";
-
-const TENANT_SLUG = "self";
+import { assertWritable, getAccount } from "@/lib/auth";
+import { currentTenantId } from "@/lib/tenant";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
@@ -23,7 +22,9 @@ function slugify(s: string): string {
 }
 
 export async function addSurfaceAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const me = await getAccount();
+  assertWritable(me);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
   const name = str(formData, "name");
   if (!name) return;
@@ -48,7 +49,9 @@ export async function addSurfaceAction(formData: FormData): Promise<void> {
 }
 
 export async function toggleSurfaceAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const me = await getAccount();
+  assertWritable(me);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
   await setSurfaceEnabled(
     tenantId,
@@ -59,7 +62,9 @@ export async function toggleSurfaceAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteSurfaceAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const me = await getAccount();
+  assertWritable(me);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
   await deleteSurface(tenantId, str(formData, "id"));
   revalidatePath(`/${str(formData, "locale") || "en"}/admin/surfaces`);

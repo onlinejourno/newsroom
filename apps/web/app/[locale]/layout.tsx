@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import {
-  Playfair_Display,
-  Source_Sans_3,
+  Source_Serif_4,
+  IBM_Plex_Sans,
+  IBM_Plex_Mono,
   Noto_Serif,
   Noto_Serif_Devanagari,
   Noto_Naskh_Arabic,
@@ -14,23 +16,40 @@ import {
   Noto_Serif_Bengali,
   Noto_Serif_Ethiopic,
 } from "next/font/google";
+import localFont from "next/font/local";
 import "../globals.css";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Masthead from "@/components/Masthead";
+import ProjectBar from "@/components/ProjectBar";
+import SiteFooter from "@/components/SiteFooter";
 import { getAccount } from "@/lib/auth";
 import { locales, dirOf, isLocale, defaultLocale, meta } from "@/lib/locale";
 
-// Chrome fonts — always loaded (headings + UI, Latin).
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "700", "800"],
-  variable: "--font-playfair",
+// Chrome fonts — always loaded (Latin display/body/UI/data, OJDS / ADR 0063).
+// Kittel is single-weight (400): display hierarchy comes from size + colour.
+const kittel = localFont({
+  src: "../fonts/KarnataFKittel.otf",
+  weight: "400",
+  variable: "--font-kittel",
   display: "swap",
 });
-const sourceSans = Source_Sans_3({
+const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
-  variable: "--font-source-sans",
+  style: ["normal", "italic"],
+  variable: "--font-source-serif",
+  display: "swap",
+});
+const ibmSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ibm-plex-sans",
+  display: "swap",
+});
+const ibmMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex-mono",
   display: "swap",
 });
 
@@ -152,13 +171,13 @@ export default async function RootLayout({
   if (!isLocale(locale)) notFound();
 
   const account = await getAccount();
-  const body = scriptFont[locale] ?? notoSerif;
-  const display = scriptFont[locale] ?? playfair;
+  const body = scriptFont[locale] ?? sourceSerif;
+  const display = scriptFont[locale] ?? kittel;
 
   // Latin fallback after the script font handles brand name + "AI" etc.
   const fontVars = {
     "--font-display": `${display.style.fontFamily}, Georgia, "Times New Roman", serif`,
-    "--font-body": `${body.style.fontFamily}, ${notoSerif.style.fontFamily}, Georgia, serif`,
+    "--font-body": `${body.style.fontFamily}, ${sourceSerif.style.fontFamily}, Georgia, serif`,
   } as React.CSSProperties;
 
   return (
@@ -166,17 +185,35 @@ export default async function RootLayout({
       lang={locale}
       dir={dirOf(locale)}
       style={fontVars}
-      className={`${playfair.variable} ${sourceSans.variable} ${notoSerif.variable}`}
+      className={`${kittel.variable} ${sourceSerif.variable} ${ibmSans.variable} ${ibmMono.variable} ${notoSerif.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
+        {/* Privacy-first analytics (Umami): cookieless, no PII, honors DNT.
+            Env-gated — renders only when the deploy configures its own Umami. */}
+        {process.env.UMAMI_SRC && process.env.UMAMI_WEBSITE_ID && (
+          <Script
+            src={process.env.UMAMI_SRC}
+            data-website-id={process.env.UMAMI_WEBSITE_ID}
+            data-do-not-track="true"
+            strategy="afterInteractive"
+          />
+        )}
+        <ProjectBar current="Platform" />
+        {account?.demo && (
+          <div className="ds-meta" style={{ background: "var(--color-frame)", color: "var(--color-paper)", textAlign: "center", padding: "4px" }}>
+            DEMO · read-only — <a href={`/${locale}/register`} style={{ textDecoration: "underline" }}>Request full access</a>
+          </div>
+        )}
         <Masthead
           locale={locale}
           role={account?.role ?? null}
           userName={account?.display_name ?? null}
+          beats={account?.beats ?? null}
         />
         {account ? <Breadcrumbs /> : null}
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

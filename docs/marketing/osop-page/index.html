@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OnlineJourno Editorial Optimisation Platform</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@font-face{font-family:"Karnata F Kittel";src:url("./KarnataFKittel.otf") format("opentype");font-weight:400;font-style:normal;font-display:swap}
+:root{
+  --stone-200:#ddd6c5;--stone-300:#c5bda9;--stone-400:#9d9482;--stone-500:#6f6757;--stone-600:#514a3c;
+  --amber-500:#f39a1b;--vermilion-500:#d6312a;--vermilion-600:#c0392b;--vermilion-700:#a32a22;--magenta-600:#8e2c8c;
+  --brand-gradient:linear-gradient(135deg,#f39a1b 0%,#d6312a 48%,#8e2c8c 100%);
+  --green-600:#2e7d46;--green-50:#e6f0e8;--blue-600:#2b5fb0;--blue-50:#e9eff8;--gold-600:#9a6a14;--gold-50:#f6efe0;
+  --paper:#fff;--paper-warm:#efe9dd;--paper-sunken:#e6dfce;--ink:#181610;--ink-band:#0b0a07;
+  --text-primary:var(--ink);--text-secondary:#514a3c;--text-muted:#6f6757;--text-faint:#9d9482;--text-inverse:#f7f4ed;--text-accent:var(--vermilion-600);
+  --surface-page:var(--paper-warm);--surface-card:var(--paper);--surface-inverse:var(--ink-band);
+  --border-subtle:#ddd6c5;--border-default:#c5bda9;--rule-ink:var(--ink);
+  --status-critical-bg:#f7e3e0;
+  --font-display:"Karnata F Kittel",Georgia,serif;--font-serif:"Source Serif 4",Georgia,serif;--font-sans:"IBM Plex Sans",system-ui,sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --tracking-eyebrow:0.12em;--shadow-lg:0 10px 30px rgba(24,22,16,.12),0 2px 6px rgba(24,22,16,.06);--shadow-sm:0 1px 2px rgba(24,22,16,.06);
+  --container:1200px;--radius-sm:2px;--radius-md:3px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-page);color:var(--text-primary);font-family:var(--font-serif);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.kicker{font:600 11px/1 var(--font-sans);letter-spacing:var(--tracking-eyebrow);text-transform:uppercase;color:var(--text-accent)}
+.wrap{max-width:var(--container);margin:0 auto;padding-left:40px;padding-right:40px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font:600 14px/1 var(--font-sans);border-radius:var(--radius-sm);padding:13px 20px;cursor:pointer;border:1px solid transparent;transition:transform .12s ease,background .12s ease}
+.btn:hover{transform:translateY(-.5px)}
+.btn-ink{background:var(--ink);color:var(--text-inverse);border-color:var(--ink)}
+.btn-ink:hover{background:#26221b}
+.btn-secondary{background:transparent;color:var(--ink);border-color:var(--border-default)}
+.btn-secondary:hover{background:#0000000a}
+.btn-sm{padding:9px 14px;font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:5px;font:500 11px/1.4 var(--font-sans);padding:2px 9px;border-radius:999px}
+.h-display{font:400 58px/1.04 var(--font-display);letter-spacing:-0.015em;margin:0}
+.h2{font:400 34px/1.12 var(--font-display);letter-spacing:-0.01em;margin:0;color:var(--text-primary)}
+.lead{font:400 18px/1.6 var(--font-serif);color:var(--text-secondary)}
+.mono{font-family:var(--font-mono)}
+@media (max-width:760px){
+  .wrap{padding-left:20px !important;padding-right:20px !important}
+  header nav{display:none}
+  [style*="grid-template-columns"]{grid-template-columns:1fr !important;gap:28px !important}
+  .h-display{font-size:36px}
+  .h2{font-size:25px}
+}
+</style>
+</head>
+<body>
+
+<header style="position:sticky;top:0;z-index:10;background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+  <div class="wrap" style="height:64px;display:flex;align-items:center;justify-content:space-between">
+    <a href="https://onlinejourno.com" style="display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:inherit" aria-label="OnlineJourno home">
+      <img src="./onlinejourno-mark.png" alt="" style="height:28px;width:auto;display:block">
+      <span style="font:400 22px/1 var(--font-display);letter-spacing:-0.005em">OnlineJourno<span style="color:var(--text-accent)">.</span></span>
+    </a>
+    <nav style="display:flex;gap:26px;align-items:center">
+      <a style="font:500 14px/1 var(--font-sans);color:var(--text-secondary)">Capabilities</a>
+      <a style="font:500 14px/1 var(--font-sans);color:var(--text-secondary)">How it works</a>
+      <a style="font:500 14px/1 var(--font-sans);color:var(--text-secondary)">Tiers</a>
+    </nav>
+    <a class="btn btn-ink btn-sm">Get it on GitHub</a>
+  </div>
+</header>
+
+<section style="background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+  <div class="wrap" style="padding-top:74px;padding-bottom:64px;display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center">
+    <div>
+      <span class="kicker">OnlineJourno · Editorial Optimisation Platform</span>
+      <h1 class="h-display" style="margin-top:16px">Give every story a <span style="color:var(--text-accent)">fair chance</span> across every surface.</h1>
+      <p class="lead" style="max-width:48ch;margin:22px 0 0">Audit any story for Google Discover, Search &amp; News, AI Overviews, AI assistants and YouTube — with the fixes, the schema, and the <em style="font-style:italic">why</em>. Free, open-source, self-hosted.</p>
+      <div style="display:flex;gap:12px;margin-top:30px">
+        <a class="btn btn-ink">Get it on GitHub</a>
+        <a class="btn btn-secondary">See how it works</a>
+      </div>
+      <p style="font:400 13px/1.5 var(--font-sans);color:var(--text-faint);margin-top:16px">Free · Apache-2.0 · runs on your machine · no account · vendor-neutral</p>
+    </div>
+
+    <div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-top:2px solid var(--vermilion-600);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);overflow:hidden">
+      <div style="padding:15px 18px;border-bottom:1px solid var(--border-subtle)">
+        <div class="kicker" style="color:var(--text-muted)">Story audit · meridian.example</div>
+        <div style="font:600 19px/1.25 var(--font-serif);margin-top:5px">Monsoon arrives early, reshaping the kharif calendar</div>
+      </div>
+      <div style="padding:16px 18px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <span class="badge" style="background:var(--green-50);color:var(--green-600)">Discover 84</span>
+          <span class="badge" style="background:var(--gold-50);color:var(--gold-600)">Search 61</span>
+          <span class="badge" style="background:var(--status-critical-bg);color:var(--vermilion-600)">● Schema missing</span>
+        </div>
+        <div style="display:grid;gap:7px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--surface-page)">
+            <span style="font:500 13px/1 var(--font-sans)">E-E-A-T · primary source</span><span class="mono" style="font-size:12px;color:var(--gold-600)">review</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--surface-page)">
+            <span style="font:500 13px/1 var(--font-sans)">Add NewsArticle + VideoObject</span><span class="mono" style="font-size:12px;color:var(--green-600)">fix ready</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-subtle)">
+          <span class="mono" style="font-size:12px;color:var(--text-muted)">6 surfaces · 3 fixes</span>
+          <span style="font:600 13px/1 var(--font-sans);color:var(--text-accent)">Open report →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--surface-page);border-bottom:1px solid var(--border-subtle)">
+  <div class="wrap" style="padding-top:64px;padding-bottom:64px">
+    <span class="kicker">What it does</span>
+    <h2 class="h2" style="margin-top:10px">Find the story, score it, fix it.</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:28px 32px;margin-top:40px">
+      <div style="border-top:2px solid var(--rule-ink);padding-top:16px"><span class="mono" style="font-size:13px;color:var(--text-accent)">01</span><h3 style="font:600 21px/1.2 var(--font-serif);margin:10px 0 8px">Per-story audit</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">SEO &amp; E-E-A-T graded against Google's Search Quality Rater Guidelines — every finding in plain language.</p></div>
+      <div style="border-top:2px solid var(--rule-ink);padding-top:16px"><span class="mono" style="font-size:13px;color:var(--text-accent)">02</span><h3 style="font:600 21px/1.2 var(--font-serif);margin:10px 0 8px">Schema.org, fixed for you</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Detects missing or wrong structured data and hands you corrected JSON-LD — NewsArticle, VideoObject and more.</p></div>
+      <div style="border-top:2px solid var(--rule-ink);padding-top:16px"><span class="mono" style="font-size:13px;color:var(--text-accent)">03</span><h3 style="font:600 21px/1.2 var(--font-serif);margin:10px 0 8px">Surface readiness</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Scores each story for Discover, Search, News, AI Overviews, ChatGPT/Perplexity/Gemini and YouTube — add your own surfaces.</p></div>
+      <div style="border-top:2px solid var(--rule-ink);padding-top:16px"><span class="mono" style="font-size:13px;color:var(--text-accent)">04</span><h3 style="font:600 21px/1.2 var(--font-serif);margin:10px 0 8px">Trends &amp; signals</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Beat-scoped trending topics, enriched with Wikidata entities, with momentum and trajectory charts.</p></div>
+      <div style="border-top:2px solid var(--rule-ink);padding-top:16px"><span class="mono" style="font-size:13px;color:var(--text-accent)">05</span><h3 style="font:600 21px/1.2 var(--font-serif);margin:10px 0 8px">Core Web Vitals</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Discovery dies on a slow page. LCP, CLS and INP, checked per story, with what to do about each.</p></div>
+      <div style="border-top:2px solid var(--rule-ink);padding-top:16px"><span class="mono" style="font-size:13px;color:var(--text-accent)">06</span><h3 style="font:600 21px/1.2 var(--font-serif);margin:10px 0 8px">Prioritised fixes</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Ranked by impact and effort, so the desk knows what to do first — and why it matters.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--surface-page);border-bottom:1px solid var(--border-subtle)">
+  <div class="wrap" style="padding-top:64px;padding-bottom:64px">
+    <span class="kicker">Working today</span>
+    <h2 class="h2" style="margin-top:10px">It already runs.</h2>
+    <p class="lead" style="margin-top:12px;max-width:62ch">The v1 engine works now, keyless — here's real output from the CLI auditing a live page. The web UI below is in design.</p>
+    <figure style="margin:32px 0 0">
+      <img src="./cap-cli.png" alt="Terminal: editorial-optimiser auditing a live page — real StoryReport JSON with overall_score 42, grade D, and per-surface scores (search 73, news 50, discover 31)" loading="lazy" style="width:100%;height:auto;border:1px solid var(--border-subtle);border-radius:6px;box-shadow:0 10px 30px rgba(24,22,16,.10);display:block">
+    </figure>
+  </div>
+</section>
+
+<section style="background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+  <div class="wrap" style="padding-top:64px;padding-bottom:64px">
+    <span class="kicker">See it in action</span>
+    <h2 class="h2" style="margin-top:10px">The desk view.</h2>
+    <p class="lead" style="margin-top:12px;max-width:60ch">What your reporters and SEO desk actually see — every score with the reason behind it.</p>
+    <div style="display:flex;flex-direction:column;gap:34px;margin-top:34px">
+      <figure style="margin:0">
+        <img src="./cap-audit.png" alt="Story Audit screen — per-surface readiness scores, E-E-A-T findings against Google's Quality Rater Guidelines, a suggested schema.org JSON-LD block, and prioritised fixes" loading="lazy" style="width:100%;height:auto;border:1px solid var(--border-subtle);border-radius:6px;box-shadow:0 10px 30px rgba(24,22,16,.10);display:block">
+        <figcaption style="font:400 13px/1.5 var(--font-sans);color:var(--text-muted);margin-top:10px"><b style="font-weight:600;color:var(--text-secondary)">Per-story audit.</b> Surface scores, E-E-A-T (QRG), the schema fix, and what to do first.</figcaption>
+      </figure>
+      <figure style="margin:0">
+        <img src="./cap-trends.png" alt="Trends and Signals screen — beat-scoped topic momentum, Wikidata entities, an interest-trajectory chart, and a coverage gap to commission" loading="lazy" style="width:100%;height:auto;border:1px solid var(--border-subtle);border-radius:6px;box-shadow:0 10px 30px rgba(24,22,16,.10);display:block">
+        <figcaption style="font:400 13px/1.5 var(--font-sans);color:var(--text-muted);margin-top:10px"><b style="font-weight:600;color:var(--text-secondary)">Trends &amp; signals.</b> What's rising in your market, the Wikidata entities, and the gaps you haven't covered.</figcaption>
+      </figure>
+      <figure style="margin:0">
+        <img src="./cap-surfaces.png" alt="Surface readiness screen — a story scored across Discover, Search, News, AI Overviews, ChatGPT, Perplexity and YouTube, with add-your-own surfaces" loading="lazy" style="width:100%;height:auto;border:1px solid var(--border-subtle);border-radius:6px;box-shadow:0 10px 30px rgba(24,22,16,.10);display:block">
+        <figcaption style="font:400 13px/1.5 var(--font-sans);color:var(--text-muted);margin-top:10px"><b style="font-weight:600;color:var(--text-secondary)">Surface readiness.</b> One story, every surface you configure — add your own and the scorer picks it up.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--surface-inverse)">
+  <div class="wrap" style="max-width:920px;padding-top:74px;padding-bottom:74px;text-align:center">
+    <span class="kicker" style="color:rgba(255,255,255,.55)">The ethic</span>
+    <p style="font:400 36px/1.28 var(--font-serif);color:#fff;margin:22px 0 0;letter-spacing:-0.01em">The machine surfaces. The journalist decides. It <span style="color:#e6726a">teaches</span> as it audits — built by journalists, for journalists.</p>
+  </div>
+</section>
+
+<section style="background:var(--surface-card);border-bottom:1px solid var(--border-subtle)">
+  <div class="wrap" style="padding-top:64px;padding-bottom:64px">
+    <span class="kicker">How it works</span>
+    <h2 class="h2" style="margin-top:10px">Three steps. No account.</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:38px">
+      <div><span class="mono" style="font-size:13px;color:var(--text-accent)">Step 01</span><h3 style="font:600 20px/1.2 var(--font-serif);margin:8px 0 8px">Download</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Grab it from GitHub and run <span class="mono" style="font-size:13px">docker compose up</span>.</p></div>
+      <div><span class="mono" style="font-size:13px;color:var(--text-accent)">Step 02</span><h3 style="font:600 20px/1.2 var(--font-serif);margin:8px 0 8px">Configure</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Set sources, surfaces, beats and market in one <span class="mono" style="font-size:13px">newsroom.yaml</span>.</p></div>
+      <div><span class="mono" style="font-size:13px;color:var(--text-accent)">Step 03</span><h3 style="font:600 20px/1.2 var(--font-serif);margin:8px 0 8px">Audit &amp; optimise</h3><p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0">Paste a URL or pull your sitemap. Get the report and the fixes.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--surface-page);border-bottom:1px solid var(--border-subtle)">
+  <div class="wrap" style="padding-top:64px;padding-bottom:64px">
+    <span class="kicker">Two tiers — you choose</span>
+    <h2 class="h2" style="margin-top:10px">Free by default. Smarter with your own AI.</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:38px">
+      <div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:26px 26px;box-shadow:var(--shadow-sm)">
+        <span class="badge" style="background:var(--green-50);color:var(--green-600)">Free &amp; keyless</span>
+        <h3 style="font:600 22px/1.2 var(--font-serif);margin:14px 0 6px">Tier 0</h3>
+        <p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0 0 14px">The full deterministic core — no API key, no cost.</p>
+        <ul style="margin:0;padding-left:18px;font:400 15px/1.7 var(--font-serif);color:var(--text-secondary)"><li>Per-story SEO &amp; E-E-A-T audit</li><li>Surface readiness scoring</li><li>Schema detection + template fixes</li><li>Core Web Vitals · prioritised fixes</li></ul>
+      </div>
+      <div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-top:2px solid var(--vermilion-600);border-radius:var(--radius-md);padding:26px 26px;box-shadow:var(--shadow-lg)">
+        <span class="badge" style="background:var(--status-critical-bg);color:var(--vermilion-600)">Add your own AI</span>
+        <h3 style="font:600 22px/1.2 var(--font-serif);margin:14px 0 6px">Tier 1</h3>
+        <p style="font:400 15px/1.55 var(--font-serif);color:var(--text-secondary);margin:0 0 14px">Plug in any model — Claude, GPT, Gemini, or local. Your key, your call.</p>
+        <ul style="margin:0;padding-left:18px;font:400 15px/1.7 var(--font-serif);color:var(--text-secondary)"><li>8 BBC-Smartocto user needs</li><li>AI-written Schema.org suggestions</li><li>Agentic SEO/GEO assistant</li><li>Provider-agnostic — no lock-in</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--surface-card)">
+  <div class="wrap" style="padding-top:64px;padding-bottom:30px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center">
+    <div>
+      <span class="kicker">Coming soon</span>
+      <h2 class="h2" style="margin-top:10px">Be first to run it.</h2>
+      <p class="lead" style="margin-top:12px;max-width:50ch">Open-source and self-hosted, launching from GitHub. Star the repo to follow, or leave your email and we'll tell you when it ships.</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input placeholder="you@newsroom.example" style="font:400 15px/1 var(--font-sans);padding:13px 14px;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-card);min-width:240px">
+      <a class="btn btn-ink">Notify me</a>
+    </div>
+  </div>
+  <div class="wrap" style="padding-top:26px;padding-bottom:40px;margin-top:18px;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+    <span style="display:inline-flex;align-items:center;gap:8px">
+      <img src="./onlinejourno-mark.png" alt="" style="height:22px">
+      <span style="font:400 17px/1 var(--font-display)">OnlineJourno<span style="color:var(--text-accent)">.</span> Editorial Optimisation Platform</span>
+    </span>
+    <span style="font:400 13px/1.5 var(--font-sans);color:var(--text-muted)">From a journalist, for journalists · Apache-2.0 · vendor-neutral</span>
+  </div>
+</section>
+
+<script defer src="https://onlinejourno-umami.fly.dev/script.js" data-website-id="123f1428-af88-498b-a1fb-50a060ec7ddd"></script>
+</body>
+</html>

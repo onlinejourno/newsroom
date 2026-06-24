@@ -1,14 +1,13 @@
 import { SignalChips, TagLegend } from "@/components/SignalChips";
+import { Card } from "@/components/ui/card";
 import {
   distinctSignalBeats,
   fetchLatestSignals,
   needMixCounts,
-  tenantIdForSlug,
 } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 const LIMIT = 20;
 const BODY_TRUNCATE_CHARS = 280;
 const MIX_WINDOW_HOURS = 168;
@@ -17,10 +16,10 @@ const MIX_WINDOW_HOURS = 168;
 // with the classic overproduction flag.
 const NEED_ORDER = ["know", "understand", "feel", "do"] as const;
 const NEED_COLORS: Record<string, string> = {
-  know: "#2563eb",
-  understand: "#7c3aed",
-  feel: "#ea580c",
-  do: "#16a34a",
+  know: "var(--color-info)",
+  understand: "var(--color-magenta)",
+  feel: "var(--color-amber-accent)",
+  do: "var(--color-ioj-green-600)",
 };
 const OVERPRODUCTION_SHARE = 0.6;
 
@@ -43,15 +42,11 @@ function NeedMixPanel({ rows }: { rows: { user_need: string; n: number }[] }) {
     flags.push("no actionable ('do') coverage — promising gap");
   }
   return (
-    <section
-      className="mb-10 ds-panel p-4"
-      style={{
-        fontFamily: "var(--font-ui)",
-      }}
+    <Card
+      className="mb-10"
+      style={{ fontFamily: "var(--font-ui)" }}
+      eyebrow={`Need mix · last ${MIX_WINDOW_HOURS / 24} days · ${total} classified`}
     >
-      <p className="ds-label mb-2">
-        Need mix · last {MIX_WINDOW_HOURS / 24} days · {total} classified
-      </p>
       <div
         className="flex h-3 w-full overflow-hidden rounded-full mb-2"
         style={{ background: "var(--color-border)" }}
@@ -75,11 +70,11 @@ function NeedMixPanel({ rows }: { rows: { user_need: string; n: number }[] }) {
         ).join(" · ")}
       </p>
       {flags.length > 0 ? (
-        <p className="text-xs mt-1 font-semibold" style={{ color: "#b45309" }}>
+        <p className="text-xs mt-1 font-semibold" style={{ color: "var(--color-amber-600)" }}>
           ⚠ {flags.join("; ")}
         </p>
       ) : null}
-    </section>
+    </Card>
   );
 }
 
@@ -132,7 +127,7 @@ export default async function SignalsPage({
   const { beat, msm } = await searchParams;
   // Original sources dominate by default (ADR 0050); MSM test feeds opt-in.
   const primaryOnly = msm !== "1";
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
 
   if (!tenantId) {
     return (
@@ -183,7 +178,7 @@ export default async function SignalsPage({
             color: "var(--color-fg-secondary)",
           }}
         >
-          Tenant: <code>{TENANT_SLUG}</code> · {signals.length} most recent.
+          {signals.length} most recent.
           Each signal is enriched by the Analyse + Classify layers — beat,
           place, entities, and the{" "}
           <strong>reader need</strong> it serves (Know · Understand · Feel ·

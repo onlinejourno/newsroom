@@ -1,10 +1,11 @@
-import { Pool, type PoolClient } from "pg";
+import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from "pg";
 
 // Postgres connection pool, singleton across Next.js dev hot-reloads.
 //
-// All queries here include tenant_id explicitly (ADR 0005). Row-level
-// security policies are added in a later migration; until then, every
-// callsite must remain explicit about which tenant it is reading.
+// Tenant isolation is defence-in-depth (ADR 0005): every query filters
+// tenant_id explicitly AND — once migration 0025 is enabled — row-level
+// security enforces it at the database. Tenant-scoped queries run through
+// withTenant()/tquery(), which pin app.current_tenant for the RLS policies.
 
 const globalForPool = globalThis as unknown as { __ojPool?: Pool };
 
@@ -24,6 +25,44 @@ function getPool(): Pool {
     });
   }
   return globalForPool.__ojPool;
+}
+
+/**
+ * Run `fn` with the tenant pinned for row-level security. Opens a transaction
+ * and sets `app.current_tenant` LOCAL — transaction-scoped, so it CANNOT leak
+ * to the next request that reuses this pooled connection. The RLS policies in
+ * migration 0025 filter every tenant-scoped table by
+ * current_setting('app.current_tenant'); the explicit `where tenant_id = $1`
+ * in each query stays as belt-and-suspenders (and keeps queries correct while
+ * RLS is still off).
+ */
+export async function withTenant<T>(
+  tenantId: string,
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await getPool().connect();
+  try {
+    await client.query("begin");
+    // Parameterised — SET LOCAL itself takes no params, set_config() does.
+    await client.query("select set_config('app.current_tenant', $1, true)", [tenantId]);
+    const out = await fn(client);
+    await client.query("commit");
+    return out;
+  } catch (err) {
+    await client.query("rollback").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Single tenant-scoped query (the common case). Wraps withTenant. */
+export async function tquery<T extends QueryResultRow>(
+  tenantId: string,
+  text: string,
+  params: unknown[] = [],
+): Promise<QueryResult<T>> {
+  return withTenant(tenantId, (c) => c.query<T>(text, params));
 }
 
 export type SignalRow = {
@@ -1077,6 +1116,16 @@ export async function tenantOutletDomain(tenantId: string): Promise<string> {
   return rows[0]?.domain ?? "";
 }
 
+/** The newsroom's city from tenant config (vendor-neutral; empty when unset). */
+export async function tenantCity(tenantId: string): Promise<string> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ city: string | null }>(
+    "select config->>'city' as city from tenants where id = $1",
+    [tenantId],
+  );
+  return rows[0]?.city ?? "";
+}
+
 // A story row pre-shaped for scorePotential (published stories only).
 export type ScorableStoryRow = {
   id: string;
@@ -1550,4 +1599,247 @@ export async function storyClusters(
     [tenantId, sinceHours, limit],
   );
   return rows;
+}
+
+// ── Phase B: competitive standings ───────────────────────────────────────────
+
+export type Peer = { domain: string; name: string; tier: string };
+
+/** The tenant's peer set from config (vendor-neutral — never hardcoded).
+ *  config.peers = [{domain, name, tier}]. Empty array when unset. */
+export async function tenantPeers(tenantId: string): Promise<Peer[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ peers: Peer[] | null }>(
+    "select config->'peers' as peers from tenants where id = $1",
+    [tenantId],
+  );
+  const raw = rows[0]?.peers;
+  return Array.isArray(raw) ? raw.filter((p) => p && typeof p.domain === "string") : [];
+}
+
+export type OwnStanding = {
+  topic: string;
+  ownRecent: number;
+  ownCombative: number;
+  ownExplanatory: number;
+  nOwn: number;
+};
+
+/** Per-topic own-coverage from the tenant's published stories in the window.
+ *  Topic match is headline ILIKE — stories may not carry the analyse-entity
+ *  array that signals do. Framing group from stories.enrichment->'framing'. */
+export async function ownTopicStandings(
+  tenantId: string,
+  topics: string[],
+  windowHours: number,
+): Promise<Map<string, OwnStanding>> {
+  if (topics.length === 0) return new Map();
+  const pool = getPool();
+  const { rows } = await pool.query<OwnStanding>(
+    `
+    select t.topic,
+           count(st.id)::int as "ownRecent",
+           count(*) filter (where st.enrichment->'framing'->>'frame_group' = 'combative')::int   as "ownCombative",
+           count(*) filter (where st.enrichment->'framing'->>'frame_group' = 'explanatory')::int as "ownExplanatory",
+           count(*) filter (where st.enrichment->'framing' is not null)::int as "nOwn"
+      from unnest($2::text[]) as t(topic)
+      left join stories st
+        on st.tenant_id = $1
+       and st.status = 'published'
+       and st.headline ilike '%' || t.topic || '%'
+       and coalesce(st.published_at, st.created_at)
+           >= now() - make_interval(hours => $3)
+     group by t.topic
+    `,
+    [tenantId, topics, windowHours],
+  );
+  return new Map(rows.map((r) => [r.topic, r]));
+}
+
+export type PeerStanding = {
+  topic: string;
+  peerRecent: number;
+  peerCount: number;
+  perDomain: number[]; // per-peer mention counts (for the median)
+  peerCombative: number;
+  peerExplanatory: number;
+  nPeer: number;
+};
+
+/** Per-topic peer-coverage from signals whose raw_payload.domain is in the
+ *  peer set. Topic match uses the analyse-entity array (as topicMomentum does).
+ *  perDomain feeds the median computed in the page. */
+export async function peerTopicStandings(
+  tenantId: string,
+  topics: string[],
+  windowHours: number,
+  peerDomains: string[],
+): Promise<Map<string, PeerStanding>> {
+  if (topics.length === 0 || peerDomains.length === 0) return new Map();
+  const pool = getPool();
+  const { rows } = await pool.query<{
+    topic: string;
+    peerRecent: number;
+    peerCount: number;
+    perDomain: number[];
+    peerCombative: number;
+    peerExplanatory: number;
+    nPeer: number;
+  }>(
+    `
+    with hits as (
+      select t.topic,
+             s.raw_payload->>'domain' as domain,
+             s.enrichment->'framing'->>'frame_group' as frame_group,
+             (s.enrichment->'framing' is not null) as coded
+        from unnest($2::text[]) as t(topic)
+        join signals s
+          on s.tenant_id = $1
+         and s.raw_payload->>'domain' = any($4::text[])
+         and s.enrichment->'analyse'->'entities' @> to_jsonb(array[t.topic])
+         and coalesce(s.published_at, s.fetched_at)
+             >= now() - make_interval(hours => $3)
+    ),
+    per_domain as (
+      select topic, domain, count(*)::int as n from hits group by topic, domain
+    )
+    select h.topic,
+           count(*)::int as "peerRecent",
+           count(distinct h.domain)::int as "peerCount",
+           coalesce((select array_agg(pd.n) from per_domain pd where pd.topic = h.topic), '{}')::int[] as "perDomain",
+           count(*) filter (where h.frame_group = 'combative')::int as "peerCombative",
+           count(*) filter (where h.frame_group = 'explanatory')::int as "peerExplanatory",
+           count(*) filter (where h.coded)::int as "nPeer"
+      from hits h
+     group by h.topic
+    `,
+    [tenantId, topics, windowHours, peerDomains],
+  );
+  return new Map(rows.map((r) => [r.topic, r]));
+}
+
+// ── BRIEF·Today ──────────────────────────────────────────────────────────────
+
+export type TodayLead = {
+  id: string;
+  title: string;
+  beat: string | null;
+  importance: string;
+  status: string;
+  trend_score: number | null;
+  note: string | null;
+  created_at: Date | string;
+  trend_reason: string | null;
+  user_need: string | null;
+  sources: number;
+};
+
+/** Open leads (idea/pitched/assigned) ranked by importance then trend_score.
+ *  sources = signals whose analyse-entities contain the lead topic (else the
+ *  linked signal counts as 1). */
+export async function openLeadsRanked(tenantId: string, limit: number): Promise<TodayLead[]> {
+  const pool = getPool();
+  const { rows } = await pool.query<TodayLead>(
+    `
+    select l.id, l.title, l.beat, l.importance, l.status, l.trend_score, l.note,
+           l.created_at, s.trend_reason,
+           s.enrichment->'classify'->>'user_need' as user_need,
+           greatest(
+             coalesce((select count(*) from signals s2
+                        where s2.tenant_id = l.tenant_id and l.topic is not null
+                          and s2.enrichment->'analyse'->'entities' @> to_jsonb(array[l.topic]))::int, 0),
+             case when l.signal_id is not null then 1 else 0 end
+           ) as sources
+      from story_leads l
+      left join signals s on s.id = l.signal_id
+     where l.tenant_id = $1
+       and l.status in ('idea','pitched','assigned')
+     order by case l.importance
+                when 'urgent' then 0 when 'high' then 1 when 'normal' then 2 else 3 end,
+              l.trend_score desc nulls last,
+              l.created_at desc
+     limit $2
+    `,
+    [tenantId, limit],
+  );
+  return rows;
+}
+
+export type NowCountsRow = {
+  signalsIn: number;
+  leadsNeedingDecision: number;
+  sourcesLive: number;
+  publishedToday: number;
+};
+
+export async function newsroomNowCounts(tenantId: string): Promise<NowCountsRow> {
+  const pool = getPool();
+  const { rows } = await pool.query<NowCountsRow>(
+    `
+    select
+      (select count(*) from signals where tenant_id = $1
+         and coalesce(published_at, fetched_at) >= now() - interval '24 hours')::int as "signalsIn",
+      (select count(*) from story_leads where tenant_id = $1
+         and status in ('idea','pitched','assigned'))::int as "leadsNeedingDecision",
+      (select count(*) from sources where tenant_id = $1 and enabled)::int as "sourcesLive",
+      (select count(*) from stories where tenant_id = $1 and status = 'published'
+         and published_at >= date_trunc('day', now() at time zone 'Asia/Kolkata'))::int as "publishedToday"
+    `,
+    [tenantId],
+  );
+  return rows[0] ?? { signalsIn: 0, leadsNeedingDecision: 0, sourcesLive: 0, publishedToday: 0 };
+}
+
+export type NavCountsRow = {
+  calendar: number;
+  brief: number;
+  signals: number;
+  newslist: number;
+  potential: number;
+};
+
+/** Live per-stage counts for the living masthead (lib/nav-signals.ts). One
+ *  batched round-trip of cheap, tenant-scoped counts. */
+export async function navStageCounts(
+  tenantId: string,
+  beats: string[] | null = null,
+): Promise<NavCountsRow> {
+  const pool = getPool();
+  // When beats is a non-empty array, scope each count to those beats (calendar
+  // keys on `topic`). null/empty → newsroom-wide. The `$2::text[] is null or …`
+  // guard keeps a single query for both cases.
+  const b = beats && beats.length ? beats : null;
+  const { rows } = await pool.query<NavCountsRow>(
+    `
+    select
+      (select count(*) from calendar_event where tenant_id = $1
+         and outcome is null and target_date is not null
+         and target_date <= now() + interval '7 days'
+         and ($2::text[] is null or topic = any($2)))::int as "calendar",
+      (select count(*) from story_leads where tenant_id = $1
+         and status in ('idea','pitched','assigned')
+         and ($2::text[] is null or beat = any($2)))::int as "brief",
+      (select count(*) from signals where tenant_id = $1
+         and coalesce(published_at, fetched_at) >= now() - interval '24 hours'
+         and ($2::text[] is null or beat = any($2)))::int as "signals",
+      (select count(*) from story_leads where tenant_id = $1
+         and status in ('filed','approved')
+         and ($2::text[] is null or beat = any($2)))::int as "newslist",
+      (select count(*) from stories where tenant_id = $1
+         and status = 'published' and published_at >= now() - interval '7 days'
+         and ($2::text[] is null or beat = any($2)))::int as "potential"
+    `,
+    [tenantId, b],
+  );
+  return rows[0] ?? { calendar: 0, brief: 0, signals: 0, newslist: 0, potential: 0 };
+}
+
+/** The install's newsroom — the oldest non-archived tenant. Fallback when there's
+ *  no session (one-newsroom-per-install). Null on a fresh, unseeded DB. */
+export async function defaultTenantId(): Promise<string | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ id: string }>(
+    "select id from tenants where archived_at is null order by created_at asc limit 1",
+  );
+  return rows[0]?.id ?? null;
 }

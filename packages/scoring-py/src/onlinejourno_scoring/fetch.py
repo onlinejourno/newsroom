@@ -17,13 +17,13 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
-from urllib.parse import urlparse, parse_qs
+from datetime import UTC, datetime
+from urllib.parse import parse_qs, urlparse
 
-import requests
 from bs4 import BeautifulSoup
 
 from onlinejourno_scoring.models import Page
+from onlinejourno_scoring.url_guard import safe_get
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -310,7 +310,7 @@ def parse_html(
             from dateutil import parser as dateparser
             published_dt = dateparser.parse(published)
             if published_dt and published_dt.tzinfo is None:
-                published_dt = published_dt.replace(tzinfo=timezone.utc)
+                published_dt = published_dt.replace(tzinfo=UTC)
         except Exception:
             pass
 
@@ -665,7 +665,7 @@ def _gnews_article_lookup(url: str) -> dict:
                     try:
                         published_iso = (
                             dateparser.parse(val)
-                            .astimezone(timezone.utc)
+                            .astimezone(UTC)
                             .isoformat()
                         )
                         break
@@ -737,9 +737,8 @@ def fetch_page(url: str, *, meta_hints: dict | None = None) -> Page:
         )
 
     try:
-        resp = requests.get(
-            url, headers=_HEADERS, timeout=_TIMEOUT, allow_redirects=True
-        )
+        # SSRF-safe: validates every redirect hop resolves to a public address.
+        resp = safe_get(url, headers=_HEADERS, timeout=_TIMEOUT)
         soup = BeautifulSoup(resp.text, "lxml")
     except Exception as e:
         print(f"[fetch] network error for {url}: {e}")

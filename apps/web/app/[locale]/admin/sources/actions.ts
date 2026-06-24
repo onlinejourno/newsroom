@@ -5,19 +5,19 @@ import {
   createSource,
   deleteSource,
   setSourceEnabled,
-  tenantIdForSlug,
   type SourceInput,
 } from "@/lib/db";
-
-// Single-tenant in dev; per-tenant resolution lands with auth later.
-const TENANT_SLUG = "self";
+import { assertWritable, getAccount } from "@/lib/auth";
+import { currentTenantId } from "@/lib/tenant";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
 }
 
 export async function addSourceAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const me = await getAccount();
+  assertWritable(me);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
 
   // Per-ingest_type params arrive as param_<name>; collapse to one object.
@@ -59,7 +59,9 @@ export async function addSourceAction(formData: FormData): Promise<void> {
 }
 
 export async function toggleSourceAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const me = await getAccount();
+  assertWritable(me);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
   await setSourceEnabled(
     tenantId,
@@ -70,7 +72,9 @@ export async function toggleSourceAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteSourceAction(formData: FormData): Promise<void> {
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const me = await getAccount();
+  assertWritable(me);
+  const tenantId = await currentTenantId();
   if (!tenantId) return;
   await deleteSource(tenantId, str(formData, "id"));
   revalidatePath(`/${str(formData, "locale") || "en"}/admin/sources`);

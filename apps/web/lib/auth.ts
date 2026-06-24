@@ -19,6 +19,8 @@ function pool(): Pool {
 
 export type Account = {
   id: string;
+  tenant_id: string;
+  demo: boolean;
   email: string;
   display_name: string | null;
   role: "admin" | "editor" | "desk" | "reporter" | "viewer";
@@ -72,7 +74,7 @@ export async function endSession(): Promise<void> {
 }
 
 const SELECT = `
-  select u.id, u.email, u.display_name, u.role, u.status, u.bureau,
+  select u.id, u.tenant_id, u.demo, u.email, u.display_name, u.role, u.status, u.bureau,
          j.slug as profile_slug,
          coalesce(array(select jsonb_array_elements_text(j.beats)), '{}') as beats,
          j.region
@@ -98,6 +100,21 @@ export async function accountByEmail(
     `${SELECT.replace("j.region", "j.region, u.password_hash")}
        where u.tenant_id = $1 and lower(u.email) = lower($2)`,
     [tenantId, email],
+  );
+  return rows[0] ?? null;
+}
+
+/** Resolve a login by email across all tenants (one-newsroom-per-install: emails
+ *  are globally unique in practice). Returns the full account + credential, so the
+ *  caller has role/profile_slug/tenant_id for the post-login redirect. */
+export async function userByEmail(
+  email: string,
+): Promise<(Account & { password_hash: string | null }) | null> {
+  const { rows } = await pool().query(
+    `${SELECT.replace("j.region", "j.region, u.password_hash")}
+       where lower(u.email) = lower($1)
+       order by u.created_at asc limit 1`,
+    [email],
   );
   return rows[0] ?? null;
 }
@@ -183,4 +200,29 @@ export function roomForRole(role: string, slug: string | null): string {
     default:
       return "signals";
   }
+}
+
+// ── read-only demo (public showcase, 2b) ──────────────────────────────────
+// Guard lives in a pure module (no Next imports) so it's unit-testable.
+export { ReadOnlyDemoError, assertWritable } from "@/lib/writable";
+
+/** Resolve the demo-viewer account for a tenant slug (public showcase). Returns
+ *  the account id + the locale-room to land on, or null. Does NOT set a cookie —
+ *  the /showcase Route Handler sets the session cookie on its redirect response
+ *  (Next forbids cookie writes during a page render). */
+export async function demoViewerSession(
+  tenantSlug = "demo",
+): Promise<{ accountId: string; room: string } | null> {
+  const { rows } = await pool().query<{ id: string; role: string; profile_slug: string | null }>(
+    `select u.id, u.role, j.slug as profile_slug
+       from users u
+       join tenants t on t.id = u.tenant_id
+       left join journalist_profiles j on j.id = u.profile_id
+      where t.slug = $1 and u.demo = true and u.status = 'approved'
+      order by u.created_at limit 1`,
+    [tenantSlug],
+  );
+  const v = rows[0];
+  if (!v) return null;
+  return { accountId: v.id, room: roomForRole(v.role, v.profile_slug) };
 }

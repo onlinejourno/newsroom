@@ -2,11 +2,10 @@ import { redirect } from "next/navigation";
 import type { Route } from "next";
 
 import { getAccount } from "@/lib/auth";
-import { regionalPulse, tenantIdForSlug } from "@/lib/db";
+import { regionalPulse } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 export default async function LocalPulsePage({
   params,
@@ -21,7 +20,7 @@ export default async function LocalPulsePage({
 
   const { region: regionFilter } = await searchParams;
 
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const pulse = tenantId ? await regionalPulse(tenantId, 48) : [];
 
   // All regions ordered by signalCount desc (DB already sorts this way, but be explicit).

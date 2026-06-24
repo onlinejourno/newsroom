@@ -1,16 +1,16 @@
 import CalendarApp, { type CalEvent, type Beat } from "@/components/calendar/CalendarApp";
-import { istToday, toCalendarDate } from "@/lib/calendar";
-import { fetchCalendarEvents, tenantIdForSlug } from "@/lib/db";
+import CalendarHeader, { type NextDue } from "@/components/calendar/CalendarHeader";
+import { istToday, toCalendarDate, classify, deadlineCountdown, calendarSummary } from "@/lib/calendar";
+import { fetchCalendarEvents, tenantCity } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
-import { getAccount } from "@/lib/auth";
+import { assertWritable, getAccount } from "@/lib/auth";
 import { assignableReporters, commissionFromCalendarEvent } from "@/lib/workflow";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -32,27 +32,28 @@ function hostOf(url: string | null): string {
 }
 
 // Map a topic to a beat id + a stable colour from the design palette.
+// Beat → a stable colour from the OJDS harmonized categorical palette.
 const BEAT_COLORS: Record<string, string> = {
-  politics: "#2B3D8F",
-  courts: "#7a4f00",
-  legal: "#7a4f00",
-  economy: "#2D7A4F",
-  business: "#7a4f00",
-  markets: "#2D7A4F",
-  infrastructure: "#b35d00",
-  infra: "#b35d00",
-  health: "#b01e1e",
-  technology: "#3a3a8a",
-  science: "#3a3a8a",
-  education: "#5a4b9a",
-  sport: "#2a6e2a",
-  governance: "#3a3a8a",
-  defence: "#4d4d4d",
-  environment: "#2a6e2a",
-  national: "#2B3D8F",
+  politics: "#2b5fb0",
+  courts: "#9a6a14",
+  legal: "#9a6a14",
+  economy: "#2e7d46",
+  business: "#d97f0c",
+  markets: "#2e7d46",
+  infrastructure: "#d97f0c",
+  infra: "#d97f0c",
+  health: "#c0392b",
+  technology: "#8e2c8c",
+  science: "#8e2c8c",
+  education: "#0e8a7e",
+  sport: "#2e7d46",
+  governance: "#6f6757",
+  defence: "#6f6757",
+  environment: "#0e8a7e",
+  national: "#2b5fb0",
 };
 const PALETTE = [
-  "#2B3D8F", "#2D7A4F", "#b35d00", "#b01e1e", "#5a4b9a", "#3a3a8a", "#2a6e2a", "#7a4f00",
+  "#2e7d46", "#2b5fb0", "#c0392b", "#8e2c8c", "#9a6a14", "#0e8a7e", "#6f6757", "#d97f0c",
 ];
 
 function SetupNotice() {
@@ -69,7 +70,7 @@ export default async function CalendarPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   if (!tenantId) return <SetupNotice />;
 
   const me = await getAccount();
@@ -77,9 +78,10 @@ export default async function CalendarPage({
 
   async function commissionEvent(formData: FormData) {
     "use server";
-    const tid = await tenantIdForSlug(TENANT_SLUG);
+    const tid = await currentTenantId();
     const who = await getAccount();
-    if (!tid || !who) return;
+    assertWritable(who);
+    if (!tid) return;
     // assigneeId is supplied by the T2 reporter selector; null when not chosen.
     const assigneeId = String(formData.get("assigneeId") ?? "").trim() || null;
     await commissionFromCalendarEvent(tid, who, String(formData.get("eventId")), assigneeId);
@@ -91,6 +93,25 @@ export default async function CalendarPage({
     fetchCalendarEvents(tenantId),
     canCommission ? assignableReporters(tenantId) : Promise.resolve([] as { id: string; name: string }[]),
   ]);
+
+  const today = istToday();
+  const summary = calendarSummary(rows, today);
+  const city = await tenantCity(tenantId);
+  const nextDue: NextDue[] = rows
+    .filter((r) => r.outcome === null && r.target_date !== null)
+    .slice(0, 3)
+    .map((r) => {
+      const t = toCalendarDate(r.target_date!);
+      return {
+        what: r.what,
+        who: r.who ?? "",
+        countdown: deadlineCountdown(r.precision, t, today),
+        overdue: classify(t, today).status === "past_due",
+      };
+    });
+  const dateLabel = new Intl.DateTimeFormat("en-GB", {
+    weekday: "short", day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata",
+  }).format(new Date());
 
   const events: CalEvent[] = rows.map((r) => ({
     id: r.id,
@@ -122,14 +143,17 @@ export default async function CalendarPage({
   }
 
   return (
-    <CalendarApp
-      events={events}
-      beats={[...beatMap.values()]}
-      todayISO={todayISO}
-      locale={locale}
-      canCommission={canCommission}
-      commission={commissionEvent}
-      reporters={reporters}
-    />
+    <main className="min-h-screen max-w-6xl mx-auto p-6 md:p-10">
+      <CalendarHeader summary={summary} nextDue={nextDue} dateLabel={dateLabel} city={city} />
+      <CalendarApp
+        events={events}
+        beats={[...beatMap.values()]}
+        todayISO={todayISO}
+        locale={locale}
+        canCommission={canCommission}
+        commission={commissionEvent}
+        reporters={reporters}
+      />
+    </main>
   );
 }

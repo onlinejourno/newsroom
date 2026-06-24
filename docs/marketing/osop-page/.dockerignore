@@ -1,0 +1,5 @@
+page-osop.php
+Dockerfile
+fly.toml
+.dockerignore
+*.md

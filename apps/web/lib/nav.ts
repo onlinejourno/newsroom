@@ -29,6 +29,7 @@ export const WORKFLOW_EXTRA: Stage[] = [
   { verb: "Frame", label: "Local Pulse",     path: "local-pulse",   blurb: "Trending by state & city" },
   { verb: "Score", label: "Surface Scores",  path: "scores",        blurb: "Per-surface channel audit" },
   { verb: "Score", label: "Hidden Gems",     path: "gems",          blurb: "Buried, worth re-optimising" },
+  { verb: "Score", label: "Frontmatter",     path: "frontmatter",   blurb: "Deserving work that isn't reaching — the merit↔reach gap" },
   { verb: "Score", label: "Story Analyser",  path: "story-analyser", blurb: "Audit one story" },
   { verb: "Score", label: "Probity",         path: "probity",       blurb: "Page-honesty audit" },
   { verb: "Score", label: "Compliance",      path: "standards",     blurb: "GDPR / DPDPA" },

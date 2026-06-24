@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { listJournalists, tenantIdForSlug } from "@/lib/db";
+import { listJournalists } from "@/lib/db";
+import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
-
-const TENANT_SLUG = "self";
 
 export default async function JournalistsPage({
   params,
@@ -12,7 +11,7 @@ export default async function JournalistsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tenantId = await tenantIdForSlug(TENANT_SLUG);
+  const tenantId = await currentTenantId();
   const journalists = tenantId ? await listJournalists(tenantId) : [];
 
   return (
