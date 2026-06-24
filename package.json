@@ -2,8 +2,8 @@
   "name": "onlinejourno-platform",
   "private": true,
   "version": "0.0.0",
-  "description": "OnlineJourno Platform — editorial intelligence for newsrooms.",
-  "license": "Apache-2.0",
+  "description": "OnlineJourno Platform \u2014 editorial intelligence for newsrooms.",
+  "license": "FSL-1.1-ALv2",
   "author": "Subhash Rai",
   "homepage": "https://onlinejourno.com",
   "repository": {
