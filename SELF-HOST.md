@@ -1,7 +1,7 @@
-# Self-hosting OnlineJourno
+# Self-hosting Arena
 
-Run your own OnlineJourno — web + Postgres, plus an optional enrichment worker — with Docker
-Compose. A platform by journalists, for journalists; your data stays on your infrastructure.
+Run your own Arena — web + Postgres, plus an optional enrichment worker — with Docker
+Compose. By journalists, for journalists; your data stays on your infrastructure.
 
 ## Prerequisites
 

@@ -44,7 +44,12 @@ export async function middleware(req: NextRequest) {
   // The login gate: everything requires a valid session except OPEN paths.
   const rest = pathname.slice(`/${locale}`.length).replace(/^\//, "");
   const top = rest.split("/")[0];
-  if (OPEN.includes(top)) return withPath();
+  // Frontmatter ("merit should travel") can be public — but opt-in, so a
+  // self-hosted newsroom doesn't expose its own performance data by default.
+  // The demo sets OJ_PUBLIC_FRONTMATTER=1; everyone else stays gated.
+  const publicFrontmatter =
+    top === "frontmatter" && process.env.OJ_PUBLIC_FRONTMATTER === "1";
+  if (OPEN.includes(top) || publicFrontmatter) return withPath();
 
   const account = await verifyToken(req.cookies.get(SESSION_COOKIE)?.value);
   if (!account) {

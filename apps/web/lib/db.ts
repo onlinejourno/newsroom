@@ -1,10 +1,11 @@
-import { Pool, type PoolClient } from "pg";
+import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from "pg";
 
 // Postgres connection pool, singleton across Next.js dev hot-reloads.
 //
-// All queries here include tenant_id explicitly (ADR 0005). Row-level
-// security policies are added in a later migration; until then, every
-// callsite must remain explicit about which tenant it is reading.
+// Tenant isolation is defence-in-depth (ADR 0005): every query filters
+// tenant_id explicitly AND — once migration 0025 is enabled — row-level
+// security enforces it at the database. Tenant-scoped queries run through
+// withTenant()/tquery(), which pin app.current_tenant for the RLS policies.
 
 const globalForPool = globalThis as unknown as { __ojPool?: Pool };
 
@@ -24,6 +25,44 @@ function getPool(): Pool {
     });
   }
   return globalForPool.__ojPool;
+}
+
+/**
+ * Run `fn` with the tenant pinned for row-level security. Opens a transaction
+ * and sets `app.current_tenant` LOCAL — transaction-scoped, so it CANNOT leak
+ * to the next request that reuses this pooled connection. The RLS policies in
+ * migration 0025 filter every tenant-scoped table by
+ * current_setting('app.current_tenant'); the explicit `where tenant_id = $1`
+ * in each query stays as belt-and-suspenders (and keeps queries correct while
+ * RLS is still off).
+ */
+export async function withTenant<T>(
+  tenantId: string,
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await getPool().connect();
+  try {
+    await client.query("begin");
+    // Parameterised — SET LOCAL itself takes no params, set_config() does.
+    await client.query("select set_config('app.current_tenant', $1, true)", [tenantId]);
+    const out = await fn(client);
+    await client.query("commit");
+    return out;
+  } catch (err) {
+    await client.query("rollback").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Single tenant-scoped query (the common case). Wraps withTenant. */
+export async function tquery<T extends QueryResultRow>(
+  tenantId: string,
+  text: string,
+  params: unknown[] = [],
+): Promise<QueryResult<T>> {
+  return withTenant(tenantId, (c) => c.query<T>(text, params));
 }
 
 export type SignalRow = {

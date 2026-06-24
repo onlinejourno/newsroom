@@ -1,4 +1,4 @@
-# OnlineJourno
+# Arena
 
 Editorial intelligence **by a journalist, for journalists** — one vendor-neutral platform that finds the story for the reporter at the base of the newsroom, hands it to her with her newsroom's archive depth behind it, and gives every story she files a fair chance, before publish and after. A companion to the newsroom's existing CMS; never a replacement.
 
@@ -12,7 +12,7 @@ Editorial intelligence **by a journalist, for journalists** — one vendor-neutr
 - `https://onlinejourno.com` — marketing site (WordPress on Bluehost), live since Wed Jun 3.
 - `https://app.onlinejourno.com` — product UI for the design partner editor (Fly.io BOM), Wk 8 onwards.
 - `https://try.onlinejourno.com` — static community playground demo, Wk 12–16 onwards (see `docs/PLAYGROUND-PLAN.md`).
-- `https://github.com/onlinejourno/platform` — currently private; flips public Wk 10–12 per `docs/COMMUNITY-LAUNCH-PLAN.md`.
+- `https://github.com/onlinejourno/arena` — currently private; flips public Wk 10–12 per `docs/COMMUNITY-LAUNCH-PLAN.md`.
 - `https://onlinejournalism.in` — sibling publication (separate brand, same founder, first case study).
 
 ---
@@ -64,7 +64,7 @@ brew services start postgresql@17
 echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zshrc
 exec zsh
 
-git clone https://github.com/onlinejourno/platform.git
+git clone https://github.com/onlinejourno/arena.git
 cd platform
 cp .env.local.example .env
 ln -s ../../.env apps/web/.env   # Next.js reads from apps/web/.env
