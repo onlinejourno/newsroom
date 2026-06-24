@@ -125,7 +125,7 @@ export function scorePotential(
    *  When provided together with outletDomain, authority is computed as the
    *  outlet's share among these competitor domains. */
   topicDomains?: { domain: string; count: number }[],
-  /** The outlet's own domain (e.g. "thehindu.com") for competitor comparison. */
+  /** The outlet's own domain (e.g. "example.com") for competitor comparison. */
   outletDomain?: string,
 ): PotentialScore {
   const headline = item.headline ?? "";

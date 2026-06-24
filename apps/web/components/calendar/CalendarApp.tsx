@@ -43,7 +43,7 @@ const C = {
   rule: "var(--color-rule)",
   ruleSoft: "var(--color-rule-soft)",
   green: "var(--color-brand)",
-  accent: "var(--color-urgent)",
+  urgent: "var(--color-urgent)",
   amber: "var(--color-amber-600)",
 } as const;
 
@@ -277,7 +277,7 @@ function TimeAxis({ horizon, todayISO }: { horizon: number; todayISO: string }) 
               fontFamily: UI,
               fontSize: 10,
               fontWeight: 700,
-              color: t === 0 ? C.accent : "#666",
+              color: t === 0 ? C.urgent : "#666",
             }}
           >
             <div style={{ letterSpacing: ".05em" }}>{t === 0 ? "TODAY" : `+${t}d`}</div>
@@ -307,7 +307,7 @@ function TimelineView({ events, horizon, beats, todayISO, onSelect }: ViewProps)
     <div style={{ background: C.surface, border: `1px solid ${C.ink}`, padding: "0 24px 20px", position: "relative" }}>
       <TimeAxis horizon={horizon} todayISO={todayISO} />
       <div style={{ position: "absolute", left: "calc(180px + 16px + 24px)", right: "calc(230px + 16px + 24px)", top: 40, bottom: 0, pointerEvents: "none", zIndex: 1 }}>
-        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, background: C.accent, opacity: 0.95 }} />
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, background: C.urgent, opacity: 0.95 }} />
       </div>
       <div style={{ position: "relative", zIndex: 2 }}>
         {grouped.map(({ bucket, items }) =>
@@ -413,13 +413,13 @@ function PastDueView({ events, beats, todayISO, onSelect }: ViewProps) {
 
   return (
     <div>
-      <div style={{ background: "var(--color-urgent-bg)", border: `1px solid ${C.accent}`, padding: "14px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        <div style={{ background: C.accent, color: "#fff", padding: "4px 10px", fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em" }}>ACCOUNTABILITY</div>
+      <div style={{ background: "var(--color-urgent-bg)", border: `1px solid ${C.urgent}`, padding: "14px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ background: C.urgent, color: "#fff", padding: "4px 10px", fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em" }}>ACCOUNTABILITY</div>
         <div style={{ fontFamily: BODY, fontSize: 14, color: "var(--color-frame)", fontStyle: "italic" }}>
           Promised by someone — delivered? These have crossed their deadline. Assign a reporter to verify.
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 14 }}>
-          <Counter n={overdue} label="overdue" color={C.accent} />
+          <Counter n={overdue} label="overdue" color={C.urgent} />
           <Counter n={unverified} label="unverified" color="#666" />
         </div>
       </div>
@@ -428,11 +428,11 @@ function PastDueView({ events, beats, todayISO, onSelect }: ViewProps) {
         {items.length === 0 && <EmptyRow text="Nothing past-due. Every tracked promise is still ahead of its deadline." />}
         {items.map((e) => {
           const over = Math.abs(daysBetween(todayISO, e.deadline!));
-          const stat = deliveredOf(e) === "overdue" ? { color: C.accent, label: "Overdue · investigate" } : { color: "#666", label: "Status not verified" };
+          const stat = deliveredOf(e) === "overdue" ? { color: C.urgent, label: "Overdue · investigate" } : { color: "#666", label: "Status not verified" };
           return (
             <button key={e.id} onClick={() => onSelect(e)} style={{ display: "grid", gridTemplateColumns: "140px 1fr 200px", gap: 16, padding: "16px 24px", borderBottom: `1px solid ${C.ruleSoft}`, background: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
               <div>
-                <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.accent }}>{over}d past-due</div>
+                <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.urgent }}>{over}d past-due</div>
                 <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 800, color: C.ink, marginTop: 4, lineHeight: 1.1 }}>{fmtShort(e.deadline!)}</div>
                 <div style={{ fontFamily: UI, fontSize: 10, color: C.ink3, marginTop: 1 }}>was due</div>
               </div>
@@ -549,7 +549,7 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
         <div style={{ padding: "24px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <BeatTag beats={beats} beat={event.beat} />
-            <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: isPast ? C.accent : bucket.color, padding: "3px 8px", background: isPast ? "var(--color-urgent-bg)" : bucket.strip, border: `1px solid ${isPast ? C.accent : bucket.color}` }}>
+            <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: isPast ? C.urgent : bucket.color, padding: "3px 8px", background: isPast ? "var(--color-urgent-bg)" : bucket.strip, border: `1px solid ${isPast ? C.urgent : bucket.color}` }}>
               {!dated ? "UNDATED" : isPast ? `${Math.abs(d)}d past-due` : daysOutLabel(d).toUpperCase()}
             </div>
           </div>
@@ -622,8 +622,8 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
           </div>
 
           {isPast && (
-            <div style={{ marginBottom: 18, padding: "12px 14px", background: "var(--color-urgent-bg)", border: `1px solid ${C.accent}` }}>
-              <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.accent }}>Delivered?</div>
+            <div style={{ marginBottom: 18, padding: "12px 14px", background: "var(--color-urgent-bg)", border: `1px solid ${C.urgent}` }}>
+              <div style={{ fontFamily: UI, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: C.urgent }}>Delivered?</div>
               <div style={{ fontFamily: BODY, fontStyle: "italic", fontSize: 14, color: "var(--color-frame)", marginTop: 4, lineHeight: 1.55 }}>
                 The deadline has passed. Assign a reporter to confirm whether it was delivered and write the accountability story.
               </div>
