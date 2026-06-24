@@ -98,6 +98,8 @@ Adapted from `discover-dashboard/data/trends_fetcher.py`. For each topic cluster
 
 Uses the vendored `GDELTCollector`. For each topic cluster (top 5 by gap score), queries the GDELT DOC API for the 90-day window. Returns: external citations per article (`gdelt_pickup`) and top competitor domains per topic (`competitor_domains` with count + share_pct). Highlights the target domain's rank among competitors.
 
+**Peer detection:** From each topic's `competitor_domains` list, collect the union of top 5 domains (excluding the client) — these become the `peer_outlets` for the audit. Run a second GDELT pass querying each peer's coverage volume per topic cluster. This produces the industry position matrix without any manual configuration of competitors.
+
 ### Scoring (`score.py`)
 
 Vendored from `platform/packages/scoring-py`. Per article:
@@ -158,7 +160,15 @@ where `coverage_ratio = articles_published / articles_expected` (articles_expect
     {"domain": "economictimes.com", "count": 47, "share_pct": 31},
     {"domain": "livemint.com", "count": 38, "share_pct": 25},
     {"domain": "thehindu.com", "count": 3, "share_pct": 2}
-  ]
+  ],
+  "peer_outlets": [
+    {"domain": "economictimes.com", "coverage_volume": 47},
+    {"domain": "livemint.com",      "coverage_volume": 38},
+    {"domain": "ndtv.com",          "coverage_volume": 21},
+    {"domain": "indianexpress.com", "coverage_volume": 18},
+    {"domain": "business-standard.com", "coverage_volume": 12}
+  ],
+  "is_white_space": false
 }]
 ```
 
@@ -200,6 +210,18 @@ Three metrics: articles published · topics covered · grade (A–F with colour)
 ### Topic Momentum chart
 `Recharts BarChart` horizontal. Y-axis: topic labels. X-axis: `gap_score` (0–100). Sorted descending. Colour: OJDS semantic tokens (high gap = red, medium = amber, low = green). Reference line at 50.
 
+### Industry Position panel
+
+Rendered between the Topic Momentum chart and the article feed. A matrix table: rows = top topic clusters, columns = client + auto-detected peer outlets. Cell value = share_pct from GDELT. Client column highlighted.
+
+Three derived signals shown below the table:
+
+- **Watch out for** — topics where a peer's share_pct is ≥ 3× the client's and trending up. Shown as labelled chips: "ET is surging on RBI coverage (31% vs your 2%)".
+- **White spaces** — topics where ALL outlets have share_pct < 8% but trend_score > 50. Opportunity signal: "India-EU trade talks — nobody owns this story."
+- **Strong ground** — topics where client share_pct ranks 1st or 2nd. Affirms what's working.
+
+`is_white_space` field in `trends.json` is computed in Step 6: true when `max(competitor_domains[*].share_pct) < 8` and `gap_score > 50`.
+
 ### Article feed
 Sorted by `story_score` descending. Each row: score badge (HIGH/MEDIUM/LOW/VERY LOW) · title · section · published_at · trend label. No pagination — full 90-day list.
 
@@ -220,8 +242,8 @@ Print-optimised (`@media print` hides nav, adds page breaks). Designed for A4.
 │  Trend peak: Apr 5 · Interest: 89/100        │
 │  Published: 3 articles · Expected: 9         │
 │                                              │
-│  Who owned this story:                       │
-│  Economic Times 31% · Livemint 25% · [you] 2%│
+│  Industry position (this topic):             │
+│  ET 31% · Mint 25% · IE 18% · [you] 2%      │
 │                                              │
 │  Recommendation:                             │
 │  Assign dedicated RBI correspondent...       │
