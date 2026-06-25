@@ -133,20 +133,38 @@ def audit_page(
     # trend_momentum: proxy from surface composite score (or 50 if no surfaces)
     composite_val = result["composite"].get("composite", 50) or 50
 
-    pot_score = potential_mod.potential_score(
+    # merit: text-internal quality from SQEG page-quality computed above — the
+    # named-journalist-over-wire / named-sources / citations signal. Folded into
+    # potential so the forward-facing recommendation privileges non-commodity
+    # work (see potential._W_MERIT, the positioning lever).
+    merit_score = float(result["sqeg"]["page_quality"]["score"])
+    reach_val = potential_mod.reach_score(
         trend_momentum=float(composite_val),
         content_alignment=alignment,
         domain_authority=da_score,
         freshness=float(freshness),
     )
+    pot_score = potential_mod.potential_score(
+        trend_momentum=float(composite_val),
+        content_alignment=alignment,
+        domain_authority=da_score,
+        freshness=float(freshness),
+        merit=merit_score,
+    )
     result["potential"] = {
         "score": round(pot_score, 1),
         "label": potential_mod.label(pot_score),
+        "reach": round(reach_val, 1),
+        "merit": round(merit_score, 1),
+        # reach − merit: positive = travelling further than it deserves (the
+        # commodity tax); negative = deserving but under-reaching (champion it).
+        "merit_gap": round(reach_val - merit_score, 1),
         "components": {
             "trend_momentum": float(composite_val),
             "content_alignment": alignment,
             "domain_authority": da_score,
             "freshness": float(freshness),
+            "merit": round(merit_score, 1),
         },
     }
 

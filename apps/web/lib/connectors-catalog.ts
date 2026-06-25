@@ -39,6 +39,15 @@ const MCP_FIELDS: ProviderField[] = [
   { name: "tool", label: "Tool name", placeholder: "get_metrics" },
 ];
 
+// DataForSEO uses Basic auth (two credentials). Per the never-store-raw rule the
+// admin captures the ENV NAMES; the values live in env.
+const DATAFORSEO_FIELDS: ProviderField[] = [
+  { name: "login_env", label: "Login env reference (not the value)", placeholder: "DATAFORSEO_LOGIN", secret: true },
+  { name: "password_env", label: "Password env reference (not the value)", placeholder: "DATAFORSEO_PASSWORD", secret: true },
+  { name: "location_code", label: "Location code", placeholder: "2356 (India)" },
+  { name: "language_code", label: "Language code", placeholder: "en" },
+];
+
 export const CONNECTOR_CATALOG: CategoryDef[] = [
   {
     key: "nlp",
@@ -92,6 +101,7 @@ export const CONNECTOR_CATALOG: CategoryDef[] = [
       { key: "keywords_everywhere", label: "Keywords Everywhere", modes: ["api", "mcp"], fields: [SECRET_REF] },
       { key: "newzdash", label: "NewzDash", modes: ["api"], fields: [SECRET_REF] },
       { key: "seopanel", label: "SEO Panel", modes: ["api"], oss: true, fields: [{ name: "base_url", label: "SEO Panel URL" }, SECRET_REF] },
+      { key: "dataforseo", label: "DataForSEO (search volume + per-URL ETV)", modes: ["api"], fields: DATAFORSEO_FIELDS },
     ],
   },
   {
@@ -101,6 +111,14 @@ export const CONNECTOR_CATALOG: CategoryDef[] = [
     providers: [
       { key: "gsc", label: "Google Search Console", modes: ["api"], fields: [{ name: "site_url", label: "Property URL" }, SECRET_REF] },
       { key: "bing_webmaster", label: "Bing Webmaster Tools", modes: ["api"], fields: [{ name: "site_url", label: "Site URL" }, SECRET_REF] },
+    ],
+  },
+  {
+    key: "serp",
+    label: "SERP / AI surface",
+    contract: "ai_overview(query) + traffic_estimate(domains) + ranked_keywords(domain)",
+    providers: [
+      { key: "dataforseo", label: "DataForSEO", modes: ["api"], fields: DATAFORSEO_FIELDS },
     ],
   },
   {

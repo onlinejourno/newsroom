@@ -77,6 +77,18 @@ class SocialClient(Protocol):
 
 
 @runtime_checkable
+class SerpClient(Protocol):
+    # AI-surface exposure (ADR 0044 extension): is the answer engine CITING the
+    # outlet or replacing it — the external counterpart to
+    # SearchConsoleClient.query_fanout — plus external traffic / ETV estimates.
+    def ai_overview(self, query: str, *, geo: str | None = None) -> dict[str, Any]: ...
+
+    def traffic_estimate(self, domains: list[str]) -> dict[str, Any]: ...
+
+    def ranked_keywords(self, domain: str) -> dict[str, Any]: ...
+
+
+@runtime_checkable
 class CMSClient(Protocol):
     # The inside end (ADR 0046): read the newsroom's own articles -> stories.
     def stories(self, *, since: str | None = None, limit: int = 50) -> list[dict[str, Any]]: ...
@@ -97,6 +109,7 @@ CONTRACTS: dict[str, type] = {
     "trends": TrendsClient,
     "subscription": SubscriptionClient,
     "social": SocialClient,
+    "serp": SerpClient,
 }
 
 
@@ -131,6 +144,95 @@ class KeApiClient:
             }
             for kw, v in volumes.items()
         }
+
+
+class _DataForSeoBase:
+    """Shared config + Basic-auth-from-env for the DataForSEO adapters.
+
+    DataForSEO needs two credentials (login + password), so rather than the single
+    ``secret_ref`` the env names live in ``config`` (login_env / password_env),
+    defaulting to DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD. Raw values stay in env,
+    never stored. location_code/language_code are config (default India/en)."""
+
+    def __init__(self, cfg: ConnectorConfig) -> None:
+        c = cfg.config or {}
+        self._login_env = str(c.get("login_env", "DATAFORSEO_LOGIN"))
+        self._password_env = str(c.get("password_env", "DATAFORSEO_PASSWORD"))
+        self._location = int(c.get("location_code", 2356))
+        self._language = str(c.get("language_code", "en"))
+        self._session: Any = None
+
+    def _auth(self) -> tuple[str, str] | None:
+        login = os.environ.get(self._login_env)
+        password = os.environ.get(self._password_env)
+        return (login, password) if login and password else None
+
+    def _sess(self) -> Any:
+        if self._session is None:
+            import requests
+
+            self._session = requests.Session()
+        return self._session
+
+
+class DataForSeoKeywordsClient(_DataForSeoBase):
+    """KeywordsClient over DataForSEO Google Ads search volume."""
+
+    def keyword_data(self, terms: list[str]) -> dict[str, Any]:
+        from onlinejourno_agents import dataforseo as dfs
+
+        res = dfs.search_volume(
+            self._sess(), terms, self._auth(),
+            location_code=self._location, language_code=self._language,
+        )
+        out: dict[str, Any] = {}
+        for it in (res.get("items", []) if res.get("available") else []):
+            kw = it.get("keyword")
+            if kw:
+                out[kw.lower()] = {
+                    "keyword": kw, "volume": it.get("search_volume"),
+                    "competition": it.get("competition"), "cpc": it.get("cpc"),
+                }
+        return out
+
+
+class DataForSeoSerpClient(_DataForSeoBase):
+    """SerpClient over DataForSEO SERP + Labs: AI-Overview citation, traffic, ETV."""
+
+    def ai_overview(self, query: str, *, geo: str | None = None) -> dict[str, Any]:
+        from onlinejourno_agents import dataforseo as dfs
+
+        res = dfs.serp_ai_overview(
+            self._sess(), query, self._auth(),
+            location_code=self._location, language_code=self._language,
+        )
+        return {
+            "available": res.get("available", False),
+            "present": res.get("aio_present", False),
+            "cited_urls": res.get("aio_cited_urls", []),
+        }
+
+    def traffic_estimate(self, domains: list[str]) -> dict[str, Any]:
+        from onlinejourno_agents import dataforseo as dfs
+
+        res = dfs.bulk_traffic_estimation(
+            self._sess(), domains, self._auth(),
+            location_code=self._location, language_code=self._language,
+        )
+        if not res.get("available"):
+            return {"available": False, "domains": {}}
+        return {
+            "available": True,
+            "domains": {r["target"]: r.get("organic_etv") for r in res.get("targets", [])},
+        }
+
+    def ranked_keywords(self, domain: str) -> dict[str, Any]:
+        from onlinejourno_agents import dataforseo as dfs
+
+        return dfs.ranked_keywords(
+            self._sess(), domain, self._auth(),
+            location_code=self._location, language_code=self._language,
+        )
 
 
 class WordPressClient:
@@ -349,6 +451,12 @@ def make_connector(cfg: ConnectorConfig) -> Any:
         and cfg.mode == "api"
     ):
         return KeApiClient(cfg)
+
+    if cfg.category == "keywords" and cfg.provider == "dataforseo" and cfg.mode == "api":
+        return DataForSeoKeywordsClient(cfg)
+
+    if cfg.category == "serp" and cfg.provider == "dataforseo" and cfg.mode == "api":
+        return DataForSeoSerpClient(cfg)
 
     raise NotImplementedError(
         f"connector adapter not yet implemented: "

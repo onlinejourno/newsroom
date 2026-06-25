@@ -82,4 +82,4 @@ pnpm dev
 
 ## License
 
-Apache License 2.0. See `LICENSE.md` and `NOTICE`.
+Source-available under the **Functional Source License 1.1 (FSL-1.1-ALv2)** — converts to Apache 2.0 on 2028-06-24 (ADR 0064). Code is FSL; methodology/docs are CC BY 4.0. See `LICENSE.md`, `COMMERCIAL_LICENSE.md`, `METHODOLOGY-LICENSE.md` and `NOTICE`.
