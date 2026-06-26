@@ -2,9 +2,9 @@
 /**
  * Homepage copy → the Customizer.
  *
- * Makes the front page (front-page.php) editable from Appearance → Customize
- * without touching code. Every default below matches the original hard-coded
- * copy, so activating/updating the theme changes nothing until you edit.
+ * Makes the front-page hero and ethic line editable from Appearance → Customize
+ * without touching code. The product cards and the "how it's built" grid are
+ * structural — edit those in front-page.php. Defaults match the JATO homepage.
  *
  * @package OnlineJourno
  */
@@ -15,7 +15,7 @@ function onlinejourno_customize_register( $wp_customize ) {
 	$panel = 'oj_homepage';
 	$wp_customize->add_panel( $panel, array(
 		'title'       => __( 'Homepage', 'onlinejourno' ),
-		'description' => __( 'Edit the front-page copy — hero, feature cards, and the ethic line. The "suite" links are structural and stay in the theme.', 'onlinejourno' ),
+		'description' => __( 'Edit the front-page hero and the ethic line. The product cards and principles are structural and live in the theme (front-page.php).', 'onlinejourno' ),
 		'priority'    => 30,
 	) );
 
@@ -38,27 +38,13 @@ function onlinejourno_customize_register( $wp_customize ) {
 
 	// ── Hero ────────────────────────────────────────────────────────────────
 	$wp_customize->add_section( 'oj_hero', array( 'title' => __( 'Hero', 'onlinejourno' ), 'panel' => $panel ) );
-	$add( 'oj_hero_kicker', __( 'Eyebrow', 'onlinejourno' ), 'Editorial intelligence for newsrooms', 'oj_hero' );
-	$add( 'oj_hero_title', __( 'Headline', 'onlinejourno' ), 'Give every story a fair chance.', 'oj_hero' );
-	$add( 'oj_hero_dek', __( 'Blurb', 'onlinejourno' ), 'OnlineJourno monitors your sources, reads how stories are being framed, and delivers desk-ready briefs — so reporters spend their time on judgement, not on watching feeds. A platform by journalists, for journalists.', 'oj_hero', 'textarea' );
-	$add( 'oj_hero_btn1_label', __( 'Button 1 — label', 'onlinejourno' ), 'Open the app', 'oj_hero' );
-	$add( 'oj_hero_btn1_url', __( 'Button 1 — link', 'onlinejourno' ), 'https://app.onlinejourno.com/', 'oj_hero', 'url' );
-	$add( 'oj_hero_btn2_label', __( 'Button 2 — label', 'onlinejourno' ), 'See a live demo', 'oj_hero' );
-	$add( 'oj_hero_btn2_url', __( 'Button 2 — link', 'onlinejourno' ), 'https://app.onlinejourno.com/en/showcase', 'oj_hero', 'url' );
-
-	// ── Feature cards ─────────────────────────────────────────────────────────
-	$wp_customize->add_section( 'oj_features', array( 'title' => __( 'Feature cards', 'onlinejourno' ), 'panel' => $panel ) );
-	$features = array(
-		array( 'Source monitoring', "Watch the outlets, wires and signals that matter to your beats — and see what's moving now." ),
-		array( 'Framing analysis', 'See how a story is being told — the PEJ frame families — not just the topic.' ),
-		array( 'Briefs & calendar', "Signals become a planning spine: what's ahead, what's at risk, what's ready to file." ),
-		array( 'Where you stand', 'Market-aware, competitor-relative context on how your coverage compares on a topic.' ),
-	);
-	foreach ( $features as $i => $f ) {
-		$n = $i + 1;
-		$add( "oj_feat{$n}_title", sprintf( __( 'Card %d — title', 'onlinejourno' ), $n ), $f[0], 'oj_features' );
-		$add( "oj_feat{$n}_text", sprintf( __( 'Card %d — text', 'onlinejourno' ), $n ), $f[1], 'oj_features', 'textarea' );
-	}
+	$add( 'oj_hero_kicker', __( 'Eyebrow', 'onlinejourno' ), 'Journalistic Agentic Task Orchestration', 'oj_hero' );
+	$add( 'oj_hero_title', __( 'Headline', 'onlinejourno' ), 'Bring a journalism task. Get an answer you can act on.', 'oj_hero' );
+	$add( 'oj_hero_dek', __( 'Blurb', 'onlinejourno' ), 'OnlineJourno takes a reporter\'s task in plain language, decomposes it, composes a library of AI agents and tools to do the research, and returns a structured, source-linked result — so the intelligence that today pools at the top of the newsroom finally reaches the reporter at the base. By a journalist, for journalists.', 'oj_hero', 'textarea' );
+	$add( 'oj_hero_btn1_label', __( 'Button 1 — label', 'onlinejourno' ), "Let's work together", 'oj_hero' );
+	$add( 'oj_hero_btn1_url', __( 'Button 1 — link', 'onlinejourno' ), '/audit/', 'oj_hero', 'url' );
+	$add( 'oj_hero_btn2_label', __( 'Button 2 — label', 'onlinejourno' ), 'Explore the free tools', 'oj_hero' );
+	$add( 'oj_hero_btn2_url', __( 'Button 2 — link', 'onlinejourno' ), 'https://tools.onlinejourno.com/', 'oj_hero', 'url' );
 
 	// ── Ethic line ──────────────────────────────────────────────────────────
 	$wp_customize->add_section( 'oj_ethic', array( 'title' => __( 'Ethic line', 'onlinejourno' ), 'panel' => $panel ) );
