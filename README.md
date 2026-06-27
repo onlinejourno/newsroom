@@ -1,4 +1,4 @@
-# Arena
+# Masthead
 
 Editorial intelligence **by a journalist, for journalists** — one vendor-neutral platform that finds the story for the reporter at the base of the newsroom, hands it to her with her newsroom's archive depth behind it, and gives every story she files a fair chance, before publish and after. A companion to the newsroom's existing CMS; never a replacement.
 
