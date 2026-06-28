@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from onlinejourno_agents import db
+
 
 @dataclass(slots=True)
 class CoverageRow:
@@ -54,3 +56,93 @@ def aggregate(signals: Iterable[dict[str, Any]]) -> Iterator[CoverageRow]:
             if when is not None and (row.last_seen is None or when > row.last_seen):
                 row.last_seen = when
     yield from acc.values()
+
+
+# ----------------------------------------------------------------------
+# DB reader
+# ----------------------------------------------------------------------
+
+
+def coverage_for(tenant_slug: str, entity_type: str, entity_name: str) -> CoverageRow:
+    """Read coverage for an entity NAME (types in the historical index are not
+    reliable — enrichment stores bare names — so we match by name and aggregate
+    across any stored types). `entity_type` is used only to label the returned
+    row. Zero-row if the name has no prior coverage."""
+    with db.connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """select coalesce(sum(appearance_count), 0) as appearance_count,
+                      max(last_seen) as last_seen
+                 from entity_coverage ec
+                 join tenants t on t.id = ec.tenant_id
+                where t.slug = %s and ec.entity_name = %s""",
+            (tenant_slug, entity_name),
+        )
+        row = cur.fetchone()
+    count = (row and row["appearance_count"]) or 0
+    if count == 0:
+        return CoverageRow(entity_type, entity_name)
+    return CoverageRow(entity_type, entity_name, count, row["last_seen"], [])
+
+
+# ----------------------------------------------------------------------
+# Refresh (rebuild from signals.enrichment)
+# ----------------------------------------------------------------------
+
+
+def _entities_from_enrichment(enrichment: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract entities from a signal's enrichment jsonb, normalised to {type, name} dicts.
+
+    Entities are stored at enrichment["analyse"]["entities"] by enrich.py.
+    In the current DB they are plain strings (e.g. ["Sensex", "FIFA"]); this
+    coerces them to the {type, name} shape that aggregate() expects, using the
+    default type "entity". Falls back through other sub-keys for any signal
+    enriched via an alternative path.
+    """
+    raw: list[Any] | None = None
+    analyse = enrichment.get("analyse") or {}
+    raw = analyse.get("entities")
+    if not raw:
+        for val in enrichment.values():
+            if isinstance(val, dict):
+                raw = val.get("entities")
+                if raw:
+                    break
+    if not raw:
+        return []
+    result: list[dict[str, Any]] = []
+    for ent in raw:
+        if isinstance(ent, dict):
+            result.append(ent)
+        elif isinstance(ent, str) and ent.strip():
+            result.append({"type": "entity", "name": ent.strip()})
+    return result
+
+
+def refresh_entity_coverage(*, tenant_slug: str) -> int:
+    """Rebuild entity_coverage for a tenant from signals.enrichment. Returns rows written."""
+    with db.connect() as conn, conn.cursor() as cur:
+        tenant_id = db.tenant_id_for_slug(conn, tenant_slug)
+        cur.execute(
+            "select s.id, s.published_at, s.enrichment from signals s "
+            "where s.tenant_id = %s and s.enrichment is not null",
+            (tenant_id,),
+        )
+        signals = [
+            {
+                "story_id": str(row["id"]),
+                "published_at": row["published_at"],
+                "entities": _entities_from_enrichment(row["enrichment"] or {}),
+            }
+            for row in cur.fetchall()
+        ]
+        rows = list(aggregate(signals))
+        cur.execute("delete from entity_coverage where tenant_id = %s", (tenant_id,))
+        for r in rows:
+            cur.execute(
+                "insert into entity_coverage "
+                "(tenant_id, entity_type, entity_name, appearance_count, last_seen, story_ids) "
+                "values (%s, %s, %s, %s, %s, %s)",
+                (tenant_id, r.entity_type, r.entity_name, r.appearance_count,
+                 r.last_seen, r.story_ids),
+            )
+    return len(rows)

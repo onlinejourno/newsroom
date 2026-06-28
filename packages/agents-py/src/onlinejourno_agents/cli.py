@@ -268,6 +268,15 @@ def cmd_calendar_fuse(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_entity_coverage(args: argparse.Namespace) -> int:
+    """Rebuild the entity_coverage index for a tenant."""
+    from onlinejourno_agents.entity_coverage import refresh_entity_coverage
+
+    n = refresh_entity_coverage(tenant_slug=args.tenant)
+    print(f"entity_coverage: {n} rows for {args.tenant}")
+    return 0
+
+
 def cmd_affinity_log(args: argparse.Namespace) -> int:
     """Channel-affinity log writer — populate channel_affinity_log (migration 0023).
 
@@ -812,6 +821,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_fuse.add_argument("--tenant", required=True)
     p_fuse.set_defaults(func=cmd_calendar_fuse)
+
+    p_ecov = sub.add_parser("entity-coverage", help="rebuild the entity_coverage index")
+    p_ecov.add_argument("--tenant", required=True)
+    p_ecov.set_defaults(func=cmd_entity_coverage)
 
     p_sf = sub.add_parser(
         "stories-from-signals",
