@@ -9,6 +9,8 @@
 // depth/eeat are the audit's own sub-signals (distribution_fit_scores.signals),
 // normalised to 0-100 from value/max — NOT raw word counts.
 
+import { computeReach } from "./reach";
+
 export type StorySignals = {
   depth: number | null; // 0-100 substance (audit "Depth" sub-signal)
   eeat: number | null; // 0-100 authority (audit "E-E-A-T" sub-signal)
@@ -37,10 +39,17 @@ export function assess(s: StorySignals): Assessment {
   const present = [depth, authority].filter((x): x is number => x != null);
   const merit = Math.round(avg(present));
 
-  // ── reach: surface-readiness (0.7) + placement (0.3) ──
+  // ── reach: surface-readiness (0.7) + placement (0.3), via the canonical reach
+  // engine (lib/reach.ts) so Frontmatter and Pulse share ONE reach measure. Both
+  // are own-desk "observed" signals → same number as before, now de-forked. ──
   const readiness = clamp(s.surfaceReadiness);
   const placement = s.onHomepage ? 100 : s.listedCount > 0 ? 50 : 15;
-  const reach = Math.round(readiness * 0.7 + placement * 0.3);
+  const reach = Math.round(
+    computeReach([
+      { surface: "readiness", value: readiness, basis: "observed", weight: 0.7 },
+      { surface: "placement", value: placement, basis: "observed", weight: 0.3 },
+    ]).reach,
+  );
 
   const gap = merit - reach;
 
