@@ -126,6 +126,15 @@ export async function tenantIdForSlug(slug: string): Promise<string | null> {
   return rows[0]?.id ?? null;
 }
 
+export async function tenantSlugForId(tenantId: string): Promise<string | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ slug: string }>(
+    "select slug from tenants where id = $1",
+    [tenantId],
+  );
+  return rows[0]?.slug ?? null;
+}
+
 // ── Data-source admin (sub-project B) ──────────────────────────────────────
 
 export type SourceRow = {

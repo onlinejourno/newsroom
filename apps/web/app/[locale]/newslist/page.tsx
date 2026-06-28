@@ -2,6 +2,8 @@ import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import { assertWritable, getAccount } from "@/lib/auth";
+import { tenantSlugForId } from "@/lib/db";
+import { scanPitch } from "@/lib/pitchScan";
 import { currentTenantId } from "@/lib/tenant";
 import {
   STATUS_META,
@@ -87,15 +89,52 @@ export default async function NewslistPage({
     const title = String(formData.get("title") ?? "").trim();
     if (!title) return;
     const desk = ["admin", "editor", "desk"].includes(me.role);
-    await createLead({
-      tenantId,
-      actor: me,
-      title,
-      origin: desk ? "requested" : "pitched",
-      beat: String(formData.get("beat") ?? "").trim() || null,
-      bureau: me.bureau ?? null,
-      importance: String(formData.get("importance") ?? "normal"),
-    });
+    // Conviction defaults to "normal" until Task 9 adds the <select> control.
+    // Validate at runtime — the `as` cast is compile-time only and the DB column
+    // has a CHECK constraint (low|normal|high) that an arbitrary POST would trip.
+    const rawConviction = String(formData.get("conviction") ?? "normal");
+    const conviction = (["low", "normal", "high"].includes(rawConviction)
+      ? rawConviction
+      : "normal") as "low" | "normal" | "high";
+
+    if (!desk) {
+      // Reporter pitch — scan and persist scores. Skip the scan (don't pass a
+      // raw UUID as the slug) when the tenant has no slug; that would silently
+      // produce all-zero archival scores.
+      const tenantSlug = await tenantSlugForId(tenantId);
+      const scan = tenantSlug ? await scanPitch(tenantSlug, title, conviction) : null;
+      // Only persist scores when the scan genuinely succeeded. A degraded /
+      // errored / unavailable scan leaves them NULL (unscored) — never 0, so
+      // "unscored" stays distinct from "scored zero".
+      const ok = !!scan && !scan.degraded && !scan.error && typeof scan.pitch_weight === "number";
+      await createLead({
+        tenantId,
+        actor: me,
+        title,
+        origin: "pitched",
+        beat: String(formData.get("beat") ?? "").trim() || null,
+        bureau: me.bureau ?? null,
+        importance: String(formData.get("importance") ?? "normal"),
+        entities: ok && Array.isArray(scan!.entities) ? scan!.entities : [],
+        reach: ok ? scan!.reach : null,
+        potential: ok ? scan!.potential : null,
+        archival_weight: ok ? scan!.archival_weight : null,
+        conviction,
+        pitch_weight: ok ? scan!.pitch_weight : null,
+        pitch_why: ok ? scan!.pitch_why : null,
+      });
+    } else {
+      // Desk commission — no scan; DB defaults handle conviction='normal', others null.
+      await createLead({
+        tenantId,
+        actor: me,
+        title,
+        origin: "requested",
+        beat: String(formData.get("beat") ?? "").trim() || null,
+        bureau: me.bureau ?? null,
+        importance: String(formData.get("importance") ?? "normal"),
+      });
+    }
     redirect(`/${locale}/newslist` as Route);
   }
 

@@ -79,7 +79,24 @@ export async function scanPitch(
       maxBuffer: 1024 * 1024,
     });
     const line = stdout.trim().split("\n").pop() ?? "{}";
-    return JSON.parse(line) as PitchScan;
+    const parsed = JSON.parse(line) as PitchScan;
+    // Empty/malformed stdout ("{}", early-exit, stderr-only error) parses to an
+    // object with no numeric pitch_weight — treat as degraded, not fake success.
+    if (typeof parsed.pitch_weight !== "number") {
+      return {
+        entities: [],
+        topic: null,
+        merit: null,
+        reach: 0,
+        potential: 0,
+        archival_weight: 0,
+        pitch_weight: 0,
+        pitch_why: "",
+        degraded: true,
+        error: "empty or malformed scan output",
+      };
+    }
+    return parsed;
   } catch (err) {
     return {
       entities: [],

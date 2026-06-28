@@ -152,6 +152,14 @@ export async function createLead(args: {
   keywords?: string[];
   topic?: string | null;
   note?: string | null;
+  // Pitch-scan fields (only set for reporter pitches; all nullable for commission path)
+  entities?: unknown | null;
+  reach?: number | null;
+  potential?: number | null;
+  archival_weight?: number | null;
+  conviction?: string | null;
+  pitch_weight?: number | null;
+  pitch_why?: string | null;
 }): Promise<string | null> {
   const isDesk = ["admin", "editor", "desk"].includes(args.actor.role);
   if (args.origin === "pitched" || args.origin === "self") {
@@ -170,8 +178,10 @@ export async function createLead(args: {
   const { rows } = await pool().query<{ id: string }>(
     `insert into story_leads
        (tenant_id, title, beat, bureau, origin, status, importance, signal_id,
-        assignee_id, commissioner_id, created_by, eta, trend_score, keywords, topic, note, ${tsCol})
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, now())
+        assignee_id, commissioner_id, created_by, eta, trend_score, keywords, topic, note,
+        entities, reach, potential, archival_weight, conviction, pitch_weight, pitch_why,
+        ${tsCol})
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23, now())
      returning id`,
     [
       args.tenantId,
@@ -190,6 +200,16 @@ export async function createLead(args: {
       args.keywords ?? [],
       args.topic ?? null,
       args.note ?? null,
+      // entities + conviction are NOT NULL (migration 0027) — fall back to the
+      // column defaults so callers that omit them (commission, takeUp, calendar)
+      // never bind null. Guard against a non-array entities payload.
+      JSON.stringify(Array.isArray(args.entities) ? args.entities : []),
+      args.reach ?? null,
+      args.potential ?? null,
+      args.archival_weight ?? null,
+      args.conviction ?? "normal",
+      args.pitch_weight ?? null,
+      args.pitch_why ?? null,
     ],
   );
   return rows[0]?.id ?? null;
