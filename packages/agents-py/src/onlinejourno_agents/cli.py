@@ -277,6 +277,26 @@ def cmd_entity_coverage(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pitch_scan(args: argparse.Namespace) -> int:
+    """Extract entities and score a pitch idea (spec 2026-06-28 §C3).
+
+    Emits exactly one JSON line to stdout — the web bridge reads the last line.
+    LLM call is best-effort: if no API key is configured the pitch still scores
+    from reach only (degraded=true in the output).
+    """
+    import json
+
+    from onlinejourno_agents.pitch_scan import scan_pitch
+
+    payload = scan_pitch(
+        tenant_slug=args.tenant,
+        text=args.text,
+        conviction=args.conviction,
+    )
+    print(json.dumps(payload))
+    return 0
+
+
 def cmd_affinity_log(args: argparse.Namespace) -> int:
     """Channel-affinity log writer — populate channel_affinity_log (migration 0023).
 
@@ -868,6 +888,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_aff.add_argument("--tenant", required=True)
     p_aff.set_defaults(func=cmd_affinity_log)
+
+    p_pscan = sub.add_parser("pitch-scan", help="extract entities + score a pitch")
+    p_pscan.add_argument("--tenant", required=True)
+    p_pscan.add_argument("--text", required=True)
+    p_pscan.add_argument(
+        "--conviction", default="normal", choices=["low", "normal", "high"]
+    )
+    p_pscan.add_argument(
+        "--json", action="store_true", help="parity flag; output is always JSON"
+    )
+    p_pscan.set_defaults(func=cmd_pitch_scan)
 
     args = parser.parse_args(argv)
     return args.func(args)
