@@ -37,6 +37,12 @@ export type ReachScore = {
   note?: string;
 };
 
+// Canonical merit↔reach gap — MUST match reach.py::compute_gap. gap = merit − reach;
+// positive = deserving work that isn't travelling. The one gap formula both products use.
+export function computeGap(merit: number, reach: number): number {
+  return Math.max(-100, Math.min(100, merit - reach));
+}
+
 // Deterministic, basis-aware composite — MUST match reach.py::compute_reach.
 export function computeReach(signals: SurfaceSignal[]): ReachScore {
   const norm = signals.map((s) => ({ ...s, weight: s.weight ?? 1 }));

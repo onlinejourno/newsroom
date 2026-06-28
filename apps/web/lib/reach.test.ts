@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { computeReach, type SurfaceSignal } from "./reach.ts";
+import { computeReach, type SurfaceSignal } from "./reach";
 
 // The SAME golden the Python suite uses. If TS drifts from Py, this fails.
 const goldenPath = fileURLToPath(

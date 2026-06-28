@@ -9,7 +9,7 @@
 // depth/eeat are the audit's own sub-signals (distribution_fit_scores.signals),
 // normalised to 0-100 from value/max — NOT raw word counts.
 
-import { computeReach } from "./reach";
+import { computeReach, computeGap } from "./reach";
 
 export type StorySignals = {
   depth: number | null; // 0-100 substance (audit "Depth" sub-signal)
@@ -51,7 +51,7 @@ export function assess(s: StorySignals): Assessment {
     ]).reach,
   );
 
-  const gap = merit - reach;
+  const gap = computeGap(merit, reach); // canonical gap (lib/reach.ts) — shared with Pulse
 
   // ── diagnose: why deserving work isn't travelling + the fix (ground-up) ──
   const whies: string[] = [];

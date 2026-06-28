@@ -117,6 +117,16 @@ def compute_reach(subject: ReachSubject, signals: list[SurfaceSignal]) -> ReachS
                       basis_summary=basis_summary, surfaces=signals)
 
 
+def compute_gap(merit: float, reach: float) -> float:
+    """Canonical merit↔reach gap. ``gap = merit − reach``; positive = deserving work
+    that isn't travelling ("merit should travel", MISSION.md). This is THE gap formula:
+    Frontmatter (own stories) and Pulse (gems) both use it. Pulse previously used a
+    multiplicative ``quality × (1 − prominence/100)`` — unified to subtractive here so
+    rankings can't fork. Product-specific GATES (e.g. Pulse's quality floor) stay in
+    the product; the gap math does not."""
+    return max(-100.0, min(100.0, float(merit) - float(reach)))
+
+
 def _clamp100(x: float) -> float:
     return max(0.0, min(100.0, float(x)))
 
