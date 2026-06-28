@@ -14,11 +14,11 @@ get_header();
 <main class="container" id="content">
 
 	<section class="page-head">
-		<p class="kicker"><?php echo esc_html( get_theme_mod( 'oj_hero_kicker', 'Journalistic Agentic Task Orchestration' ) ); ?></p>
-		<h1><?php echo esc_html( get_theme_mod( 'oj_hero_title', 'Bring a journalism task. Get an answer you can act on.' ) ); ?></h1>
-		<p class="dek"><?php echo esc_html( get_theme_mod( 'oj_hero_dek', 'OnlineJourno takes a reporter\'s task in plain language, decomposes it, composes a library of AI agents and tools to do the research, and returns a structured, source-linked result — so the intelligence that today pools at the top of the newsroom finally reaches the reporter at the base. By a journalist, for journalists.' ) ); ?></p>
+		<p class="kicker"><?php echo esc_html( get_theme_mod( 'oj_hero_kicker', 'OnlineJourno Intelligent Newsroom Project · powered by JATO' ) ); ?></p>
+		<h1><?php echo esc_html( get_theme_mod( 'oj_hero_title', 'Let\'s build the intelligent newsroom together.' ) ); ?></h1>
+		<p class="dek"><?php echo esc_html( get_theme_mod( 'oj_hero_dek', 'The OnlineJourno Intelligent Newsroom Project is an open, fair-source effort to bring every reporter the intelligence that today pools at the top of the newsroom. Powered by JATO — Journalistic Agentic Task Orchestration — it takes a journalist\'s task in plain language, composes a library of AI agents and tools to do the research, and hands back a structured, source-linked result. By a journalist, for journalists — come build it with us.' ) ); ?></p>
 		<p style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap;">
-			<a class="btn" href="<?php echo esc_url( get_theme_mod( 'oj_hero_btn1_url', home_url( '/audit/' ) ) ); ?>"><?php echo esc_html( get_theme_mod( 'oj_hero_btn1_label', "Let's work together" ) ); ?></a>
+			<a class="btn" href="<?php echo esc_url( get_theme_mod( 'oj_hero_btn1_url', home_url( '/contact/' ) ) ); ?>"><?php echo esc_html( get_theme_mod( 'oj_hero_btn1_label', "Let's work together" ) ); ?></a>
 			<a class="btn ghost" href="<?php echo esc_url( get_theme_mod( 'oj_hero_btn2_url', 'https://tools.onlinejourno.com/' ) ); ?>"><?php echo esc_html( get_theme_mod( 'oj_hero_btn2_label', 'Explore the free tools' ) ); ?></a>
 		</p>
 	</section>
