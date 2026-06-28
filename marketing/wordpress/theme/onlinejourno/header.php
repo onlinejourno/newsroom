@@ -33,13 +33,19 @@
 					'depth'          => 1,
 				) );
 			} else {
-				// Fallback menu — the cross-property ecosystem nav.
+				// Fallback menu — the JATO ecosystem nav (current names + live pages).
+				// For a grouped nav with a "Products" dropdown, build a menu at the
+				// 'primary' location (Appearance > Menus) — it overrides this fallback.
 				echo '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>';
-				echo '<a href="https://app.onlinejourno.com/">Platform</a>';
-				echo '<a href="https://tools.onlinejourno.com/">Tools</a>';
-				echo '<a href="https://editorial-optimiser.onlinejourno.com/">Editorial Optimiser</a>';
-				echo '<a href="' . esc_url( home_url( '/docs/' ) ) . '">Docs</a>';
+				echo '<a href="' . esc_url( home_url( '/newsroom/' ) ) . '">Newsroom</a>';
+				echo '<a href="' . esc_url( home_url( '/galley/' ) ) . '">Galley</a>';
+				echo '<a href="' . esc_url( home_url( '/daybook/' ) ) . '">Daybook</a>';
+				echo '<a href="' . esc_url( home_url( '/lens/' ) ) . '">Lens</a>';
+				echo '<a href="' . esc_url( home_url( '/audit/' ) ) . '">The Audit</a>';
+				echo '<a href="' . esc_url( home_url( '/tools/' ) ) . '">Free tools</a>';
+				echo '<a href="' . esc_url( home_url( '/toolkit/' ) ) . '">Toolkit</a>';
 				echo '<a href="' . esc_url( home_url( '/about/' ) ) . '">About</a>';
+				echo '<a href="https://github.com/onlinejourno" target="_blank" rel="noopener">GitHub</a>';
 			}
 			?>
 		</nav>
