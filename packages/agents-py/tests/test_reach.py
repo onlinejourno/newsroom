@@ -10,8 +10,20 @@ from onlinejourno_agents.reach import (
     ReachSubject,
     SurfaceSignal,
     compute_reach,
+    compute_merit,
     ConnectorReachAgent,
 )
+
+# Canonical merit cases — MUST equal reach.test.ts::computeMerit cases (keep in sync).
+MERIT_CASES = [
+    ((80, 80), 80), ((78, 30), 54), ((60, None), 60),
+    ((None, 40), 40), ((None, None), 0), ((120, -5), 50),
+]
+
+
+def test_compute_merit_matches_contract():
+    for (depth, authority), expected in MERIT_CASES:
+        assert compute_merit(depth, authority) == expected, (depth, authority)
 
 GOLDEN = pathlib.Path(__file__).parent / "golden" / "reach.golden.json"
 

@@ -43,6 +43,16 @@ export function computeGap(merit: number, reach: number): number {
   return Math.max(-100, Math.min(100, merit - reach));
 }
 
+// Canonical editorial MERIT — substance + authority, NOT surface-fit. The mean of
+// the present substance signals (depth, authority), each 0..100. MUST match
+// reach.py::compute_merit. The one merit measure Frontmatter and the standalone
+// repository audit share, so merit never forks.
+export function computeMerit(depth: number | null, authority: number | null): number {
+  const clamp = (n: number) => Math.max(0, Math.min(100, n));
+  const present = [depth, authority].filter((x): x is number => x != null).map(clamp);
+  return present.length ? Math.round(present.reduce((a, b) => a + b, 0) / present.length) : 0;
+}
+
 // Deterministic, basis-aware composite — MUST match reach.py::compute_reach.
 export function computeReach(signals: SurfaceSignal[]): ReachScore {
   const norm = signals.map((s) => ({ ...s, weight: s.weight ?? 1 }));
