@@ -506,6 +506,8 @@ export type CalendarEventRow = {
   signal_id: string | null;
   lead_id: string | null;
   outcome: string | null;
+  pitch_weight: number | null;
+  pitch_why: string | null;
 };
 
 export async function fetchCalendarEvents(
@@ -514,12 +516,14 @@ export async function fetchCalendarEvents(
 ): Promise<CalendarEventRow[]> {
   const pool = getPool();
   const { rows } = await pool.query<CalendarEventRow>(
-    `select id, who, what, deadline_text, date_claimed, target_date, precision,
-            source_link, original_claim_text, confidence, topic, signal_id,
-            lead_id, outcome
-       from calendar_event
-      where tenant_id = $1
-      order by (target_date is null), target_date asc
+    `select ce.id, ce.who, ce.what, ce.deadline_text, ce.date_claimed, ce.target_date,
+            ce.precision, ce.source_link, ce.original_claim_text, ce.confidence,
+            ce.topic, ce.signal_id, ce.lead_id, ce.outcome,
+            sl.pitch_weight, sl.pitch_why
+       from calendar_event ce
+       left join story_leads sl on sl.id = ce.lead_id and sl.tenant_id = ce.tenant_id
+      where ce.tenant_id = $1
+      order by (ce.target_date is null), ce.target_date asc
       limit $2`,
     [tenantId, limit],
   );

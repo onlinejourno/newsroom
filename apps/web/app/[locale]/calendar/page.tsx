@@ -128,6 +128,8 @@ export default async function CalendarPage({
     location: null,
     outcome: r.outcome as CalEvent["outcome"],
     leadId: r.lead_id,
+    pitchWeight: r.pitch_weight ?? null,
+    pitchWhy: r.pitch_why ?? null,
   }));
 
   // Beats present in the data, each with a colour — drives the beat dropdown.

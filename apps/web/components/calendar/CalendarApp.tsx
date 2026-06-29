@@ -12,6 +12,7 @@
 
 import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
+import { WeightBadge } from "@/components/WeightBadge";
 
 export type CalEvent = {
   id: string;
@@ -28,6 +29,8 @@ export type CalEvent = {
   location: string | null;
   outcome: "delivered" | "broken" | "dropped" | null;
   leadId: string | null;
+  pitchWeight: number | null;
+  pitchWhy: string | null;
 };
 
 export type Beat = { id: string; label: string; color: string };
@@ -631,9 +634,17 @@ function EventDrawer({ event, beats, todayISO, locale, canCommission, commission
           )}
 
           {event.leadId ? (
-            <a href={`/${locale}/newslist`} style={{ display: "block", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.green, color: "#fff", textDecoration: "none", padding: "11px 0", letterSpacing: ".04em" }}>
-              On the Newslist →
-            </a>
+            <>
+              {event.pitchWeight != null && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontFamily: UI, fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.ink3 }}>Pitch weight</span>
+                  <WeightBadge value={event.pitchWeight} title={event.pitchWhy ?? undefined} />
+                </div>
+              )}
+              <a href={`/${locale}/newslist`} style={{ display: "block", textAlign: "center", fontFamily: UI, fontSize: 12, fontWeight: 700, background: C.green, color: "#fff", textDecoration: "none", padding: "11px 0", letterSpacing: ".04em" }}>
+                On the Newslist →
+              </a>
+            </>
           ) : canCommission && dated ? (
             <form action={commission}>
               <input type="hidden" name="eventId" value={event.id} />
