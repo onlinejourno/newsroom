@@ -127,6 +127,16 @@ def compute_gap(merit: float, reach: float) -> float:
     return max(-100.0, min(100.0, float(merit) - float(reach)))
 
 
+def compute_merit(depth: float | None, authority: float | None) -> float:
+    """Canonical editorial MERIT — substance + authority, NOT surface-fit. The mean
+    of the present substance signals (depth, authority), each 0..100. MUST match
+    reach.ts::computeMerit. The one merit measure Frontmatter (own stories) and the
+    standalone repository audit share, so merit never forks. Inputs are derived per
+    context (DB scores vs a URL audit); the formula is one."""
+    present = [_clamp100(x) for x in (depth, authority) if x is not None]
+    return round(sum(present) / len(present)) if present else 0.0
+
+
 def _clamp100(x: float) -> float:
     return max(0.0, min(100.0, float(x)))
 

@@ -277,6 +277,15 @@ def cmd_entity_coverage(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pitch_score(args: argparse.Namespace) -> int:
+    """Cron-fill: score pitched leads that have no pitch_weight yet (prod path)."""
+    from onlinejourno_agents.pitch_scan import run_pitch_scoring
+
+    n = run_pitch_scoring(tenant_slug=args.tenant)
+    print(f"pitch-score: scored {n} pitched lead(s) for {args.tenant}")
+    return 0
+
+
 def cmd_pitch_scan(args: argparse.Namespace) -> int:
     """Extract entities and score a pitch idea (spec 2026-06-28 §C3).
 
@@ -845,6 +854,12 @@ def main(argv: list[str] | None = None) -> int:
     p_ecov = sub.add_parser("entity-coverage", help="rebuild the entity_coverage index")
     p_ecov.add_argument("--tenant", required=True)
     p_ecov.set_defaults(func=cmd_entity_coverage)
+
+    p_pscore = sub.add_parser(
+        "pitch-score", help="cron-fill: score pitched leads missing a pitch_weight"
+    )
+    p_pscore.add_argument("--tenant", required=True)
+    p_pscore.set_defaults(func=cmd_pitch_score)
 
     p_sf = sub.add_parser(
         "stories-from-signals",

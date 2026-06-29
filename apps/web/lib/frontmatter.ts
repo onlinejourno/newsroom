@@ -9,7 +9,7 @@
 // depth/eeat are the audit's own sub-signals (distribution_fit_scores.signals),
 // normalised to 0-100 from value/max — NOT raw word counts.
 
-import { computeReach, computeGap } from "./reach";
+import { computeReach, computeGap, computeMerit } from "./reach";
 
 export type StorySignals = {
   depth: number | null; // 0-100 substance (audit "Depth" sub-signal)
@@ -30,14 +30,14 @@ export type Assessment = {
 };
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
-const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
 export function assess(s: StorySignals): Assessment {
-  // ── merit: substance + authority (not surface-fit) ──
+  // ── merit: substance + authority (not surface-fit) — canonical computeMerit
+  // (lib/reach.ts) so Frontmatter and the standalone repository audit share ONE
+  // merit measure; same number as before, now de-forked. ──
   const depth = s.depth == null ? null : clamp(s.depth);
   const authority = s.eeat == null ? null : clamp(s.eeat);
-  const present = [depth, authority].filter((x): x is number => x != null);
-  const merit = Math.round(avg(present));
+  const merit = computeMerit(depth, authority);
 
   // ── reach: surface-readiness (0.7) + placement (0.3), via the canonical reach
   // engine (lib/reach.ts) so Frontmatter and Pulse share ONE reach measure. Both

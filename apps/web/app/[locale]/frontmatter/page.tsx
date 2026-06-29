@@ -1,5 +1,6 @@
 import { storiesWithScores, tenantIdForSlug } from "@/lib/db";
 import { assess, signalsFromStory } from "@/lib/frontmatter";
+import { letterGrade } from "@/lib/grades";
 import { getAccount } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 
@@ -20,6 +21,32 @@ function Bar({ value, color }: { value: number; color: string }) {
         className="block h-2 rounded-full"
         style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: color }}
       />
+    </span>
+  );
+}
+
+// Canonical A–F grade chip — the story's surface-readiness grade (same bands as
+// Galley and The Audit). A high grade with a wide gap = strong, ready work the
+// algorithms still aren't surfacing.
+const GRADE_COLOR: Record<string, string> = {
+  A: "var(--color-ioj-green-600)",
+  B: "var(--color-ioj-green-600)",
+  C: "#c98a00",
+  D: "var(--color-urgent)",
+  F: "var(--color-urgent)",
+};
+function GradeChip({ score }: { score: number }) {
+  const g = letterGrade(score);
+  return (
+    <span
+      title={`Surface-readiness ${Math.round(score)}/100 — grade ${g} (same A–F bands as Galley)`}
+      className="inline-flex items-center justify-center font-bold"
+      style={{
+        width: 26, height: 26, borderRadius: 6, color: "#fff",
+        fontFamily: "var(--font-display)", fontSize: 14, background: GRADE_COLOR[g] ?? "var(--color-ink-400)",
+      }}
+    >
+      {g}
     </span>
   );
 }
@@ -113,10 +140,13 @@ export default async function FrontmatterPage({
         <ol className="space-y-4 list-none">
           {shown.map(({ st, a }) => (
             <li key={st.id} className="ds-frame p-4">
-              <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                <p className="ds-meta">
-                  {[st.section, st.beat].filter(Boolean).join(" · ") || "—"}
-                </p>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <GradeChip score={a.reachParts.readiness} />
+                  <p className="ds-meta">
+                    {[st.section, st.beat].filter(Boolean).join(" · ") || "—"}
+                  </p>
+                </div>
                 <span className="ds-meta" style={{ color: "var(--color-urgent)" }}>
                   gap +{a.gap}
                 </span>
