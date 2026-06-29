@@ -1,7 +1,10 @@
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
+import { WeightBadge } from "@/components/WeightBadge";
 import { assertWritable, getAccount } from "@/lib/auth";
+import { tenantSlugForId } from "@/lib/db";
+import { scanPitch } from "@/lib/pitchScan";
 import { currentTenantId } from "@/lib/tenant";
 import {
   STATUS_META,
@@ -87,15 +90,52 @@ export default async function NewslistPage({
     const title = String(formData.get("title") ?? "").trim();
     if (!title) return;
     const desk = ["admin", "editor", "desk"].includes(me.role);
-    await createLead({
-      tenantId,
-      actor: me,
-      title,
-      origin: desk ? "requested" : "pitched",
-      beat: String(formData.get("beat") ?? "").trim() || null,
-      bureau: me.bureau ?? null,
-      importance: String(formData.get("importance") ?? "normal"),
-    });
+    // Conviction defaults to "normal" until Task 9 adds the <select> control.
+    // Validate at runtime — the `as` cast is compile-time only and the DB column
+    // has a CHECK constraint (low|normal|high) that an arbitrary POST would trip.
+    const rawConviction = String(formData.get("conviction") ?? "normal");
+    const conviction = (["low", "normal", "high"].includes(rawConviction)
+      ? rawConviction
+      : "normal") as "low" | "normal" | "high";
+
+    if (!desk) {
+      // Reporter pitch — scan and persist scores. Skip the scan (don't pass a
+      // raw UUID as the slug) when the tenant has no slug; that would silently
+      // produce all-zero archival scores.
+      const tenantSlug = await tenantSlugForId(tenantId);
+      const scan = tenantSlug ? await scanPitch(tenantSlug, title, conviction) : null;
+      // Only persist scores when the scan genuinely succeeded. A degraded /
+      // errored / unavailable scan leaves them NULL (unscored) — never 0, so
+      // "unscored" stays distinct from "scored zero".
+      const ok = !!scan && !scan.degraded && !scan.error && typeof scan.pitch_weight === "number";
+      await createLead({
+        tenantId,
+        actor: me,
+        title,
+        origin: "pitched",
+        beat: String(formData.get("beat") ?? "").trim() || null,
+        bureau: me.bureau ?? null,
+        importance: String(formData.get("importance") ?? "normal"),
+        entities: ok && Array.isArray(scan!.entities) ? scan!.entities : [],
+        reach: ok ? scan!.reach : null,
+        potential: ok ? scan!.potential : null,
+        archival_weight: ok ? scan!.archival_weight : null,
+        conviction,
+        pitch_weight: ok ? scan!.pitch_weight : null,
+        pitch_why: ok ? scan!.pitch_why : null,
+      });
+    } else {
+      // Desk commission — no scan; DB defaults handle conviction='normal', others null.
+      await createLead({
+        tenantId,
+        actor: me,
+        title,
+        origin: "requested",
+        beat: String(formData.get("beat") ?? "").trim() || null,
+        bureau: me.bureau ?? null,
+        importance: String(formData.get("importance") ?? "normal"),
+      });
+    }
     redirect(`/${locale}/newslist` as Route);
   }
 
@@ -141,7 +181,14 @@ export default async function NewslistPage({
     redirect(`/${locale}/newslist` as Route);
   }
 
-  const byStatus = (s: string) => leads.filter((l) => l.status === s);
+  const byStatus = (s: string) => {
+    const filtered = leads.filter((l) => l.status === s);
+    if (s === "pitched") {
+      // Weight-rank: highest pitch_weight first; unscored (null) last.
+      return [...filtered].sort((a, b) => (b.pitch_weight ?? -1) - (a.pitch_weight ?? -1));
+    }
+    return filtered;
+  };
 
   const card = (l: Lead) => {
     const moves = nextMoves(l.status, isDesk, l.assignee_id === me!.id);
@@ -193,6 +240,24 @@ export default async function NewslistPage({
             "unassigned"
           )}
         </p>
+        {l.status === "pitched" && (l.pitch_weight != null || l.pitch_why) ? (
+          <p className="text-xs mt-1 flex items-center gap-2" style={{ fontFamily: "var(--font-ui)" }}>
+            <WeightBadge value={l.pitch_weight} title={l.pitch_why ?? undefined} />
+            {l.pitch_why ? (
+              <span
+                style={{
+                  color: "var(--color-fg-tertiary)",
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                }}
+              >
+                {l.pitch_why}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
         <p className="text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-tertiary)" }}>
           ETA {eta(l.eta)}
           {l.on_time === true ? " · ✅ on time" : l.on_time === false ? " · ⚠ late" : ""}
@@ -364,6 +429,18 @@ export default async function NewslistPage({
             <option value="urgent">urgent</option>
             <option value="low">low</option>
           </select>
+          {!isDesk && (
+            <select
+              name="conviction"
+              className="border rounded-sm px-2 py-2 text-sm"
+              style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}
+              title="How strongly do you believe in this story?"
+            >
+              <option value="normal">normal conviction</option>
+              <option value="high">high conviction</option>
+              <option value="low">low conviction</option>
+            </select>
+          )}
           <button
             type="submit"
             className="px-3 py-2 rounded-sm text-sm font-semibold"

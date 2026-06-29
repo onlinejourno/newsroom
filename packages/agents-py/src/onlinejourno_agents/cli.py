@@ -268,6 +268,35 @@ def cmd_calendar_fuse(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_entity_coverage(args: argparse.Namespace) -> int:
+    """Rebuild the entity_coverage index for a tenant."""
+    from onlinejourno_agents.entity_coverage import refresh_entity_coverage
+
+    n = refresh_entity_coverage(tenant_slug=args.tenant)
+    print(f"entity_coverage: {n} rows for {args.tenant}")
+    return 0
+
+
+def cmd_pitch_scan(args: argparse.Namespace) -> int:
+    """Extract entities and score a pitch idea (spec 2026-06-28 §C3).
+
+    Emits exactly one JSON line to stdout — the web bridge reads the last line.
+    LLM call is best-effort: if no API key is configured the pitch still scores
+    from reach only (degraded=true in the output).
+    """
+    import json
+
+    from onlinejourno_agents.pitch_scan import scan_pitch
+
+    payload = scan_pitch(
+        tenant_slug=args.tenant,
+        text=args.text,
+        conviction=args.conviction,
+    )
+    print(json.dumps(payload))
+    return 0
+
+
 def cmd_affinity_log(args: argparse.Namespace) -> int:
     """Channel-affinity log writer — populate channel_affinity_log (migration 0023).
 
@@ -813,6 +842,10 @@ def main(argv: list[str] | None = None) -> int:
     p_fuse.add_argument("--tenant", required=True)
     p_fuse.set_defaults(func=cmd_calendar_fuse)
 
+    p_ecov = sub.add_parser("entity-coverage", help="rebuild the entity_coverage index")
+    p_ecov.add_argument("--tenant", required=True)
+    p_ecov.set_defaults(func=cmd_entity_coverage)
+
     p_sf = sub.add_parser(
         "stories-from-signals",
         help="promote a publication's signals into the own-stories demo corpus",
@@ -855,6 +888,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_aff.add_argument("--tenant", required=True)
     p_aff.set_defaults(func=cmd_affinity_log)
+
+    p_pscan = sub.add_parser("pitch-scan", help="extract entities + score a pitch")
+    p_pscan.add_argument("--tenant", required=True)
+    p_pscan.add_argument("--text", required=True)
+    p_pscan.add_argument(
+        "--conviction", default="normal", choices=["low", "normal", "high"]
+    )
+    p_pscan.add_argument(
+        "--json", action="store_true", help="parity flag; output is always JSON"
+    )
+    p_pscan.set_defaults(func=cmd_pitch_scan)
 
     args = parser.parse_args(argv)
     return args.func(args)

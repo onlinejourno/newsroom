@@ -126,6 +126,15 @@ export async function tenantIdForSlug(slug: string): Promise<string | null> {
   return rows[0]?.id ?? null;
 }
 
+export async function tenantSlugForId(tenantId: string): Promise<string | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<{ slug: string }>(
+    "select slug from tenants where id = $1",
+    [tenantId],
+  );
+  return rows[0]?.slug ?? null;
+}
+
 // ── Data-source admin (sub-project B) ──────────────────────────────────────
 
 export type SourceRow = {
@@ -497,6 +506,8 @@ export type CalendarEventRow = {
   signal_id: string | null;
   lead_id: string | null;
   outcome: string | null;
+  pitch_weight: number | null;
+  pitch_why: string | null;
 };
 
 export async function fetchCalendarEvents(
@@ -505,12 +516,14 @@ export async function fetchCalendarEvents(
 ): Promise<CalendarEventRow[]> {
   const pool = getPool();
   const { rows } = await pool.query<CalendarEventRow>(
-    `select id, who, what, deadline_text, date_claimed, target_date, precision,
-            source_link, original_claim_text, confidence, topic, signal_id,
-            lead_id, outcome
-       from calendar_event
-      where tenant_id = $1
-      order by (target_date is null), target_date asc
+    `select ce.id, ce.who, ce.what, ce.deadline_text, ce.date_claimed, ce.target_date,
+            ce.precision, ce.source_link, ce.original_claim_text, ce.confidence,
+            ce.topic, ce.signal_id, ce.lead_id, ce.outcome,
+            sl.pitch_weight, sl.pitch_why
+       from calendar_event ce
+       left join story_leads sl on sl.id = ce.lead_id and sl.tenant_id = ce.tenant_id
+      where ce.tenant_id = $1
+      order by (ce.target_date is null), ce.target_date asc
       limit $2`,
     [tenantId, limit],
   );
@@ -1832,6 +1845,75 @@ export async function navStageCounts(
     [tenantId, b],
   );
   return rows[0] ?? { calendar: 0, brief: 0, signals: 0, newslist: 0, potential: 0 };
+}
+
+// ── Scored Pitch reads (Task 11) ─────────────────────────────────────────────
+
+export type EntityCoverageRow = {
+  entity_name: string;
+  appearance_count: number;
+  last_seen: Date | null;
+};
+
+/**
+ * Aggregated coverage for an entity NAME within the tenant, summed across all
+ * stored entity_types (the coverage table uses a placeholder type so matching
+ * by name is the only reliable join). Returns null when no coverage exists.
+ */
+export async function entityCoverage(
+  tenantId: string,
+  entityName: string,
+): Promise<EntityCoverageRow | null> {
+  const pool = getPool();
+  const { rows } = await pool.query<EntityCoverageRow>(
+    `
+    select ec.entity_name,
+           coalesce(sum(ec.appearance_count), 0)::int as appearance_count,
+           max(ec.last_seen) as last_seen
+      from entity_coverage ec
+     where ec.tenant_id = $1 and ec.entity_name = $2
+     group by ec.entity_name
+    `,
+    [tenantId, entityName],
+  );
+  return rows[0] ?? null;
+}
+
+export type PitchedLeadRow = {
+  id: string;
+  title: string;
+  pitch_weight: number | null;
+  pitcher: string | null;
+};
+
+/**
+ * Open pitched leads whose entities jsonb contains ANY entity with one of the
+ * given NAMES (matched by name only — LLM-typed pitch entities and the coverage
+ * store use different type vocabularies). Returns [] immediately when entityNames
+ * is empty. Ordered by pitch_weight desc nulls last.
+ */
+export async function pitchesForEntities(
+  tenantId: string,
+  entityNames: string[],
+): Promise<PitchedLeadRow[]> {
+  if (entityNames.length === 0) return [];
+  const pool = getPool();
+  const { rows } = await pool.query<PitchedLeadRow>(
+    `
+    select l.id, l.title, l.pitch_weight, u.display_name as pitcher
+      from story_leads l
+      left join users u on u.id = l.assignee_id
+     where l.tenant_id = $1
+       and l.status = 'pitched'
+       and exists (
+         select 1 from jsonb_array_elements(l.entities) e
+          where e->>'name' = any($2::text[])
+       )
+     order by l.pitch_weight desc nulls last
+    `,
+    [tenantId, entityNames],
+  );
+  return rows;
 }
 
 /** The install's newsroom — the oldest non-archived tenant. Fallback when there's

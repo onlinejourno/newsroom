@@ -415,6 +415,29 @@ def build_framing_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
     return ScorePromptParts(system=system, user="\n".join(lines))
 
 
+def build_pitch_entity_prompt(text: str) -> ScorePromptParts:
+    """Build the system+user prompt for extracting entities and topic from a pitch.
+    Pure; mirrors build_claim_prompt style.
+
+    Instructs the model to return JSON with entities (typed) and a short topic
+    label. The five recognised entity types mirror ENTITY_TYPES in pitch_scan.py:
+    Location | Person | Organisation | Topic | Named Entity.
+    """
+    system = (
+        "You extract named entities and the primary topic from a journalist's pitch "
+        "(a brief idea description, not a published story). Respond with ONLY a JSON "
+        "object, no prose, no markdown fences, exactly:\n"
+        '{"entities": [{"type": <one of "Location"|"Person"|"Organisation"|"Topic"'
+        '|"Named Entity">, "name": <entity name>}], '
+        '"topic": <short topic phrase, or null>}\n'
+        "Extract named people, organisations, locations, named schemes/programmes, "
+        "and topics explicitly mentioned. Omit vague or generic terms. "
+        "Keep each name exactly as written in the pitch."
+    )
+    user = f"PITCH: {_truncate(text, 1200) or '(empty)'}\n"
+    return ScorePromptParts(system=system, user=user)
+
+
 def build_claim_prompt(signals: list[dict[str, Any]]) -> ScorePromptParts:
     """Batch Claim Extractor prompt (m-calendar, ADR 0057): per signal pull out
     concrete time-bound public promises. Pure; one entry per 1-based index, each
