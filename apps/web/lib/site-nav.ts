@@ -9,7 +9,7 @@
 
 export const SITE = {
   portal: "https://onlinejourno.com",
-  app: "https://app.onlinejourno.com", // Masthead
+  app: "https://app.onlinejourno.com", // OnlineJourno Newsroom (flagship)
   tools: "https://tools.onlinejourno.com",
   galley: "https://galley.onlinejourno.com",
   daybook: "https://daybook.onlinejourno.com",
@@ -26,7 +26,7 @@ export type NavLink = { label: string; href: string };
 // a URL. News Ranking was removed (not pursued).
 export const PRODUCTS: NavLink[] = [
   { label: "Home", href: SITE.portal },
-  { label: "Masthead", href: SITE.app },
+  { label: "Newsroom", href: SITE.app },
   { label: "Galley", href: SITE.galley },
   { label: "Tools", href: SITE.tools },
   { label: "Daybook", href: SITE.daybook },
@@ -34,7 +34,7 @@ export const PRODUCTS: NavLink[] = [
 ];
 
 // The uniform cross-property project bar — identical items + order on every
-// .com property (portal, Masthead, Galley, Tools, Daybook, Pulse). Each emphasises
+// .com property (portal, Newsroom, Galley, Tools, Daybook, Pulse). Each emphasises
 // its own. Self-hosted installs can trim this; the demo shows the full suite.
 export const PROJECT_NAV: NavLink[] = [
   ...PRODUCTS,
