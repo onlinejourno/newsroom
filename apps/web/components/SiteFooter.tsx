@@ -39,8 +39,8 @@ export default function SiteFooter() {
                 maxWidth: "34ch",
               }}
             >
-              Editorial intelligence for newsrooms. Open source — see it here, get the code on
-              GitHub, run it on your own servers.
+              Editorial intelligence for newsrooms. The free tools are open source; the
+              products are source-available — request access to the code.
             </p>
           </div>
           <Col title="Product" links={PRODUCTS} />
