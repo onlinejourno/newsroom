@@ -42,10 +42,11 @@ export const PROJECT_NAV: NavLink[] = [
   { label: "About", href: `${SITE.portal}/about` },
 ];
 
-// The open-source funnel.
+// Access funnel — the free tools are open source (MIT); the products are
+// source-available (FSL), code on request.
 export const PROJECT: NavLink[] = [
   { label: "Source on GitHub", href: SITE.github },
-  { label: "Self-host", href: `${SITE.portal}/about` },
+  { label: "Request access", href: `${SITE.portal}/contact` },
 ];
 
 // Standard pages (on the portal) — in every footer for SEO.
