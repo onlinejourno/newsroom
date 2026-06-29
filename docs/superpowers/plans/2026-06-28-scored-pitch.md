@@ -1,3 +1,5 @@
+
+> **STATUS: ✅ SHIPPED 2026-06-29 — merged + pushed to origin/main (98befff); prod cron-fill added. Unchecked boxes below are historical.**
 # Scored Pitch Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
