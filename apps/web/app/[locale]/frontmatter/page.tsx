@@ -1,6 +1,7 @@
 import { storiesWithScores, tenantIdForSlug } from "@/lib/db";
 import { assess, signalsFromStory } from "@/lib/frontmatter";
 import { letterGrade } from "@/lib/grades";
+import { safeUrl } from "@/lib/url";
 import { getAccount } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 
@@ -152,7 +153,7 @@ export default async function FrontmatterPage({
                 </span>
               </div>
               <a
-                href={st.url ?? "#"}
+                href={safeUrl(st.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-xl font-bold leading-snug mt-1"
@@ -198,7 +199,7 @@ export default async function FrontmatterPage({
 
               <p className="mt-3 text-xs flex flex-wrap gap-4" style={{ fontFamily: "var(--font-ui)" }}>
                 {st.url ? (
-                  <a className="underline" href={st.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-fg-tertiary)" }}>
+                  <a className="underline" href={safeUrl(st.url)} target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-fg-tertiary)" }}>
                     read ↗
                   </a>
                 ) : null}
