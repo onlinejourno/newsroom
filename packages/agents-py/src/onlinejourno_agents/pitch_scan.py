@@ -146,3 +146,57 @@ def _score(
         "pitch_why": pw.why,
         "degraded": degraded,
     }
+
+
+def run_pitch_scoring(*, tenant_slug: str, limit: int = 200) -> int:
+    """Cron-fill the prod path: score pitched leads that have no pitch_weight yet.
+
+    The Node-only web prod image can't shell the scan, so a prod pitch lands with
+    NULL scores (see apps/web addLead). This step — run by the Python cron, which
+    has the LLM key — fills them with a full scan. Idempotent: only touches leads
+    where pitch_weight is null. Returns the number scored.
+    """
+    import json
+
+    from onlinejourno_agents import db
+
+    with db.connect() as conn, conn.cursor() as cur:
+        tenant_id = db.tenant_id_for_slug(conn, tenant_slug)
+        cur.execute(
+            """select id, title, note, conviction
+                 from story_leads
+                where tenant_id = %s and origin = 'pitched' and pitch_weight is null
+                order by created_at
+                limit %s""",
+            (tenant_id, limit),
+        )
+        rows = cur.fetchall()
+        scored = 0
+        for r in rows:
+            text = r["title"] or ""
+            if r["note"]:
+                text += "\n" + r["note"]
+            payload = scan_pitch(
+                tenant_slug=tenant_slug,
+                text=text,
+                conviction=r["conviction"] or "normal",
+            )
+            if payload.get("pitch_weight") is None:
+                continue
+            cur.execute(
+                """update story_leads
+                      set entities = %s, reach = %s, potential = %s,
+                          archival_weight = %s, pitch_weight = %s, pitch_why = %s
+                    where id = %s""",
+                (
+                    json.dumps(payload["entities"]),
+                    payload["reach"],
+                    payload["potential"],
+                    payload["archival_weight"],
+                    payload["pitch_weight"],
+                    payload["pitch_why"],
+                    r["id"],
+                ),
+            )
+            scored += 1
+    return scored
