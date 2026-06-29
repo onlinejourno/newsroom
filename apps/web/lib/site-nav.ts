@@ -17,7 +17,7 @@ export const SITE = {
   github: "https://github.com/onlinejourno",
 } as const;
 
-export type NavLink = { label: string; href: string };
+export type NavLink = { label: string; href: string; highlight?: boolean };
 
 // The OnlineJourno products, by product name (not project/repo name), same set +
 // order on every property. Frontmatter is live but only behind the app login for
@@ -26,11 +26,13 @@ export type NavLink = { label: string; href: string };
 // a URL. News Ranking was removed (not pursued).
 export const PRODUCTS: NavLink[] = [
   { label: "Home", href: SITE.portal },
+  // Pulse sits right after Home and is visually highlighted (accent + live dot)
+  // — it's the daily, public, reader-facing surface (the front door).
+  { label: "Pulse", href: SITE.pulse, highlight: true },
   { label: "Newsroom", href: SITE.app },
   { label: "Galley", href: SITE.galley },
   { label: "Tools", href: SITE.tools },
   { label: "Daybook", href: SITE.daybook },
-  { label: "Pulse", href: SITE.pulse },
 ];
 
 // The uniform cross-property project bar — identical items + order on every

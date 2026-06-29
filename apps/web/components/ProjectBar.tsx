@@ -27,20 +27,35 @@ export default function ProjectBar({ current }: { current?: string }) {
           </span>
         </a>
         <nav style={{ display: "flex", gap: 18, flexWrap: "wrap", marginLeft: "auto", fontFamily: "var(--font-ui)", fontSize: 13 }}>
-          {PROJECT_NAV.map((p) => (
-            <a
-              key={p.href}
-              href={p.href}
-              aria-current={p.label === current ? "page" : undefined}
-              style={{
-                textDecoration: "none",
-                fontWeight: p.label === current ? 700 : 500,
-                color: p.label === current ? "var(--color-fg-primary)" : "var(--color-fg-secondary)",
-              }}
-            >
-              {p.label}
-            </a>
-          ))}
+          {PROJECT_NAV.map((p) => {
+            const isCurrent = p.label === current;
+            return (
+              <a
+                key={p.href}
+                href={p.href}
+                aria-current={isCurrent ? "page" : undefined}
+                style={{
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontWeight: p.highlight || isCurrent ? 700 : 500,
+                  color: p.highlight
+                    ? "var(--color-red-700)"
+                    : isCurrent
+                      ? "var(--color-fg-primary)"
+                      : "var(--color-fg-secondary)",
+                }}
+              >
+                {p.highlight && (
+                  <span aria-hidden="true" style={{ fontSize: 9, lineHeight: 1 }}>
+                    ●
+                  </span>
+                )}
+                {p.label}
+              </a>
+            );
+          })}
         </nav>
       </div>
     </div>
