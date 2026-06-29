@@ -9,27 +9,32 @@
 
 export const SITE = {
   portal: "https://onlinejourno.com",
-  app: "https://app.onlinejourno.com",
+  app: "https://app.onlinejourno.com", // Masthead
   tools: "https://tools.onlinejourno.com",
-  optimiser: "https://editorial-optimiser.onlinejourno.com",
+  galley: "https://galley.onlinejourno.com",
+  daybook: "https://daybook.onlinejourno.com",
+  pulse: "https://onlinejourno.com/in",
   github: "https://github.com/onlinejourno/platform",
 } as const;
 
 export type NavLink = { label: string; href: string };
 
-// The "kinds of access" — same set + order on every property.
+// The OnlineJourno products, by product name (not project/repo name), same set +
+// order on every property. Frontmatter is live but only behind the app login for
+// now — add it here ({ label: "Frontmatter", href: SITE.frontmatter }) once it has
+// a public URL. Compositor is forthcoming (in progress) — add it here once it has
+// a URL. News Ranking was removed (not pursued).
 export const PRODUCTS: NavLink[] = [
   { label: "Home", href: SITE.portal },
-  { label: "Platform", href: SITE.app },
+  { label: "Masthead", href: SITE.app },
+  { label: "Galley", href: SITE.galley },
   { label: "Tools", href: SITE.tools },
-  { label: "Editorial Optimiser", href: SITE.optimiser },
-  // Forthcoming (separate session) — News Ranking, which reverse-engineers
-  // news-story ranking. When it ships, add `ranking: "https://ranking.onlinejourno.com"`
-  // to SITE above, then: { label: "News Ranking", href: SITE.ranking }.
+  { label: "Daybook", href: SITE.daybook },
+  { label: "Pulse", href: SITE.pulse },
 ];
 
-// The uniform cross-property project bar — identical six items + order on every
-// .com property (portal, platform, tools, editorial-optimiser). Each emphasises
+// The uniform cross-property project bar — identical items + order on every
+// .com property (portal, Masthead, Galley, Tools, Daybook, Pulse). Each emphasises
 // its own. Self-hosted installs can trim this; the demo shows the full suite.
 export const PROJECT_NAV: NavLink[] = [
   ...PRODUCTS,
