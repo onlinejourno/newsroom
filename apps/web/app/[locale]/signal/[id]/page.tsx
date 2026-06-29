@@ -3,10 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignalChips } from "@/components/SignalChips";
+import { WeightBadge } from "@/components/WeightBadge";
 import { assertWritable, getAccount } from "@/lib/auth";
 import {
   archiveMatches,
   journalistsForSignal,
+  pitchesForEntities,
   signalById,
 } from "@/lib/db";
 import { currentTenantId } from "@/lib/tenant";
@@ -124,11 +126,25 @@ export default async function SignalDetailPage({
     redirect(`/${locale}/newslist` as Route);
   }
 
-  const [routed, archive, lead, reporters] = await Promise.all([
+  // Build a robust string[] of entity names — enrichment entities are stored as
+  // bare strings but may occasionally be {name} objects. Deduplicate for safety.
+  const rawEntities: unknown[] = e.analyse?.entities ?? [];
+  const entityNames: string[] = [
+    ...new Set(
+      rawEntities
+        .map((ent) =>
+          typeof ent === "string" ? ent : (ent as { name?: string })?.name,
+        )
+        .filter((n): n is string => typeof n === "string" && n.length > 0),
+    ),
+  ];
+
+  const [routed, archive, lead, reporters, pitches] = await Promise.all([
     journalistsForSignal(tenantId!, id),
     archiveMatches(tenantId!, e.analyse?.entities ?? []),
     leadForSignal(tenantId!, id),
     canCommission ? assignableReporters(tenantId!) : Promise.resolve([] as { id: string; name: string }[]),
+    entityNames.length ? pitchesForEntities(tenantId!, entityNames) : Promise.resolve([]),
   ]);
   const analyse = e.analyse ?? {};
   const classify = e.classify ?? {};
@@ -337,6 +353,32 @@ export default async function SignalDetailPage({
           ) : (
             <p style={{ color: "var(--color-fg-tertiary)" }}>
               No journalist on this beat/place yet.
+            </p>
+          )}
+        </Stage>
+
+        <Stage label="⑦ Reporters pitched on this" by="scored-pitch index">
+          {pitches.length ? (
+            <ul className="space-y-1">
+              {pitches.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex items-center gap-2 text-sm"
+                  style={{ fontFamily: "var(--font-ui)" }}
+                >
+                  <WeightBadge value={p.pitch_weight} />
+                  <span>{p.title}</span>
+                  {p.pitcher ? (
+                    <span style={{ color: "var(--color-fg-tertiary)" }}>
+                      · {p.pitcher}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ color: "var(--color-fg-tertiary)" }}>
+              No open pitches on this entity.
             </p>
           )}
         </Stage>
