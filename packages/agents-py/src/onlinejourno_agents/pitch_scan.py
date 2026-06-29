@@ -61,11 +61,12 @@ def _days_since(when: datetime | None, today: datetime) -> int | None:
     return None if when is None else max(0, (today - when).days)
 
 
-def _extract_entities(text: str) -> tuple[list[dict[str, str]], str | None]:
+def _extract_entities(text: str) -> tuple[list[dict[str, str]], str | None, float]:
     """Call the LLM to extract entities and topic from pitch text.
 
     Uses make_completer() exactly as claim_extract.py / other orchestrators do.
-    The response JSON is {"entities": [...], "topic": "..."}.
+    The response JSON is {"entities": [...], "topic": "..."}. Returns the call's
+    cost so a batch caller (run_pitch_scoring) can enforce the daily cap.
     """
     from onlinejourno_agents.client import make_completer
     from onlinejourno_agents.prompts import build_pitch_entity_prompt
@@ -76,7 +77,7 @@ def _extract_entities(text: str) -> tuple[list[dict[str, str]], str | None]:
     raw_entities = (completion.data or {}).get("entities") or []
     topic = (completion.data or {}).get("topic") or None
     entities = coerce_entities(raw_entities)
-    return entities, topic
+    return entities, topic, completion.cost_usd
 
 
 def scan_pitch(
@@ -94,15 +95,21 @@ def scan_pitch(
     """
     today = today or datetime.now(timezone.utc)
     if not has_scannable_text(text):
-        return _score(tenant_slug, [], None, conviction, today, degraded=False)
+        payload = _score(tenant_slug, [], None, conviction, today, degraded=False)
+        payload["cost_usd"] = 0.0
+        return payload
+    cost = 0.0
     try:
-        entities, topic = _extract_entities(text)
+        entities, topic, cost = _extract_entities(text)
         degraded = False
     except Exception as exc:
         import sys
+
         print(f"[pitch-scan] entity extraction failed: {exc!r}", file=sys.stderr)
         entities, topic, degraded = [], None, True
-    return _score(tenant_slug, entities, topic, conviction, today, degraded=degraded)
+    payload = _score(tenant_slug, entities, topic, conviction, today, degraded=degraded)
+    payload["cost_usd"] = cost
+    return payload
 
 
 def _score(
@@ -148,20 +155,33 @@ def _score(
     }
 
 
-def run_pitch_scoring(*, tenant_slug: str, limit: int = 200) -> int:
+def run_pitch_scoring(*, tenant_slug: str, limit: int = 25) -> int:
     """Cron-fill the prod path: score pitched leads that have no pitch_weight yet.
 
     The Node-only web prod image can't shell the scan, so a prod pitch lands with
     NULL scores (see apps/web addLead). This step — run by the Python cron, which
-    has the LLM key — fills them with a full scan. Idempotent: only touches leads
-    where pitch_weight is null. Returns the number scored.
+    has the LLM key — fills them with a full scan.
+
+    Robustness (mirrors claim_extract):
+    - **Capped** by the tenant's daily LLM budget; stops when spent ≥ cap and logs
+      how many leads were deferred (no silent truncation). Conservative `limit`.
+    - **Degraded scans are left NULL** (not written), so a transient LLM failure is
+      retried next cycle instead of locking in a reach-only score.
+    - **No long-held write transaction**: the read commits up front and each update
+      commits on its own, so a mid-loop failure can't roll back earlier writes and
+      no lock spans the per-lead LLM calls.
+
+    Idempotent (only `pitch_weight is null`), tenant-scoped. Returns the count scored.
     """
     import json
+    import sys
 
     from onlinejourno_agents import db
 
     with db.connect() as conn, conn.cursor() as cur:
         tenant_id = db.tenant_id_for_slug(conn, tenant_slug)
+        cap = db.daily_cap_usd(conn, tenant_id)
+        spent = db.today_cost_usd(conn, tenant_id)
         cur.execute(
             """select id, title, note, conviction
                  from story_leads
@@ -171,8 +191,17 @@ def run_pitch_scoring(*, tenant_slug: str, limit: int = 200) -> int:
             (tenant_id, limit),
         )
         rows = cur.fetchall()
+        conn.commit()  # close the read txn — the LLM loop holds no write lock
+
         scored = 0
-        for r in rows:
+        for i, r in enumerate(rows):
+            if spent >= cap:
+                print(
+                    f"[pitch-score] daily cap ${cap:.2f} reached (spent ${spent:.2f}); "
+                    f"{len(rows) - i} lead(s) deferred to next run",
+                    file=sys.stderr,
+                )
+                break
             text = r["title"] or ""
             if r["note"]:
                 text += "\n" + r["note"]
@@ -181,8 +210,9 @@ def run_pitch_scoring(*, tenant_slug: str, limit: int = 200) -> int:
                 text=text,
                 conviction=r["conviction"] or "normal",
             )
-            if payload.get("pitch_weight") is None:
-                continue
+            spent += payload.get("cost_usd", 0.0)
+            if payload.get("degraded") or payload.get("pitch_weight") is None:
+                continue  # LLM unavailable this cycle — leave NULL, retry next run
             cur.execute(
                 """update story_leads
                       set entities = %s, reach = %s, potential = %s,
@@ -198,5 +228,6 @@ def run_pitch_scoring(*, tenant_slug: str, limit: int = 200) -> int:
                     r["id"],
                 ),
             )
+            conn.commit()  # short per-row txn; nothing held across the next scan
             scored += 1
     return scored
