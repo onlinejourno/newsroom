@@ -59,12 +59,17 @@ export type Lead = {
   created_at: Date;
   published_at: Date | null;
   on_time: boolean | null;
+  // Pitch-scan fields (Task 9)
+  pitch_weight: number | null;
+  pitch_why: string | null;
+  entities: unknown[];
 };
 
 const SELECT = `
   select l.id, l.title, l.beat, l.bureau, l.origin, l.status, l.importance,
          l.signal_id, l.story_id, l.assignee_id, l.eta, l.trend_score, l.keywords, l.topic,
          l.note, l.created_at, l.published_at,
+         l.pitch_weight, l.pitch_why, l.entities,
          a.display_name as assignee, c.display_name as commissioner,
          p.display_name as pitcher, s.url as story_url,
          l.target_surfaces, l.plan_approval,
