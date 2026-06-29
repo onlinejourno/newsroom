@@ -4,7 +4,7 @@
 # is the spend guard: enrich/frame stop at the cap, collect/trends/affinity-log are free.
 #
 # Install:  crontab -e  →
-#   */30 * * * * /Users/subhashrai/projects/platform/infra/cron/pipeline.sh
+#   */30 * * * * /ABSOLUTE/PATH/TO/platform/infra/cron/pipeline.sh
 # Logs: ~/Library/Logs/onlinejourno-pipeline.log
 
 set -u
