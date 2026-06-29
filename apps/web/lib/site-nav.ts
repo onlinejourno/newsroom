@@ -14,7 +14,7 @@ export const SITE = {
   galley: "https://galley.onlinejourno.com",
   daybook: "https://daybook.onlinejourno.com",
   pulse: "https://onlinejourno.com/in",
-  github: "https://github.com/onlinejourno/platform",
+  github: "https://github.com/onlinejourno",
 } as const;
 
 export type NavLink = { label: string; href: string };
