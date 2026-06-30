@@ -2,19 +2,23 @@
 // middleware and node server actions (ADR 0055). Token = "<accountId>.<sig>".
 // Fail closed: a misconfigured prod deploy must NOT fall back to a public,
 // forgeable signing key (anyone knowing it could forge a session for any account).
-const SECRET = (() => {
+// Resolved LAZILY (not at module load) so `next build` — which runs with
+// NODE_ENV=production but without the runtime SESSION_SECRET — doesn't throw.
+let _secret: string | null = null;
+function secret(): string {
+  if (_secret !== null) return _secret;
   const s = process.env.SESSION_SECRET;
-  if (s && s.length >= 16) return s;
+  if (s && s.length >= 16) return (_secret = s);
   if (process.env.NODE_ENV === "production") {
     throw new Error("SESSION_SECRET must be set (>= 16 chars) in production");
   }
-  return "dev-only-insecure-secret-change-me";
-})();
+  return (_secret = "dev-only-insecure-secret-change-me");
+}
 
 async function key(): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(SECRET),
+    new TextEncoder().encode(secret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"],
