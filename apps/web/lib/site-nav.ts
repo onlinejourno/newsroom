@@ -13,6 +13,7 @@ export const SITE = {
   tools: "https://tools.onlinejourno.com",
   galley: "https://galley.onlinejourno.com",
   daybook: "https://daybook.onlinejourno.com",
+  frontmatter: "https://frontmatter.onlinejourno.com",
   pulse: "https://onlinejourno.com/in",
   github: "https://github.com/onlinejourno",
 } as const;
@@ -20,10 +21,8 @@ export const SITE = {
 export type NavLink = { label: string; href: string; highlight?: boolean };
 
 // The OnlineJourno products, by product name (not project/repo name), same set +
-// order on every property. Frontmatter is live but only behind the app login for
-// now — add it here ({ label: "Frontmatter", href: SITE.frontmatter }) once it has
-// a public URL. Compositor is forthcoming (in progress) — add it here once it has
-// a URL. News Ranking was removed (not pursued).
+// order on every property. Compositor is forthcoming (in progress) — add it here
+// once it has a URL. News Ranking was removed (not pursued).
 export const PRODUCTS: NavLink[] = [
   { label: "Home", href: SITE.portal },
   // Pulse sits right after Home and is visually highlighted (accent + live dot)
@@ -33,6 +32,7 @@ export const PRODUCTS: NavLink[] = [
   { label: "Galley", href: SITE.galley },
   { label: "Tools", href: SITE.tools },
   { label: "Daybook", href: SITE.daybook },
+  { label: "Frontmatter", href: SITE.frontmatter },
 ];
 
 // The uniform cross-property project bar — identical items + order on every
