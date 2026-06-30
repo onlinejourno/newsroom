@@ -33,11 +33,21 @@ create table users (
   tenant_id       uuid not null references tenants(id) on delete cascade,
   email           text not null,
   display_name    text,
-  role            text not null check (role in ('admin','editor','journalist','viewer')),
+  role            text not null check (role in ('admin','editor','desk','reporter','viewer')),  -- 0014
+  status          text not null default 'pending'
+                    check (status in ('invited','pending','approved','rejected','suspended')),  -- 0014
+  password_hash   text,                                  -- scrypt salt:hash (0014)
+  bureau          text,                                  -- 0014
+  profile_id      uuid,                                  -- → journalist_profiles; FK deferred below (0014)
+  invited_by      uuid references users(id) on delete set null,                                 -- 0014
+  demo            boolean not null default false,        -- read-only showcase account (0024)
+  token_version   int not null default 0,                -- session-token revocation counter (0028)
   beat_focus      text[] not null default '{}',
   locale          text not null default 'en-IN',     -- per-user UI + brief locale; falls back to tenant primary_locale
   mode            text not null default 'senior' check (mode in ('rookie','senior')),
   created_at      timestamptz not null default now(),
+  approved_at     timestamptz,                           -- 0014
+  last_login_at   timestamptz,                           -- 0014
   archived_at     timestamptz,
   unique (tenant_id, email)
 );
@@ -234,6 +244,13 @@ create table journalist_profiles (
 );
 create index on journalist_profiles (tenant_id, region);
 create index on journalist_profiles (tenant_id, bureau);
+
+-- Deferred FK: users.profile_id → journalist_profiles. The column is declared
+-- in the users table above; the constraint lives here because journalist_profiles
+-- is defined after users. Added by migration 0014.
+alter table users
+  add constraint users_profile_id_fkey
+  foreign key (profile_id) references journalist_profiles(id) on delete set null;
 
 -- ============================================================
 -- Shortlist + editorial decisions
