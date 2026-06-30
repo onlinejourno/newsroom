@@ -15,3 +15,17 @@ export class ReadOnlyDemoError extends Error {
 export function assertWritable(account: Account | null): asserts account is Account {
   if (!account || account.demo) throw new ReadOnlyDemoError();
 }
+
+/** Thrown when a non-admin attempts an admin-only action. */
+export class ForbiddenError extends Error {
+  constructor() {
+    super("Admin access required.");
+    this.name = "ForbiddenError";
+  }
+}
+
+/** Guard for admin-only mutating actions: writable AND role 'admin'. */
+export function assertAdmin(account: Account | null): asserts account is Account {
+  assertWritable(account);
+  if (account.role !== "admin") throw new ForbiddenError();
+}

@@ -32,7 +32,10 @@ export default async function RegisterPage({
       .toLowerCase();
     const name = String(formData.get("name") ?? "").trim();
     const pw = String(formData.get("password") ?? "");
-    const role = String(formData.get("role") ?? "reporter");
+    // Whitelist against ROLES (which excludes "admin") — server actions accept
+    // arbitrary POST data, so never trust the client-supplied role.
+    const roleRaw = String(formData.get("role") ?? "reporter");
+    const role = ROLES.includes(roleRaw) ? roleRaw : "reporter";
     const bureau = String(formData.get("bureau") ?? "").trim() || null;
     const domain = await tenantEmailDomain(tenantId);
 

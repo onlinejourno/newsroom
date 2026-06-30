@@ -1,6 +1,15 @@
 // HMAC-signed session token, Web Crypto only so it runs in BOTH edge
 // middleware and node server actions (ADR 0055). Token = "<accountId>.<sig>".
-const SECRET = process.env.SESSION_SECRET ?? "dev-only-insecure-secret-change-me";
+// Fail closed: a misconfigured prod deploy must NOT fall back to a public,
+// forgeable signing key (anyone knowing it could forge a session for any account).
+const SECRET = (() => {
+  const s = process.env.SESSION_SECRET;
+  if (s && s.length >= 16) return s;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET must be set (>= 16 chars) in production");
+  }
+  return "dev-only-insecure-secret-change-me";
+})();
 
 async function key(): Promise<CryptoKey> {
   return crypto.subtle.importKey(

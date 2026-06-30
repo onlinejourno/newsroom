@@ -204,7 +204,7 @@ export function roomForRole(role: string, slug: string | null): string {
 
 // ── read-only demo (public showcase, 2b) ──────────────────────────────────
 // Guard lives in a pure module (no Next imports) so it's unit-testable.
-export { ReadOnlyDemoError, assertWritable } from "@/lib/writable";
+export { ReadOnlyDemoError, ForbiddenError, assertWritable, assertAdmin } from "@/lib/writable";
 
 /** Resolve the demo-viewer account for a tenant slug (public showcase). Returns
  *  the account id + the locale-room to land on, or null. Does NOT set a cookie —
