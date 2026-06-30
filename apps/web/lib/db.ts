@@ -2,10 +2,14 @@ import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from "pg
 
 // Postgres connection pool, singleton across Next.js dev hot-reloads.
 //
-// Tenant isolation is defence-in-depth (ADR 0005): every query filters
-// tenant_id explicitly AND — once migration 0025 is enabled — row-level
-// security enforces it at the database. Tenant-scoped queries run through
-// withTenant()/tquery(), which pin app.current_tenant for the RLS policies.
+// Tenant isolation TODAY is the explicit `where tenant_id = $1` in every query —
+// that filter is the SOLE boundary. RLS (ADR 0005) is the *intended* defence-in-
+// depth backstop: withTenant()/tquery() below pin app.current_tenant for the
+// policies. But RLS is NOT currently active — migration 0025 is unapplied (it
+// sits in optional/), 0026 disables RLS, and no query path yet routes through
+// withTenant()/tquery(). To enable the backstop: apply 0025 and route reads
+// through tquery(). Until then, a single forgotten tenant_id filter crosses
+// tenants silently. (Security audit 2026-06-30.)
 
 const globalForPool = globalThis as unknown as { __ojPool?: Pool };
 
