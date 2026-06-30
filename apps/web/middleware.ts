@@ -51,8 +51,8 @@ export async function middleware(req: NextRequest) {
     top === "frontmatter" && process.env.OJ_PUBLIC_FRONTMATTER === "1";
   if (OPEN.includes(top) || publicFrontmatter) return withPath();
 
-  const account = await verifyToken(req.cookies.get(SESSION_COOKIE)?.value);
-  if (!account) {
+  const claims = await verifyToken(req.cookies.get(SESSION_COOKIE)?.value);
+  if (!claims) {
     const url = req.nextUrl.clone();
     url.pathname = `/${locale}/login`;
     url.search = "";

@@ -1,7 +1,13 @@
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
-import { assertWritable, getAccount, listAccounts, setAccountStatus } from "@/lib/auth";
+import {
+  assertWritable,
+  bumpTokenVersion,
+  getAccount,
+  listAccounts,
+  setAccountStatus,
+} from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +48,17 @@ export default async function AdminUsersPage({
       String(formData.get("id")),
       String(formData.get("status")),
     );
+    redirect(`/${locale}/admin/users` as Route);
+  }
+
+  async function revokeSessions(formData: FormData) {
+    "use server";
+    const me = await getAccount();
+    assertWritable(me);
+    if (me.role !== "admin") return;
+    const tenantId = await currentTenantId();
+    if (!tenantId) return;
+    await bumpTokenVersion(tenantId, String(formData.get("id")));
     redirect(`/${locale}/admin/users` as Route);
   }
 
@@ -130,6 +147,19 @@ export default async function AdminUsersPage({
                 {a.status === "approved"
                   ? btn("Suspend", "suspended", a.id, "#6b7280")
                   : null}
+                {a.status === "approved" ? (
+                  <form action={revokeSessions} style={{ display: "inline" }}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <button
+                      type="submit"
+                      className="text-xs px-2 py-1 border font-semibold mr-1"
+                      style={{ borderColor: "#b45309", color: "#b45309" }}
+                      title="Invalidate all of this user's active sessions"
+                    >
+                      Log out
+                    </button>
+                  </form>
+                ) : null}
                 {a.status === "suspended"
                   ? btn("Restore", "approved", a.id, "#16a34a")
                   : null}

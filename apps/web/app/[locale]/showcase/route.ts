@@ -20,7 +20,7 @@ export async function GET(
   // bind (0.0.0.0:3000) behind the proxy.
   const res = new NextResponse(null, { status: 307, headers: { Location: dest } });
   if (dv) {
-    res.cookies.set(SESSION_COOKIE, await signToken(dv.accountId), {
+    res.cookies.set(SESSION_COOKIE, await signToken(dv.accountId, dv.tokenVersion), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

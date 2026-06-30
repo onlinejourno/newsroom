@@ -47,26 +47,38 @@ export function verifyPassword(pw: string, stored: string | null): boolean {
 }
 
 // Set a new password for an account (self-serve change; admin reset later).
+// Bumping token_version invalidates every outstanding session for the user.
 export async function setPassword(accountId: string, newPassword: string): Promise<void> {
-  await pool().query("update users set password_hash = $2 where id = $1", [
-    accountId,
-    hashPassword(newPassword),
-  ]);
+  await pool().query(
+    "update users set password_hash = $2, token_version = token_version + 1 where id = $1",
+    [accountId, hashPassword(newPassword)],
+  );
+}
+
+// Revoke all live sessions for an account (admin "log out everywhere").
+export async function bumpTokenVersion(tenantId: string, id: string): Promise<void> {
+  await pool().query(
+    "update users set token_version = token_version + 1 where tenant_id = $1 and id = $2",
+    [tenantId, id],
+  );
 }
 
 // ── session ─────────────────────────────────────────────────────────────
 export async function startSession(accountId: string): Promise<void> {
+  // Stamp login and read the current token_version in one round-trip, so the
+  // freshly minted token carries the live revocation counter.
+  const { rows } = await pool().query<{ token_version: number }>(
+    "update users set last_login_at = now() where id = $1 returning token_version",
+    [accountId],
+  );
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, await signToken(accountId), {
+  jar.set(SESSION_COOKIE, await signToken(accountId, rows[0]?.token_version ?? 0), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 14,
     path: "/",
   });
-  await pool().query("update users set last_login_at = now() where id = $1", [
-    accountId,
-  ]);
 }
 
 export async function endSession(): Promise<void> {
@@ -83,11 +95,13 @@ const SELECT = `
 
 export async function getAccount(): Promise<Account | null> {
   const jar = await cookies();
-  const id = await verifyToken(jar.get(SESSION_COOKIE)?.value);
-  if (!id) return null;
+  const claims = await verifyToken(jar.get(SESSION_COOKIE)?.value);
+  if (!claims) return null;
+  // token_version is the revocation backstop: a token whose tv no longer
+  // matches the row (password change / admin revoke) fails to resolve.
   const { rows } = await pool().query<Account>(
-    `${SELECT} where u.id = $1 and u.status = 'approved'`,
-    [id],
+    `${SELECT} where u.id = $1 and u.status = 'approved' and u.token_version = $2`,
+    [claims.sub, claims.tv],
   );
   return rows[0] ?? null;
 }
@@ -212,9 +226,14 @@ export { ReadOnlyDemoError, ForbiddenError, assertWritable, assertAdmin } from "
  *  (Next forbids cookie writes during a page render). */
 export async function demoViewerSession(
   tenantSlug = "demo",
-): Promise<{ accountId: string; room: string } | null> {
-  const { rows } = await pool().query<{ id: string; role: string; profile_slug: string | null }>(
-    `select u.id, u.role, j.slug as profile_slug
+): Promise<{ accountId: string; tokenVersion: number; room: string } | null> {
+  const { rows } = await pool().query<{
+    id: string;
+    role: string;
+    profile_slug: string | null;
+    token_version: number;
+  }>(
+    `select u.id, u.role, j.slug as profile_slug, u.token_version
        from users u
        join tenants t on t.id = u.tenant_id
        left join journalist_profiles j on j.id = u.profile_id
@@ -224,5 +243,9 @@ export async function demoViewerSession(
   );
   const v = rows[0];
   if (!v) return null;
-  return { accountId: v.id, room: roomForRole(v.role, v.profile_slug) };
+  return {
+    accountId: v.id,
+    tokenVersion: v.token_version,
+    room: roomForRole(v.role, v.profile_slug),
+  };
 }
