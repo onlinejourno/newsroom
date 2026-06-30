@@ -16,6 +16,8 @@ from urllib.parse import urlsplit, urlunsplit
 
 import requests
 
+from onlinejourno_scoring.url_guard import validate_url
+
 REALISTIC_HEADERS: dict[str, str] = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -91,6 +93,7 @@ class CloudflareFetcher:
         self.timeout = timeout_seconds
 
     def get_bytes(self, url: str, *, headers: dict[str, str] | None = None) -> bytes:
+        validate_url(url)  # SSRF: DB-source URL — reject non-public before requests/Playwright
         try:
             return self._tier_headers(url, headers)
         except CloudflareBlocked:

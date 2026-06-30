@@ -15,6 +15,15 @@ from onlinejourno_agents.connectors import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _stub_ssrf_guard(monkeypatch):
+    # CMS tests use reserved/example hosts to exercise parsing; the SSRF guard
+    # (real DNS) is tested separately in scoring-py. No-op it here.
+    import onlinejourno_agents.connectors as c
+
+    monkeypatch.setattr(c, "validate_url", lambda url: None)
+
+
 def test_ke_adapter_shapes_response(monkeypatch):
     fake = {
         "india news": kw.KeywordVolume(
