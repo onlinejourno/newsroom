@@ -7,7 +7,7 @@ import {
   upsertConnector,
   type ConnectorInput,
 } from "@/lib/db";
-import { assertWritable, getAccount } from "@/lib/auth";
+import { assertAdmin, getAccount } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
 
 function str(fd: FormData, key: string): string {
@@ -16,7 +16,7 @@ function str(fd: FormData, key: string): string {
 
 export async function addConnectorAction(formData: FormData): Promise<void> {
   const me = await getAccount();
-  assertWritable(me);
+  assertAdmin(me);
   const tenantId = await currentTenantId();
   if (!tenantId) return;
 
@@ -42,7 +42,7 @@ export async function addConnectorAction(formData: FormData): Promise<void> {
 
 export async function toggleConnectorAction(formData: FormData): Promise<void> {
   const me = await getAccount();
-  assertWritable(me);
+  assertAdmin(me);
   const tenantId = await currentTenantId();
   if (!tenantId) return;
   await setConnectorEnabled(
@@ -55,7 +55,7 @@ export async function toggleConnectorAction(formData: FormData): Promise<void> {
 
 export async function deleteConnectorAction(formData: FormData): Promise<void> {
   const me = await getAccount();
-  assertWritable(me);
+  assertAdmin(me);
   const tenantId = await currentTenantId();
   if (!tenantId) return;
   await deleteConnector(tenantId, str(formData, "id"));

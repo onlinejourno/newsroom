@@ -44,12 +44,14 @@ export async function GET() {
       { status: 200, headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {
+    console.error("ready check failed:", err);
     return NextResponse.json(
       {
         status: "degraded",
         service: "onlinejourno-web",
         db: "error",
-        error: err instanceof Error ? err.message : String(err),
+        // Don't leak raw DB error text (can expose host/credential fragments)
+        // on this unauthenticated endpoint; log server-side instead.
         ms: Date.now() - started,
         timestamp: new Date().toISOString(),
       },

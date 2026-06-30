@@ -3,6 +3,8 @@
 // (Express + Playwright); we POST a URL, poll for the written JSON report,
 // and surface the scores. On-demand only — a scan takes 15–40s.
 
+import { assertPublicUrl } from "@/lib/ssrf";
+
 const PROBITY_URL = process.env.PROBITY_URL ?? "http://localhost:4870";
 
 export type ProbityResult = {
@@ -24,7 +26,15 @@ export type ProbityResult = {
 
 export async function probityScan(url: string): Promise<ProbityResult> {
   const fail = (error: string) => ({ error }) as ProbityResult;
+  // On-demand audits are disabled in prod (mirrors lib/analyze, lib/seoAudit).
+  if (process.env.DISABLE_ONDEMAND_AUDIT === "1") return fail("on-demand audit is disabled");
   if (!/^https?:\/\//i.test(url)) return fail("URL must start with http(s)://");
+  // SSRF: the engine fetches this URL — reject non-public targets before relaying.
+  try {
+    await assertPublicUrl(url);
+  } catch {
+    return fail("URL must be a public http(s) address");
+  }
 
   let jobId: string;
   try {
