@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import pytest
+
 from onlinejourno_ingest.fetch.cloudflare import (
     CloudflareBlocked,
     is_cloudflare_challenge,
 )
+
+
+@pytest.fixture(autouse=True)
+def _stub_ssrf_guard(monkeypatch):
+    # These tests use reserved `.test` hosts to exercise fetch-tier logic; the
+    # SSRF guard (real DNS) is tested separately in scoring-py. No-op it here.
+    import onlinejourno_ingest.fetch.cloudflare as cf
+
+    monkeypatch.setattr(cf, "validate_url", lambda url: None)
 
 
 def test_challenge_detection():

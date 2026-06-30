@@ -24,6 +24,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from onlinejourno_agents import db
+from onlinejourno_scoring.url_guard import UrlNotAllowed, validate_url
 
 _UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -53,6 +54,10 @@ def derive_fronts(story_urls: list[str]) -> list[str]:
 
 
 def _links_on(page_url: str, session: requests.Session) -> set[str]:
+    try:
+        validate_url(page_url)  # SSRF: skip links that resolve to non-public hosts
+    except UrlNotAllowed:
+        return set()
     resp = session.get(page_url, timeout=20)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")

@@ -13,6 +13,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
+from onlinejourno_scoring.url_guard import validate_url
+
 
 @dataclass(frozen=True)
 class ConnectorConfig:
@@ -250,6 +252,7 @@ class WordPressClient:
         params: dict[str, Any] = {"per_page": min(limit, 100), "_embed": "1"}
         if since:
             params["after"] = since
+        validate_url(self._base)  # SSRF: tenant-config CMS base_url
         resp = requests.get(
             f"{self._base}/wp-json/wp/v2/posts",
             params=params,
@@ -296,6 +299,7 @@ class DrupalClient:
         import requests
         from bs4 import BeautifulSoup
 
+        validate_url(self._base)  # SSRF: tenant-config CMS base_url
         resp = requests.get(
             f"{self._base}/jsonapi/node/{self._node_type}",
             params={"page[limit]": min(limit, 50), "sort": "-created"},
@@ -341,6 +345,7 @@ class GhostClient:
         import requests
         from bs4 import BeautifulSoup
 
+        validate_url(self._base)  # SSRF: tenant-config CMS base_url
         resp = requests.get(
             f"{self._base}/ghost/api/content/posts/",
             params={

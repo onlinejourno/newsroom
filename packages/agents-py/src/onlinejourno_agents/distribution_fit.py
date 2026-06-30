@@ -25,6 +25,8 @@ from typing import Any
 import requests
 from bs4 import BeautifulSoup
 
+from onlinejourno_scoring.url_guard import validate_url
+
 
 @dataclass
 class Story:
@@ -328,8 +330,10 @@ def _author(soup: BeautifulSoup, nodes: list[dict[str, Any]]) -> str | None:
 def fetch_story(url: str, *, timeout: int = 15) -> Story:
     """Fetch a published article and parse it into a Story for scoring.
 
-    Raises requests.RequestException on fetch failure (caller handles).
+    Raises requests.RequestException on fetch failure (caller handles), or
+    url_guard.UrlNotAllowed if the URL targets a non-public address (SSRF guard).
     """
+    validate_url(url)  # SSRF: user/DB-supplied story URL — reject non-public targets
     resp = requests.get(
         url, headers={"User-Agent": _UA, "Accept": "text/html"}, timeout=timeout
     )
