@@ -4,7 +4,7 @@
  *
  * Makes the front-page hero and ethic line editable from Appearance → Customize
  * without touching code. The product cards and the "how it's built" grid are
- * structural — edit those in front-page.php. Defaults match the JATO homepage.
+ * structural — edit those in front-page.php. Defaults match the portal homepage.
  *
  * @package OnlineJourno
  */
