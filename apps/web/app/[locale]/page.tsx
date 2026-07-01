@@ -175,19 +175,28 @@ export default async function Home({
           </section>
         ) : (
           <section
-            className="ds-frame p-5 mb-2"
+            className="ds-frame p-6 mb-2"
             style={{ fontFamily: "var(--font-ui)" }}
           >
-            <p className="text-base mb-3">
+            <p className="text-base mb-4">
               {LANDING.loggedOut.prompt}
             </p>
-            <Link
-              href={`/${locale}/onboarding`}
-              className="px-4 py-2 rounded-sm text-sm font-semibold no-underline"
-              style={{ background: "var(--color-brand)", color: "white" }}
-            >
-              {LANDING.loggedOut.cta}
-            </Link>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <Link
+                href={`/${locale}/showcase` as Route}
+                className="px-5 py-2.5 rounded-sm text-sm font-semibold no-underline"
+                style={{ background: "var(--color-brand)", color: "white" }}
+              >
+                {LANDING.loggedOut.demoCta}
+              </Link>
+              <Link
+                href={`/${locale}/onboarding`}
+                className="text-sm underline"
+                style={{ color: "var(--color-brand)" }}
+              >
+                {LANDING.loggedOut.cta}
+              </Link>
+            </div>
           </section>
         )}
 
