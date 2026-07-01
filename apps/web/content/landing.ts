@@ -32,7 +32,8 @@ export const LANDING = {
   },
 
   loggedOut: {
-    prompt: "Sign in to see your newsroom’s situation — or join in under two minutes.",
+    prompt: "See a newsroom’s situation at a glance — what’s live, what’s moving, what needs work. Explore it on demo data now, or sign in.",
+    demoCta: "See the demo →",
     cta: "Sign in / Join →",
   },
 
