@@ -2,8 +2,8 @@
 /**
  * Front page — the OnlineJourno marketing homepage.
  *
- * Frames the umbrella: Journalistic Agentic Task Orchestration (the full phrase
- * leads; "JATO" is in-context shorthand only). Brand sits on OnlineJourno.
+ * Frames the umbrella: the OnlineJourno Intelligent Newsroom Project.
+ * Brand sits on OnlineJourno.
  * Hero is Customizer-editable; the body sections are structural. Per OJDS.
  *
  * @package OnlineJourno
@@ -14,9 +14,9 @@ get_header();
 <main class="container" id="content">
 
 	<section class="page-head">
-		<p class="kicker"><?php echo esc_html( get_theme_mod( 'oj_hero_kicker', 'OnlineJourno Intelligent Newsroom Project · powered by JATO' ) ); ?></p>
+		<p class="kicker"><?php echo esc_html( get_theme_mod( 'oj_hero_kicker', 'OnlineJourno Intelligent Newsroom Project' ) ); ?></p>
 		<h1><?php echo esc_html( get_theme_mod( 'oj_hero_title', 'Let\'s build the intelligent newsroom together.' ) ); ?></h1>
-		<p class="dek"><?php echo esc_html( get_theme_mod( 'oj_hero_dek', 'The OnlineJourno Intelligent Newsroom Project is an open, fair-source effort to bring every reporter the intelligence that today pools at the top of the newsroom. Powered by JATO — Journalistic Agentic Task Orchestration — it takes a journalist\'s task in plain language, composes a library of AI agents and tools to do the research, and hands back a structured, source-linked result. By a journalist, for journalists — come build it with us.' ) ); ?></p>
+		<p class="dek"><?php echo esc_html( get_theme_mod( 'oj_hero_dek', 'The OnlineJourno Intelligent Newsroom Project is an open, fair-source effort to bring every reporter the intelligence that today pools at the top of the newsroom. It takes a journalist\'s task in plain language, brings the tools and research to do it, and hands back a structured, source-linked result. By a journalist, for journalists — come build it with us.' ) ); ?></p>
 		<p style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap;">
 			<a class="btn" href="<?php echo esc_url( get_theme_mod( 'oj_hero_btn1_url', home_url( '/contact/' ) ) ); ?>"><?php echo esc_html( get_theme_mod( 'oj_hero_btn1_label', "Let's work together" ) ); ?></a>
 			<a class="btn ghost" href="<?php echo esc_url( get_theme_mod( 'oj_hero_btn2_url', 'https://tools.onlinejourno.com/' ) ); ?>"><?php echo esc_html( get_theme_mod( 'oj_hero_btn2_label', 'Explore the free tools' ) ); ?></a>
@@ -39,7 +39,7 @@ get_header();
 		</div>
 		<div class="feature">
 			<h3><a href="<?php echo esc_url( home_url( '/audit/' ) ); ?>" style="color:inherit;text-decoration:none;">The Audit &rarr;</a></h3>
-			<p>The first task of JATO: <em>"assess an outlet, and tell me where its stories are dying."</em> A merit-led diagnostic and a graded report, delivered as a consulting engagement. <em>Consulting.</em></p>
+			<p>The first engagement: <em>"assess an outlet, and tell me where its stories are dying."</em> A merit-led diagnostic and a graded report, delivered as a consulting engagement. <em>Consulting.</em></p>
 		</div>
 		<div class="feature">
 			<h3><a href="<?php echo esc_url( home_url( '/daybook/' ) ); ?>" style="color:inherit;text-decoration:none;">Daybook &rarr;</a></h3>
@@ -55,7 +55,7 @@ get_header();
 		</div>
 		<div class="feature">
 			<h3><a href="<?php echo esc_url( home_url( '/toolkit/' ) ); ?>" style="color:inherit;text-decoration:none;">The Toolkit &rarr;</a></h3>
-			<p>145+ open-source tools for the agentic newsroom, mapped by skill — the landscape JATO orchestrates. <em>Free resource.</em></p>
+			<p>145+ open-source tools for the agentic newsroom, mapped by skill — the landscape these tools draw on. <em>Free resource.</em></p>
 		</div>
 	</section>
 

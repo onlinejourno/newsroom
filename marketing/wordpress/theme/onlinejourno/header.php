@@ -18,7 +18,7 @@
 	<meta property="og:description" content="Monitor sources, read how stories are framed, plan ahead, grade a story — give every piece the reach it earns.">
 	<meta property="og:url" content="<?php echo esc_url( home_url( '/' ) ); ?>">
 	<meta name="twitter:card" content="summary_large_image">
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://onlinejourno.com/#org","name":"OnlineJourno","url":"https://onlinejourno.com","description":"Editorial intelligence for newsrooms — the JATO suite.","sameAs":["https://onlinejournalism.in","https://github.com/onlinejourno"]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://onlinejourno.com/#org","name":"OnlineJourno","url":"https://onlinejourno.com","description":"Editorial intelligence for newsrooms — an open, fair-source suite.","sameAs":["https://onlinejournalism.in","https://github.com/onlinejourno"]}</script>
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://onlinejourno.com/#website","url":"https://onlinejourno.com","name":"OnlineJourno","publisher":{"@id":"https://onlinejourno.com/#org"}}</script>
 	<?php endif; ?>
 	<?php wp_head(); ?>
@@ -45,7 +45,7 @@
 					'depth'          => 1,
 				) );
 			} else {
-				// Fallback menu — the JATO ecosystem nav (current names + live pages).
+				// Fallback menu — the OnlineJourno ecosystem nav (current names + live pages).
 				// For a grouped nav with a "Products" dropdown, build a menu at the
 				// 'primary' location (Appearance > Menus) — it overrides this fallback.
 				echo '<a href="' . esc_url( home_url( '/' ) ) . '">Home</a>';
