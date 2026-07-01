@@ -66,7 +66,8 @@ img { max-width: 100%; height: auto; }
 .main-nav { display: flex; gap: 26px; align-items: center; }
 .main-nav a { text-decoration: none; color: var(--text-secondary); font: 500 16px/1 var(--font-serif); padding-bottom: 3px; border-bottom: 2px solid transparent; }
 .main-nav a:hover, .main-nav .current-menu-item a { color: var(--text-primary); border-color: var(--accent); }
-.masthead .user { font: 400 14px/1 var(--font-sans); color: var(--text-muted); }
+.main-nav .nav-pulse { color: var(--accent); font-weight: 700; }
+.main-nav .nav-pulse::before { content: "\25CF"; font-size: 9px; vertical-align: 1px; margin-right: 5px; }
 
 /* ============================================================ Kicker / hero */
 .kicker { font: 600 12px/1 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
