@@ -38,8 +38,8 @@ get_header();
 			<p>The agentic newsroom: watch the public record &rarr; contextualise against your archive &rarr; ranked beat briefs; pre-publish fair-chance cue &rarr; post-publish diagnostic. <em>Fair-source (FSL).</em></p>
 		</div>
 		<div class="feature">
-			<h3><a href="<?php echo esc_url( home_url( '/audit/' ) ); ?>" style="color:inherit;text-decoration:none;">The Audit &rarr;</a></h3>
-			<p>The first engagement: <em>"assess an outlet, and tell me where its stories are dying."</em> A merit-led diagnostic and a graded report, delivered as a consulting engagement. <em>Consulting.</em></p>
+			<h3><a href="<?php echo esc_url( home_url( '/frontmatter/' ) ); ?>" style="color:inherit;text-decoration:none;">Frontmatter &rarr;</a></h3>
+			<p>Audit a whole feed for the merit&ndash;reach gap &mdash; the deserving stories that aren't travelling, ranked with the fix. <em>Fair-source (FSL).</em></p>
 		</div>
 		<div class="feature">
 			<h3><a href="<?php echo esc_url( home_url( '/daybook/' ) ); ?>" style="color:inherit;text-decoration:none;">Daybook &rarr;</a></h3>
@@ -54,10 +54,12 @@ get_header();
 			<p>A page-bloat + surveillance-tracker auditor and a crawl-budget analyser — how search and AI crawlers see a publication. <em>Open source (MIT) — free, live now.</em></p>
 		</div>
 		<div class="feature">
-			<h3><a href="<?php echo esc_url( home_url( '/toolkit/' ) ); ?>" style="color:inherit;text-decoration:none;">The Toolkit &rarr;</a></h3>
-			<p>145+ open-source tools for the agentic newsroom, mapped by skill — the landscape these tools draw on. <em>Free resource.</em></p>
+			<h3><a href="<?php echo esc_url( home_url( '/in/' ) ); ?>" style="color:inherit;text-decoration:none;">Pulse &rarr;</a></h3>
+			<p>A curated digest of Indian journalism that deserves more readers than it got &mdash; high merit, low reach, human-picked. <em>Public.</em></p>
 		</div>
 	</section>
+
+	<p class="dek" style="margin-top:18px;font-size:15px;">Also: <a href="<?php echo esc_url( home_url( '/audit/' ) ); ?>"><strong>The Audit</strong></a> &mdash; a merit-led diagnostic delivered as a consulting engagement &middot; <a href="<?php echo esc_url( home_url( '/toolkit/' ) ); ?>"><strong>The Toolkit</strong></a> &mdash; 145+ open-source tools for the newsroom, mapped by skill.</p>
 
 	<hr class="rule" style="margin-top:40px;">
 	<p class="kicker">How it's built</p>
