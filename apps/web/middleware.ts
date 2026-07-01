@@ -49,7 +49,10 @@ export async function middleware(req: NextRequest) {
   // The demo sets OJ_PUBLIC_FRONTMATTER=1; everyone else stays gated.
   const publicFrontmatter =
     top === "frontmatter" && process.env.OJ_PUBLIC_FRONTMATTER === "1";
-  if (OPEN.includes(top) || publicFrontmatter) return withPath();
+  // The locale root (rest === "") is the public marketing landing — it renders
+  // no tenant data when logged out (orgSnapshot runs only for a signed-in user),
+  // so it markets to visitors instead of bouncing them to /login.
+  if (rest === "" || OPEN.includes(top) || publicFrontmatter) return withPath();
 
   const claims = await verifyToken(req.cookies.get(SESSION_COOKIE)?.value);
   if (!claims) {
