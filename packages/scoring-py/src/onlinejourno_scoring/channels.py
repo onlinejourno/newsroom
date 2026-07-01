@@ -659,6 +659,17 @@ NEED_SURFACE_WEIGHTS: dict[str, dict[str, float]] = {
 }
 
 
+_NO_DATA_MARKERS = (
+    "data provided", "cannot check", "no trend keyword", "to check", "no trend data", "no keyword",
+)
+
+
+def _is_measured(note: str | None) -> bool:
+    """False if `note` signals an absent/unmeasured input rather than an actionable fix."""
+    low = (note or "").lower()
+    return not any(m in low for m in _NO_DATA_MARKERS)
+
+
 def need_weighted_composite(
     scored: dict[str, dict],
     need: str | None,
@@ -682,15 +693,23 @@ def need_weighted_composite(
     priority = [k for k, w in weights.items() if w > 1.0 and k in scored]
     pool = priority or list(scored)
 
+    # top_fix must be an ACTIONABLE gap, not the largest *unmeasured* signal.
+    # A missing input (e.g. no trends connector) scores 0/max and would otherwise
+    # win as "the biggest gap" with a note like "No trend alignment data provided"
+    # — a data-absence note, not a fix. Skip those; fall back to the biggest gap
+    # of any kind only if nothing was actually measured.
     best_gap, best_note = 0.0, None
+    any_gap, any_note = 0.0, None
     for k in pool:
         for s in scored[k].get("signals", []):
             gap = (s["max"] - s["value"]) * weights.get(k, 1.0)
-            if gap > best_gap:
+            if gap > any_gap:
+                any_gap, any_note = gap, s["note"]
+            if gap > best_gap and _is_measured(s["note"]):
                 best_gap, best_note = gap, s["note"]
 
     return {
         "composite": round(total / wsum),
         "priority_surfaces": priority,
-        "top_fix": best_note,
+        "top_fix": best_note if best_note is not None else any_note,
     }
