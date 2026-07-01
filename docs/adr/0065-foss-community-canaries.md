@@ -17,7 +17,7 @@ Each gets: a `CONTRIBUTING.md`, "good first issue" guidance, and a README "why a
 
 ### Scope — what stays fair-source / proprietary
 
-The **moat stays FSL-1.1-ALv2**: the orchestrator (JATO engine), the scoring/merit methodology (`onlinejourno-scoring` + vendored copies), `story-optimiser` (Galley), `masthead-audit`, and `platform`. `onlinejourno-pulse` stays **proprietary**. This ADR carves *only* the two named tools out of ADR 0064's FSL list.
+The **moat stays FSL-1.1-ALv2**: the orchestrator (the "JATO engine"), the scoring/merit methodology (`onlinejourno-scoring` + vendored copies), `story-optimiser` (Galley), `masthead-audit`, and `platform`. `onlinejourno-pulse` stays **proprietary**. This ADR carves *only* the two named tools out of ADR 0064's FSL list. *(The "JATO" label is parked pending a positioning review — see the JATO ADR, story-optimiser 0002; the moat decision here is unaffected.)*
 
 ## Consequences
 

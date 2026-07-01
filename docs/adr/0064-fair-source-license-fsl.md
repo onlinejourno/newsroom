@@ -35,4 +35,4 @@ FSL applies to the source-available OnlineJourno products: `platform`, `onlinejo
 
 - ADR 0024 (Apache-2.0 license model — superseded); ADR 0028 (FOSS-first values — amended); ADR 0042 (one vendor-neutral product).
 - FSL: <https://fsl.software/> · SPDX `FSL-1.1-ALv2`: <https://spdx.org/licenses/FSL-1.1-ALv2.html>
-- JATO project report: `~/projects/JATO-Project-Report.md`.
+- JATO project report: `~/projects/JATO-Project-Report.md`. *(JATO positioning is parked pending review — see the JATO ADR, story-optimiser 0002. This licence decision is unaffected.)*
