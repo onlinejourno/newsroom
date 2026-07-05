@@ -1,0 +1,29 @@
+{
+  "name": "onlinejourno-platform",
+  "private": true,
+  "version": "0.0.0",
+  "description": "OnlineJourno Platform \u2014 editorial intelligence for newsrooms.",
+  "license": "FSL-1.1-ALv2",
+  "author": "Subhash Rai",
+  "homepage": "https://onlinejourno.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onlinejourno/newsroom.git"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @onlinejourno/web dev",
+    "build": "pnpm --filter @onlinejourno/web build",
+    "lint": "pnpm --filter @onlinejourno/web lint",
+    "type-check": "pnpm --filter @onlinejourno/web type-check",
+    "test": "pnpm --filter @onlinejourno/web test",
+    "db:migrate": "for f in infra/migrations/[0-9]*.sql; do echo \"-- $f --\"; psql \"${DATABASE_URL:-onlinejourno_dev}\" -f \"$f\" || exit 1; done",
+    "db:seed:dev": "psql \"${DATABASE_URL:-onlinejourno_dev}\" -f infra/seeds/dev.sql",
+    "ingest": "cd packages/ingest-py && uv run python -m onlinejourno_ingest.cli",
+    "ingest:install": "cd packages/ingest-py && uv sync"
+  },
+  "devDependencies": {}
+}

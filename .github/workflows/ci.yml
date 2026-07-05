@@ -1,0 +1,63 @@
+name: CI
+
+# Production quality gate (mirrors the onlinejourno-tools-web template, adapted
+# for this pnpm monorepo). type-check + lint + test + build BLOCK the merge —
+# `test` includes the multi-tenant isolation guard (apps/web/lib/tenant-isolation
+# .test.ts), which is the sole tenant boundary (RLS is intentionally off, one
+# DB per install). Semgrep / gitleaks / Trivy REPORT first — drop their
+# `continue-on-error` / `|| true` to make findings block once triaged.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    name: type-check · lint · test · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+
+  security:
+    name: semgrep (report)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      # `--config auto` pulls the default registry rules; no account/token needed.
+      # Add `--error` to make findings fail the job.
+      - run: semgrep scan --config auto
+
+  secrets:
+    name: gitleaks (report)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Full-history secret scan. Reports; drop `|| true` to make leaks block.
+      - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source=/repo --no-banner || true
+
+  scoring-py:
+    name: scoring-py tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/scoring-py
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      # Offline, deterministic — integration tests excluded via pyproject addopts.
+      - run: uv run pytest -q

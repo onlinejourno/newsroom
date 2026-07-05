@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+.git
+.gitignore
+Dockerfile
+.dockerignore
+**/fly.toml
+**/*.log
+**/.env*
+**/.DS_Store
+docs
+infra/*
+!infra/migrations
+packages/*-py
+**/__pycache__
+.venv

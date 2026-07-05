@@ -1,0 +1,383 @@
+@import "tailwindcss";
+
+/* OnlineJourno design tokens — ADR 0013.
+   Inherits from packages/spine but locked here for the web app's Tailwind theme. */
+
+@theme {
+  /* ── OnlineJourno Design System (ADR 0063) — warm newsprint, prism accents.
+     Token NAMES preserved from ADR 0013; VALUES repointed to OJDS so every
+     surface re-skins via the tokens. Green = functional/positive only;
+     ink = primary; vermilion/prism = the brand accent. ──────────────────── */
+
+  /* Functional green (positive / go / commission; inline links) */
+  --color-ioj-green-900: #143d26;
+  --color-ioj-green-800: #1f5c38;
+  --color-ioj-green-600: #2e7d46;
+  --color-ioj-green-400: #48a870;
+  --color-ioj-green-100: #e6f0e8;
+
+  /* Vermilion (prism red — urgency / kicker / emphasis) */
+  --color-red-700: #a32a22;
+  --color-red-600: #c0392b;
+  --color-red-500: #d6312a;
+  --color-red-100: #f7e3e0;
+
+  /* Gold (mid lead-time / warning) */
+  --color-amber-600: #9a6a14;
+  --color-amber-100: #f6efe0;
+
+  /* Warm stone neutrals (paper → ink) */
+  --color-ink-950: #0c0b08;
+  --color-ink-900: #181610;
+  --color-ink-800: #26221b;
+  --color-ink-700: #3a352a;
+  --color-ink-600: #514a3c;
+  --color-ink-500: #6f6757;
+  --color-ink-400: #9d9482;
+  --color-ink-300: #c5bda9;
+  --color-ink-200: #ddd6c5;
+  --color-ink-100: #eee9dc;
+  --color-ink-50: #f7f4ed;
+
+  /* Paper + rule lines (warm cream) */
+  --color-paper: #efe9dd;
+  --color-paper-card: #ffffff;
+  --color-rule: #c5bda9;
+  --color-rule-soft: #ddd6c5;
+  --color-frame: #181610; /* warm ink — card frame / black bands */
+
+  /* Semantic role aliases */
+  --color-brand: var(--color-ink-900);          /* primary = ink (OJDS) */
+  --color-brand-dark: var(--color-ink-950);
+  --color-brand-bg: var(--color-ioj-green-100);
+  --color-urgent: var(--color-red-600);          /* vermilion */
+  --color-urgent-bg: var(--color-red-100);
+  --color-bg: var(--color-paper);
+  --color-bg-card: var(--color-paper-card);
+  --color-fg-primary: var(--color-ink-900);
+  --color-fg-secondary: var(--color-ink-600);
+  --color-fg-tertiary: var(--color-ink-400);
+  --color-border: var(--color-ink-200);
+  --color-link: var(--color-ioj-green-800);      /* links stay green (OJDS) */
+  --color-link-hover: var(--color-ioj-green-900);
+
+  /* Prism accent system (from the logo: amber → vermilion → magenta) */
+  --color-accent: var(--color-red-600);
+  --color-amber-accent: #d97f0c;
+  --color-magenta: #8e2c8c;
+  --brand-gradient: linear-gradient(135deg, #f39a1b 0%, #d6312a 48%, #8e2c8c 100%);
+  --color-text-inverse: #f7f4ed;
+
+  /* Slice 2 — info/blue + framing-category palette (OJDS-harmonized) */
+  --color-info: #2b5fb0;
+  --color-info-bg: #e9eff8;
+  --color-framing-combative: var(--color-red-600);   /* vermilion — conflict */
+  --color-framing-explanatory: #0e8a7e;               /* teal — process/context */
+  --color-framing-straight: var(--color-ink-500);     /* stone — just the facts */
+  --color-framing-policy: var(--color-info);          /* blue — policy substance */
+  --color-framing-other: var(--color-amber-600);      /* gold — reaction/profile */
+
+  /* Type stacks (OJDS — Latin defaults; per-script Noto set in layout.tsx) */
+  --font-display: var(--font-kittel), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-source-serif), Georgia, serif;
+  --font-ui: var(--font-ibm-plex-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, Menlo, monospace;
+
+  /* Letter spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+  --tracking-widest: 0.12em;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Radius */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-pill: 100px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+html,
+body {
+  background-color: var(--color-paper);
+  color: var(--color-fg-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+/* Section-label semantic class — small caps, widest tracking, urgency-red. */
+.ds-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-urgent);
+}
+
+/* Editorial rule line. */
+.ds-rule {
+  height: 1px;
+  background-color: var(--color-rule);
+  border: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BROADSHEET KIT (ADR 0013, levelled up) — the single visual
+   vocabulary every page draws from. All values resolve to tokens so
+   the platform stays consistent and themeable. No hardcoded hex.
+───────────────────────────────────────────────────────────────── */
+
+/* Page wrapper: warm paper bg comes from <body>; this just sizes content. */
+.ds-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 28px 80px;
+}
+.ds-page-narrow {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 24px 28px 80px;
+}
+
+/* Display type roles (Playfair). */
+.ds-mast {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.7rem;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--color-fg-primary);
+}
+.ds-h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--color-fg-primary);
+}
+.ds-h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--color-fg-primary);
+}
+.ds-deck {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--color-fg-secondary);
+}
+/* Uppercase meta / column label (smaller, tertiary). */
+.ds-meta {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-fg-tertiary);
+}
+
+/* Card: white surface, thick near-black frame, square corners. */
+.ds-frame {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-frame);
+  border-radius: 0;
+}
+/* Lighter inner panel (warm, soft rule) — for nested blocks. */
+.ds-panel {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 0;
+}
+
+/* Section header bar: Playfair title + colour swatch + uppercase sub. */
+.ds-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 0 6px;
+  border-bottom: 1px solid var(--color-rule);
+  margin-bottom: 12px;
+}
+.ds-bar-swatch {
+  width: 8px;
+  height: 8px;
+  background: var(--color-frame);
+  align-self: center;
+}
+
+/* Filter / category chip (square, fills black when active). */
+.ds-chip {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-bg-card);
+  color: var(--color-fg-secondary);
+  cursor: pointer;
+  border-radius: 0;
+}
+.ds-chip-on {
+  border-color: var(--color-frame);
+  background: var(--color-frame);
+  color: #fff;
+}
+
+/* Tab in a tab strip (underline-active). */
+.ds-tab {
+  font-family: var(--font-ui);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 0;
+  margin-right: 22px;
+  border-bottom: 3px solid transparent;
+  color: var(--color-fg-secondary);
+  font-weight: 700;
+  font-size: 14px;
+}
+.ds-tab-on {
+  color: var(--color-fg-primary);
+  border-bottom-color: var(--color-frame);
+}
+
+/* Big broadsheet stat number. */
+.ds-stat {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.9rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-fg-primary);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   EDITORIAL DATA-DESIGN (redesign Phase A) — FT/Economist feel layered
+   on the broadsheet kit. All values resolve to ADR 0013 tokens.
+───────────────────────────────────────────────────────────────── */
+
+/* Big narrative lead (the "Where coverage is heading." headline). */
+.ds-lead {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: var(--color-fg-primary);
+}
+
+/* Editorial content card (topic / story). White, hairline frame, square. */
+.ds-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 0;
+  padding: 18px 20px;
+}
+
+/* Position tag — the "where you stand" state pills. */
+.ds-tag {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.ds-tag-behind   { color: var(--color-urgent); }          /* red — you're behind */
+.ds-tag-noangle  { color: var(--color-urgent); }          /* red — no angle yet */
+.ds-tag-onit     { color: var(--color-ioj-green-600); }   /* green — on it (positive) */
+.ds-tag-peak     { color: #fff; background: var(--color-urgent); border-color: var(--color-urgent); }
+
+/* Momentum bar — 0–100 fill. */
+.ds-momentum { height: 4px; background: var(--color-rule-soft); }
+.ds-momentum > span { display: block; height: 100%; background: var(--color-brand); }
+
+/* Honest-data amber (n<30 / low confidence). */
+.ds-amber { color: var(--color-amber-600); }
+
+/* ── BRIEF·Today ─────────────────────────────────────────────────────────── */
+.today-grid { display: grid; grid-template-columns: 1fr 320px; gap: 28px; }
+@media (max-width: 880px) { .today-grid { grid-template-columns: 1fr; } }
+.lead-card { display: flex; gap: 0; border: 1px solid var(--color-rule); background: var(--color-paper-card); margin-bottom: 12px; }
+.lead-card__sev { width: 4px; flex: 0 0 4px; }
+.lead-card__sev--high { background: var(--color-urgent); }
+.lead-card__sev--med { background: var(--color-amber-600); }
+.lead-card__sev--low { background: var(--color-rule); }
+.lead-card__body { padding: 14px 16px; flex: 1; }
+.lead-card__top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-family: var(--font-ui); font-size: 12px; color: var(--color-fg-tertiary); }
+.lead-card__time { font-family: var(--font-mono); }
+.tag { padding: 2px 8px; border: 1px solid var(--color-rule); font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.02em; }
+.tag--pot { color: var(--color-urgent); border-color: var(--color-urgent); }
+.lead-card__hl { font-family: var(--font-display); font-size: 17px; font-weight: 600; margin: 0 0 4px; }
+.lead-card__why { font-family: var(--font-ui); font-size: 13px; color: var(--color-fg-secondary); margin: 0 0 10px; }
+.lead-card__actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lead-card__src { font-family: var(--font-ui); font-size: 12px; color: var(--color-fg-tertiary); }
+.act-btn--primary { font-family: var(--font-ui); font-size: 13px; font-weight: 600; padding: 6px 12px; background: var(--color-frame); color: var(--color-paper); }
+.side-panel { border: 1px solid var(--color-rule); background: var(--color-paper-card); padding: 16px; margin-bottom: 16px; }
+.side-panel__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.now-stats { display: flex; flex-direction: column; gap: 10px; }
+.now-stat { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-ui); font-size: 13px; }
+.now-stat__label { display: flex; align-items: center; gap: 8px; color: var(--color-fg-secondary); }
+.now-stat__dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.now-stat__n { font-family: var(--font-mono); font-weight: 600; }
+.now-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-rule); }
+.mini-frame { border: 1px solid var(--color-rule); background: var(--color-paper-card); padding: 16px; }
+.mini-frame__title { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+.mini-frame__sub { font-family: var(--font-ui); font-size: 12px; color: var(--color-fg-tertiary); margin: 0; }
+.empty-note { font-family: var(--font-ui); font-size: 13px; color: var(--color-fg-tertiary); font-style: italic; }
+
+/* ── Mobile pass (OJDS responsive) ─────────────────────────────────────────
+   Tighter gutters + fluid display type on phones; a scroll wrapper so wide
+   tables/charts pan instead of clipping. The today-grid already collapses. */
+@media (max-width: 640px) {
+  .ds-page,
+  .ds-page-narrow { padding: 16px 16px 56px; }
+  .ds-h1 { font-size: clamp(1.6rem, 7vw, 2rem); }
+  .ds-lead { font-size: clamp(1.8rem, 8vw, 2.4rem); }
+  .ds-mast { font-size: 1.4rem; }
+}
+/* Wrap wide tables / Plotly charts in this so they pan, not clip, on phones. */
+.ds-scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Site footer (cross-property IA) ───────────────────────────────────────── */
+.site-footer__grid { display: grid; grid-template-columns: 1.7fr 1fr 1fr 1fr; gap: 28px; }
+.site-footer__col-title { font-family: var(--font-ui); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; margin: 0 0 10px; }
+.site-footer a { color: inherit; opacity: 0.8; text-decoration: none; display: block; margin: 7px 0; font-family: var(--font-ui); font-size: 14px; }
+.site-footer a:hover { opacity: 1; text-decoration: underline; }
+.site-footer__base { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 28px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.14); font-family: var(--font-mono); font-size: 12px; opacity: 0.6; }
+@media (max-width: 640px) { .site-footer__grid { grid-template-columns: 1fr 1fr; } }

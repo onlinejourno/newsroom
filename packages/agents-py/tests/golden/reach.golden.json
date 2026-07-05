@@ -1,0 +1,162 @@
+{
+  "_doc": "Canonical reach golden fixtures. Both Py (agents-py) and TS (Frontmatter) compute_reach MUST reproduce expect{} from signals[]. Do not edit by hand \u2014 regenerate from the reference engine.",
+  "cases": [
+    {
+      "name": "mixed_observed_predicted_proxy_dark",
+      "signals": [
+        {
+          "surface": "search",
+          "value": 80,
+          "basis": "observed",
+          "weight": 2
+        },
+        {
+          "surface": "ai_overview",
+          "value": 40,
+          "basis": "predicted",
+          "weight": 1
+        },
+        {
+          "surface": "trends",
+          "value": 60,
+          "basis": "proxy",
+          "weight": 1
+        },
+        {
+          "surface": "social",
+          "value": 0,
+          "basis": "unavailable",
+          "weight": 1
+        }
+      ],
+      "expect": {
+        "reach": 69.3,
+        "confidence": 0.6,
+        "basis_summary": "proxy"
+      }
+    },
+    {
+      "name": "proxies_only",
+      "signals": [
+        {
+          "surface": "trends",
+          "value": 70,
+          "basis": "proxy",
+          "weight": 1
+        },
+        {
+          "surface": "wiki",
+          "value": 50,
+          "basis": "proxy",
+          "weight": 1
+        }
+      ],
+      "expect": {
+        "reach": 60.0,
+        "confidence": 0.4,
+        "basis_summary": "proxy"
+      }
+    },
+    {
+      "name": "all_dark",
+      "signals": [
+        {
+          "surface": "social",
+          "value": 0,
+          "basis": "unavailable",
+          "weight": 1
+        }
+      ],
+      "expect": {
+        "reach": 0.0,
+        "confidence": 0.0,
+        "basis_summary": "unavailable"
+      }
+    },
+    {
+      "name": "single_observed",
+      "signals": [
+        {
+          "surface": "search",
+          "value": 90,
+          "basis": "observed",
+          "weight": 1
+        }
+      ],
+      "expect": {
+        "reach": 90.0,
+        "confidence": 1.0,
+        "basis_summary": "observed"
+      }
+    },
+    {
+      "name": "observed_plus_predicted",
+      "signals": [
+        {
+          "surface": "search",
+          "value": 80,
+          "basis": "observed",
+          "weight": 2
+        },
+        {
+          "surface": "ai_overview",
+          "value": 60,
+          "basis": "predicted",
+          "weight": 1
+        }
+      ],
+      "expect": {
+        "reach": 75.4,
+        "confidence": 0.87,
+        "basis_summary": "predicted"
+      }
+    },
+    {
+      "name": "empty",
+      "signals": [],
+      "expect": {
+        "reach": 0.0,
+        "confidence": 0.0,
+        "basis_summary": "unavailable"
+      }
+    }
+  ],
+  "gap_cases": [
+    {
+      "name": "strong_buried",
+      "merit": 90,
+      "reach": 40,
+      "gap": 50.0
+    },
+    {
+      "name": "over_reached",
+      "merit": 60,
+      "reach": 75,
+      "gap": -15.0
+    },
+    {
+      "name": "max_gap",
+      "merit": 100,
+      "reach": 0,
+      "gap": 100.0
+    },
+    {
+      "name": "even",
+      "merit": 50,
+      "reach": 50,
+      "gap": 0.0
+    },
+    {
+      "name": "invisible_mediocre",
+      "merit": 58,
+      "reach": 5,
+      "gap": 53.0
+    },
+    {
+      "name": "clamp_neg",
+      "merit": 0,
+      "reach": 100,
+      "gap": -100.0
+    }
+  ]
+}

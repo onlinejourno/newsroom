@@ -1,0 +1,83 @@
+# Self-host OnlineJourno: web + Postgres (pgvector) + optional enrichment worker.
+# Quick start:  cp .env.example .env  →  set AUTH_SECRET  →  docker compose up --build
+# See SELF-HOST.md for the full guide.
+name: onlinejourno
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: onlinejourno
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-onlinejourno}
+      POSTGRES_DB: onlinejourno
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onlinejourno -d onlinejourno"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+  # One-shot: apply infra/migrations/*.sql before the web starts (same script the
+  # Fly release_command uses). Exits 0 when the schema is up to date.
+  migrate:
+    image: onlinejourno-web:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["node", "apps/web/scripts/migrate.mjs"]
+    environment:
+      DATABASE_URL: postgres://onlinejourno:${POSTGRES_PASSWORD:-onlinejourno}@db:5432/onlinejourno
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    image: onlinejourno-web:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://onlinejourno:${POSTGRES_PASSWORD:-onlinejourno}@db:5432/onlinejourno
+      AUTH_SECRET: "${AUTH_SECRET:?Set AUTH_SECRET in .env (generate with openssl rand -hex 32)}"
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_PRODUCT_NAME: ${NEXT_PUBLIC_PRODUCT_NAME:-OnlineJourno}
+      UMAMI_SRC: ${UMAMI_SRC:-}
+      UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
+      NODE_ENV: production
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Enrichment pipeline (collect → enrich → frame → calendar → trends). Opt-in:
+  # runs one cycle then exits, so schedule it with host cron. Needs an LLM key.
+  #   docker compose --profile worker run --rm worker
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      DATABASE_URL: postgres://onlinejourno:${POSTGRES_PASSWORD:-onlinejourno}@db:5432/onlinejourno
+      OJ_TENANT: ${OJ_TENANT:-self}
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      LLM_MODEL: ${LLM_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      KEYWORDS_EVERYWHERE: ${KEYWORDS_EVERYWHERE:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    profiles: ["worker"]
+    restart: "no"
+
+volumes:
+  pgdata:

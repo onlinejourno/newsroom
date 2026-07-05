@@ -1,0 +1,479 @@
+import type { Route } from "next";
+import { redirect } from "next/navigation";
+
+import { WeightBadge } from "@/components/WeightBadge";
+import { assertWritable, getAccount } from "@/lib/auth";
+import { tenantSlugForId } from "@/lib/db";
+import { scanPitch } from "@/lib/pitchScan";
+import { currentTenantId } from "@/lib/tenant";
+import {
+  STATUS_META,
+  type Lead,
+  type Status,
+  assignLead,
+  assignableReporters,
+  bureaus,
+  createLead,
+  listLeads,
+  takeUpLead,
+  transition,
+} from "@/lib/workflow";
+
+export const dynamic = "force-dynamic";
+
+const COLUMNS: Status[] = ["idea", "pitched", "assigned", "filed", "approved", "published"];
+// "idea" renders as the "Suggested" intake lane (calendar + commission origin).
+const COLUMN_LABEL: Record<string, string> = { idea: "Suggested" };
+const IMPORTANCE_COLOR: Record<string, string> = {
+  urgent: "var(--color-urgent)",
+  high: "var(--color-amber-accent)",
+  normal: "var(--color-ink-500)",
+  low: "var(--color-ink-400)",
+};
+// How a lead entered the board (origin), in plain words.
+const ORIGIN_LABEL: Record<string, string> = {
+  self: "self-started",
+  pitched: "pitched",
+  requested: "commissioned",
+  assigned: "assigned",
+};
+
+function eta(d: Date | null): string {
+  if (!d) return "no ETA";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(d));
+}
+
+// Which status this viewer can move a lead TO, given its current state.
+function nextMoves(status: string, isDesk: boolean, isAssignee: boolean): Status[] {
+  if (status === "pitched" && isDesk) return ["assigned", "killed"];
+  if (status === "assigned" && (isDesk || isAssignee)) return ["filed"];
+  if (status === "filed" && isDesk) return ["approved", "killed"];
+  if (status === "approved" && isDesk) return ["published"];
+  return [];
+}
+
+export default async function NewslistPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ bureau?: string; mine?: string }>;
+}) {
+  const { locale } = await params;
+  const { bureau, mine } = await searchParams;
+  const tenantId = await currentTenantId();
+  const me = await getAccount();
+  if (!tenantId || !me) redirect(`/${locale}/login` as Route);
+
+  const isDesk = ["admin", "editor", "desk"].includes(me!.role);
+  const [leads, bureauList, reporters] = await Promise.all([
+    listLeads(tenantId!, {
+      bureau: bureau || null,
+      mineId: mine === "1" ? me!.id : null,
+    }),
+    bureaus(tenantId!),
+    assignableReporters(tenantId!),
+  ]);
+
+  async function addLead(formData: FormData) {
+    "use server";
+    const tenantId = await currentTenantId();
+    const me = await getAccount();
+    assertWritable(me);
+    if (!tenantId) return;
+    const title = String(formData.get("title") ?? "").trim();
+    if (!title) return;
+    const desk = ["admin", "editor", "desk"].includes(me.role);
+    // Conviction defaults to "normal" until Task 9 adds the <select> control.
+    // Validate at runtime — the `as` cast is compile-time only and the DB column
+    // has a CHECK constraint (low|normal|high) that an arbitrary POST would trip.
+    const rawConviction = String(formData.get("conviction") ?? "normal");
+    const conviction = (["low", "normal", "high"].includes(rawConviction)
+      ? rawConviction
+      : "normal") as "low" | "normal" | "high";
+
+    if (!desk) {
+      // Reporter pitch — scan and persist scores. Skip the scan (don't pass a
+      // raw UUID as the slug) when the tenant has no slug; that would silently
+      // produce all-zero archival scores.
+      const tenantSlug = await tenantSlugForId(tenantId);
+      const scan = tenantSlug ? await scanPitch(tenantSlug, title, conviction) : null;
+      // Only persist scores when the scan genuinely succeeded. A degraded /
+      // errored / unavailable scan leaves them NULL (unscored) — never 0, so
+      // "unscored" stays distinct from "scored zero".
+      const ok = !!scan && !scan.degraded && !scan.error && typeof scan.pitch_weight === "number";
+      await createLead({
+        tenantId,
+        actor: me,
+        title,
+        origin: "pitched",
+        beat: String(formData.get("beat") ?? "").trim() || null,
+        bureau: me.bureau ?? null,
+        importance: String(formData.get("importance") ?? "normal"),
+        entities: ok && Array.isArray(scan!.entities) ? scan!.entities : [],
+        reach: ok ? scan!.reach : null,
+        potential: ok ? scan!.potential : null,
+        archival_weight: ok ? scan!.archival_weight : null,
+        conviction,
+        pitch_weight: ok ? scan!.pitch_weight : null,
+        pitch_why: ok ? scan!.pitch_why : null,
+      });
+    } else {
+      // Desk commission — no scan; DB defaults handle conviction='normal', others null.
+      await createLead({
+        tenantId,
+        actor: me,
+        title,
+        origin: "requested",
+        beat: String(formData.get("beat") ?? "").trim() || null,
+        bureau: me.bureau ?? null,
+        importance: String(formData.get("importance") ?? "normal"),
+      });
+    }
+    redirect(`/${locale}/newslist` as Route);
+  }
+
+  async function move(formData: FormData) {
+    "use server";
+    const tenantId = await currentTenantId();
+    const me = await getAccount();
+    assertWritable(me);
+    if (!tenantId) return;
+    await transition(
+      tenantId,
+      me,
+      String(formData.get("id")),
+      String(formData.get("to")) as Status,
+    );
+    redirect(`/${locale}/newslist` as Route);
+  }
+
+  async function assign(formData: FormData) {
+    "use server";
+    const tenantId = await currentTenantId();
+    const me = await getAccount();
+    assertWritable(me);
+    if (!tenantId) return;
+    await assignLead(
+      tenantId,
+      me,
+      String(formData.get("id")),
+      String(formData.get("assigneeId")),
+    );
+    redirect(`/${locale}/newslist` as Route);
+  }
+
+  // Reporter (or desk) self-claims an unassigned Suggested/idea or pitched lead.
+  // Sets assignee_id = actor.id → status "assigned"; attributed to that journalist.
+  async function selfAssign(formData: FormData) {
+    "use server";
+    const tenantId = await currentTenantId();
+    const me = await getAccount();
+    assertWritable(me);
+    if (!tenantId) return;
+    await takeUpLead(tenantId, me, String(formData.get("id")));
+    redirect(`/${locale}/newslist` as Route);
+  }
+
+  const byStatus = (s: string) => {
+    const filtered = leads.filter((l) => l.status === s);
+    if (s === "pitched") {
+      // Weight-rank: highest pitch_weight first; unscored (null) last.
+      return [...filtered].sort((a, b) => (b.pitch_weight ?? -1) - (a.pitch_weight ?? -1));
+    }
+    return filtered;
+  };
+
+  const card = (l: Lead) => {
+    const moves = nextMoves(l.status, isDesk, l.assignee_id === me!.id);
+    return (
+      <div key={l.id} className="ds-panel p-3 mb-2 text-sm">
+        <div className="flex items-center gap-2 mb-1" style={{ fontFamily: "var(--font-ui)" }}>
+          <span
+            title={`importance: ${l.importance}`}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 9999,
+              background: IMPORTANCE_COLOR[l.importance],
+              display: "inline-block",
+            }}
+          />
+          {l.trend_score != null ? (
+            <span className="text-xs" style={{ color: "var(--color-urgent)" }}>
+              🔥 {l.trend_score}
+            </span>
+          ) : null}
+          <span className="text-xs ml-auto" style={{ color: "var(--color-fg-tertiary)" }}>
+            {ORIGIN_LABEL[l.origin] ?? l.origin}
+          </span>
+        </div>
+        <p className="font-semibold leading-snug" style={{ fontFamily: "var(--font-display)" }}>
+          {l.signal_id ? (
+            <a className="hover:underline" href={`/${locale}/signal/${l.signal_id}`}>
+              {l.title}
+            </a>
+          ) : (
+            l.title
+          )}
+        </p>
+        <p className="text-xs mt-1" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}>
+          {[l.beat, l.bureau].filter(Boolean).join(" · ") || "—"}
+        </p>
+        <p className="text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-tertiary)" }}>
+          {l.assignee ? (
+            <>
+              assigned to <strong style={{ color: "var(--color-fg-secondary)" }}>{l.assignee}</strong>
+              {l.commissioner ? ` · by ${l.commissioner}` : ""}
+            </>
+          ) : l.pitcher ? (
+            <>
+              pitched by <strong style={{ color: "var(--color-fg-secondary)" }}>{l.pitcher}</strong>
+            </>
+          ) : (
+            "unassigned"
+          )}
+        </p>
+        {l.status === "pitched" && (l.pitch_weight != null || l.pitch_why) ? (
+          <p className="text-xs mt-1 flex items-center gap-2" style={{ fontFamily: "var(--font-ui)" }}>
+            <WeightBadge value={l.pitch_weight} title={l.pitch_why ?? undefined} />
+            {l.pitch_why ? (
+              <span
+                style={{
+                  color: "var(--color-fg-tertiary)",
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                }}
+              >
+                {l.pitch_why}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
+        <p className="text-xs" style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-tertiary)" }}>
+          ETA {eta(l.eta)}
+          {l.on_time === true ? " · ✅ on time" : l.on_time === false ? " · ⚠ late" : ""}
+          {l.status === "published" && l.story_url ? (
+            <>
+              {" · "}
+              <a className="underline" href={l.story_url} target="_blank" rel="noopener noreferrer">
+                read ↗
+              </a>
+              {" · "}
+              <a
+                className="underline"
+                href={`/${locale}/scores?url=${encodeURIComponent(l.story_url)}&probity=1`}
+              >
+                audit ↗
+              </a>
+            </>
+          ) : null}
+        </p>
+        {l.keywords.length ? (
+          <p className="text-xs mt-1" style={{ color: "var(--color-fg-tertiary)" }}>
+            {l.keywords.slice(0, 4).join(" · ")}
+          </p>
+        ) : null}
+        {((l.status === "pitched" || l.status === "idea") && (isDesk || !l.assignee_id)) || moves.length ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {(l.status === "pitched" || l.status === "idea") && isDesk ? (
+              <form action={assign} className="flex items-center gap-1">
+                <input type="hidden" name="id" value={l.id} />
+                <select
+                  name="assigneeId"
+                  required
+                  defaultValue=""
+                  className="text-xs border px-1 py-0.5"
+                  style={{ borderColor: "var(--color-rule)", background: "var(--color-bg)" }}
+                >
+                  <option value="" disabled>
+                    assign to…
+                  </option>
+                  {reporters.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  className="text-xs px-2 py-0.5 border font-semibold"
+                  style={{ borderColor: STATUS_META.assigned.color, color: STATUS_META.assigned.color }}
+                >
+                  → Assign
+                </button>
+              </form>
+            ) : (l.status === "pitched" || l.status === "idea") && !isDesk && !l.assignee_id ? (
+              // Reporter self-claims an unassigned lead — "Take it up / I'll write this".
+              <form action={selfAssign}>
+                <input type="hidden" name="id" value={l.id} />
+                <button
+                  type="submit"
+                  className="text-xs px-2 py-0.5 border font-semibold"
+                  style={{ borderColor: STATUS_META.assigned.color, color: STATUS_META.assigned.color }}
+                  title="Assign this to yourself and write it"
+                >
+                  Take it up → I&rsquo;ll write this
+                </button>
+              </form>
+            ) : (
+              // Forward move is the primary action — one per stage.
+              moves
+                .filter((to) => to !== "killed")
+                .map((to) => (
+                  <form action={move} key={to}>
+                    <input type="hidden" name="id" value={l.id} />
+                    <input type="hidden" name="to" value={to} />
+                    <button
+                      type="submit"
+                      className="text-xs px-2 py-0.5 border font-semibold"
+                      style={{ borderColor: STATUS_META[to].color, color: STATUS_META[to].color }}
+                    >
+                      → {STATUS_META[to].label}
+                    </button>
+                  </form>
+                ))
+            )}
+            {/* Kill is a quiet escape hatch, not a twin of the forward move. */}
+            {isDesk && l.status !== "published" ? (
+              <form action={move} className="ml-auto">
+                <input type="hidden" name="id" value={l.id} />
+                <input type="hidden" name="to" value="killed" />
+                <button
+                  type="submit"
+                  className="text-xs underline"
+                  style={{ color: "var(--color-urgent)", opacity: 0.55 }}
+                  title="Spike this story — removes it from the board"
+                >
+                  kill
+                </button>
+              </form>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  return (
+    <main className="min-h-screen max-w-6xl mx-auto p-6 md:p-10">
+      <header className="mb-6">
+        <p className="ds-label mb-2">OnlineJourno · Newslist</p>
+        <h1
+          className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-3"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Newslist · signal → published
+        </h1>
+        <p
+          className="text-base max-w-3xl"
+          style={{ fontFamily: "var(--font-body)", color: "var(--color-fg-secondary)" }}
+        >
+          Every story in flight, the state it&rsquo;s in, who&rsquo;s filing it,
+          its ETA and whether it&rsquo;ll catch the trend — visible to the whole
+          desk (ADR 0056). {leads.length} leads.
+        </p>
+      </header>
+
+      {/* How to read a card — decode the markers so the board explains itself. */}
+      <div
+        className="ds-panel p-3 mb-5 text-xs flex flex-wrap items-center gap-x-6 gap-y-2"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-secondary)" }}
+      >
+        <span className="ds-meta">How to read a card</span>
+        <span className="flex items-center gap-1.5">
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "var(--color-urgent)", display: "inline-block" }} /> urgent
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "var(--color-amber-accent)", display: "inline-block", marginLeft: 6 }} /> high
+          <span style={{ width: 8, height: 8, borderRadius: 9999, background: "var(--color-ink-500)", display: "inline-block", marginLeft: 6 }} /> normal
+          <span style={{ color: "var(--color-fg-tertiary)" }}>— importance</span>
+        </span>
+        <span>🔥 <span style={{ color: "var(--color-fg-tertiary)" }}>trend score — riding a moving topic</span></span>
+        <span>
+          <strong>pitched / requested / assigned</strong>{" "}
+          <span style={{ color: "var(--color-fg-tertiary)" }}>— how it entered</span>
+        </span>
+        <span>✅ on time · ⚠ late <span style={{ color: "var(--color-fg-tertiary)" }}>vs its ETA</span></span>
+        <span style={{ color: "var(--color-fg-tertiary)" }}>columns = its stage, signal → published</span>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-4 mb-6" style={{ fontFamily: "var(--font-ui)" }}>
+        <form action={addLead} className="flex flex-wrap gap-2 items-end">
+          <input
+            name="title"
+            required
+            placeholder={isDesk ? "Commission a story…" : "Pitch a story…"}
+            className="border rounded-sm px-3 py-2 text-sm min-w-64"
+            style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}
+          />
+          <input
+            name="beat"
+            placeholder="beat"
+            className="border rounded-sm px-2 py-2 text-sm w-28"
+            style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}
+          />
+          <select
+            name="importance"
+            className="border rounded-sm px-2 py-2 text-sm"
+            style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}
+          >
+            <option value="normal">normal</option>
+            <option value="high">high</option>
+            <option value="urgent">urgent</option>
+            <option value="low">low</option>
+          </select>
+          {!isDesk && (
+            <select
+              name="conviction"
+              className="border rounded-sm px-2 py-2 text-sm"
+              style={{ borderColor: "var(--color-border)", background: "var(--color-bg)" }}
+              title="How strongly do you believe in this story?"
+            >
+              <option value="normal">normal conviction</option>
+              <option value="high">high conviction</option>
+              <option value="low">low conviction</option>
+            </select>
+          )}
+          <button
+            type="submit"
+            className="px-3 py-2 rounded-sm text-sm font-semibold"
+            style={{ background: "var(--color-brand)", color: "white" }}
+          >
+            {isDesk ? "Commission" : "Pitch"}
+          </button>
+        </form>
+        <span className="text-xs flex gap-3" style={{ color: "var(--color-fg-tertiary)" }}>
+          <a className="underline" href={`/${locale}/newslist`}>all</a>
+          <a className="underline" href={`/${locale}/newslist?mine=1`}>mine</a>
+          {bureauList.map((b) => (
+            <a key={b} className="underline" href={`/${locale}/newslist?bureau=${encodeURIComponent(b)}`}>
+              {b}
+            </a>
+          ))}
+        </span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-6">
+        {COLUMNS.map((s) => (
+          <div key={s}>
+            <p
+              className="text-xs uppercase tracking-wide font-bold mb-2 pb-1 flex items-center gap-2"
+              style={{ color: STATUS_META[s].color, borderBottom: `2px solid ${STATUS_META[s].color}` }}
+            >
+              <span style={{ width: 8, height: 8, background: STATUS_META[s].color, display: "inline-block" }} />
+              {COLUMN_LABEL[s] ?? STATUS_META[s].label} · {byStatus(s).length}
+            </p>
+            {byStatus(s).map(card)}
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}

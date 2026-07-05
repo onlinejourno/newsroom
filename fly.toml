@@ -1,0 +1,42 @@
+# fly.toml — Arena / onlinejourno-platform (apps/web, Next.js standalone)
+# Deploys from repo root: fly deploy
+app = "onlinejourno-platform"
+# Primary region: prefer BOM (Mumbai, ~30ms from India). Fell back to
+# SIN (Singapore, ~70ms) on 2026-06-03 when BOM had no capacity.
+# Revisit and switch back to BOM when capacity returns.
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # Apply DB migrations against DATABASE_URL before each release goes live.
+  # Fly aborts the deploy (keeps the prior version) if this exits non-zero.
+  release_command = "node apps/web/scripts/migrate.mjs"
+
+[env]
+  PORT = "3000"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # v1: on-demand audit (analyze-url + scoring) shells `uv run`, which the
+  # Node-only image can't. Disable it in prod here; local dev (no fly env) keeps
+  # it on. Re-enable when the Python audit service lands.
+  DISABLE_ONDEMAND_AUDIT = "1"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

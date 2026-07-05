@@ -1,0 +1,38 @@
+[project]
+name = "onlinejourno-scoring"
+version = "0.0.0"
+description = "SEO + E-E-A-T audit engine (ported from discover-dashboard): SEJ periodic-table checks, channel scorers, SQEG, recirculation, potential, CWV."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "FSL-1.1-ALv2" }
+authors = [{ name = "Subhash Rai" }]
+dependencies = [
+  "requests>=2.31",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
+  "feedparser>=6.0",
+  "python-dateutil>=2.8",
+  "python-dotenv>=1.0",
+]
+
+[project.scripts]
+onlinejourno-scoring = "onlinejourno_scoring.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/onlinejourno_scoring"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+# Integration tests hit live services (GDELT, YouTube suggest, AI queries) and
+# are excluded from the default run so it stays fast and deterministic.
+# Run them explicitly with: pytest -m integration
+addopts = "-m 'not integration'"
+markers = [
+  "integration: hits live external services; excluded from the default run",
+]

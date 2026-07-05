@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from "next/server";
+import { locales, defaultLocale } from "@/lib/locale";
+import { SESSION_COOKIE, verifyToken } from "@/lib/session-token";
+
+// Paths (after the /{locale} prefix) reachable without a session (ADR 0055).
+const OPEN = ["login", "register", "accept", "pending", "showcase"];
+
+// Pick best supported locale from Accept-Language, else default.
+function negotiate(req: NextRequest): string {
+  const header = req.headers.get("accept-language");
+  if (!header) return defaultLocale;
+  for (const part of header.split(",")) {
+    const tag = part.split(";")[0].trim().toLowerCase();
+    const base = tag.split("-")[0];
+    const hit = locales.find((l) => l === tag || l === base);
+    if (hit) return hit;
+  }
+  return defaultLocale;
+}
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  const locale = locales.find(
+    (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`),
+  );
+
+  // No locale prefix → add one and redirect.
+  if (!locale) {
+    const url = req.nextUrl.clone();
+    const loc = negotiate(req);
+    url.pathname = `/${loc}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.redirect(url);
+  }
+
+  // Forward the path so server components (the masthead) can mark the active
+  // lifecycle stage — App Router doesn't expose the pathname otherwise.
+  const withPath = () => {
+    const h = new Headers(req.headers);
+    h.set("x-invoke-path", pathname);
+    return NextResponse.next({ request: { headers: h } });
+  };
+
+  // The login gate: everything requires a valid session except OPEN paths.
+  const rest = pathname.slice(`/${locale}`.length).replace(/^\//, "");
+  const top = rest.split("/")[0];
+  // Frontmatter ("merit should travel") can be public — but opt-in, so a
+  // self-hosted newsroom doesn't expose its own performance data by default.
+  // The demo sets OJ_PUBLIC_FRONTMATTER=1; everyone else stays gated.
+  const publicFrontmatter =
+    top === "frontmatter" && process.env.OJ_PUBLIC_FRONTMATTER === "1";
+  // The locale root (rest === "") is the public marketing landing — it renders
+  // no tenant data when logged out (orgSnapshot runs only for a signed-in user),
+  // so it markets to visitors instead of bouncing them to /login.
+  if (rest === "" || OPEN.includes(top) || publicFrontmatter) return withPath();
+
+  const claims = await verifyToken(req.cookies.get(SESSION_COOKIE)?.value);
+  if (!claims) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/${locale}/login`;
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+  return withPath();
+}
+
+export const config = {
+  // Skip API, Next internals, and any file with an extension (assets).
+  matcher: ["/((?!api|_next/static|_next/image|.*\\..*).*)"],
+};

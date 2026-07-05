@@ -1,0 +1,103 @@
+# Uptime monitor for app.onlinejourno.com.
+#
+# Values: FOSS-first, no commercial SaaS uptime vendor (ADR 0028).
+# Pings the public health endpoint and alerts via ntfy.sh on failure.
+# ntfy is FOSS; you can self-host an ntfy server later and change
+# NTFY_BASE_URL to point at it without touching this workflow.
+#
+# Setup:
+#   1. Generate a random topic name: `openssl rand -hex 8`
+#   2. GitHub repo → Settings → Secrets and variables → Actions → New repo secret
+#        Name: NTFY_TOPIC
+#        Value: <the random hex string>
+#   3. (Optional) Set repo variable NTFY_BASE_URL if you self-host.
+#        Default is https://ntfy.sh (public free tier).
+#   4. Install the ntfy app on your phone, subscribe to your topic.
+#
+# Cadence:
+#   GitHub Actions cron minimum is 5 minutes (and may jitter up to ~15 min on
+#   free tier under load). Acceptable for solo bootstrap. If a tighter SLA is
+#   ever needed, move the cron to a self-hosted runner or a small VPS cron.
+
+name: uptime-check
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # every 15 minutes
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping health endpoint
+        id: ping
+        env:
+          TARGET_URL: https://app.onlinejourno.com/api/ready
+        run: |
+          set +e
+          # Capture HTTP status code and total time.
+          read -r status total_time < <(
+            curl -o /tmp/body -s -w "%{http_code} %{time_total}" \
+                 --max-time 10 \
+                 --retry 2 --retry-delay 5 \
+                 "$TARGET_URL"
+          )
+          curl_exit=$?
+          body="$(cat /tmp/body 2>/dev/null || true)"
+
+          echo "HTTP status: $status"
+          echo "Total time:  ${total_time}s"
+          echo "Body (first 200 chars): ${body:0:200}"
+
+          # Persist for the alert step.
+          {
+            echo "status=$status"
+            echo "total_time=$total_time"
+            echo "curl_exit=$curl_exit"
+            echo "body_excerpt=${body:0:200}"
+          } >> "$GITHUB_OUTPUT"
+
+          # Pass criteria: HTTP 200 AND body contains "ok".
+          # Anything else triggers the alert step (workflow itself still
+          # exits zero so we don't pile up failed-workflow noise — the
+          # ntfy push is the signal).
+          if [ "$status" = "200" ] && echo "$body" | grep -q '"status":"ok"'; then
+            echo "result=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=fail" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Alert on failure
+        if: steps.ping.outputs.result == 'fail'
+        env:
+          NTFY_BASE_URL: ${{ vars.NTFY_BASE_URL || 'https://ntfy.sh' }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          STATUS: ${{ steps.ping.outputs.status }}
+          TIME: ${{ steps.ping.outputs.total_time }}
+          BODY: ${{ steps.ping.outputs.body_excerpt }}
+        run: |
+          if [ -z "$NTFY_TOPIC" ]; then
+            echo "::error::NTFY_TOPIC secret not set; cannot alert."
+            exit 1
+          fi
+          message="OnlineJourno app health check failed at $(date -u +"%Y-%m-%dT%H:%M:%SZ").
+          HTTP status: ${STATUS}
+          Response time: ${TIME}s
+          Body excerpt: ${BODY}
+          URL: https://app.onlinejourno.com/api/health"
+
+          curl -s -X POST \
+            -H "Title: OnlineJourno app DOWN" \
+            -H "Priority: urgent" \
+            -H "Tags: rotating_light,warning" \
+            -H "Click: https://fly.io/apps/onlinejourno-platform/monitoring" \
+            -d "$message" \
+            "${NTFY_BASE_URL%/}/${NTFY_TOPIC}"

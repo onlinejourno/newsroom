@@ -1,0 +1,16 @@
+# fly.worker.toml — onlinejourno-worker: the Python pipeline as a daily scheduled machine.
+# Build/config only. There is NO [http_service]: this app serves nothing. The
+# scheduled machine is created out-of-band:
+#   fly machine run <image> --schedule daily --restart never -a onlinejourno-worker
+# and re-run on demand for a manual pass. Image is built with:
+#   fly deploy -c fly.worker.toml --build-only --push -a onlinejourno-worker
+app = "onlinejourno-worker"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile.worker"
+  ignorefile = "Dockerfile.worker.dockerignore"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
