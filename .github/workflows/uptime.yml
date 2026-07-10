@@ -1,23 +1,25 @@
-# Uptime monitor for app.onlinejourno.com.
+# Uptime monitor for the OnlineJourno service fleet.
 #
 # Values: FOSS-first, no commercial SaaS uptime vendor (ADR 0028).
-# Pings the public health endpoint and alerts via ntfy.sh on failure.
-# ntfy is FOSS; you can self-host an ntfy server later and change
-# NTFY_BASE_URL to point at it without touching this workflow.
+# Each service is pinged; any failure pushes an ntfy.sh alert naming the
+# service. ntfy is FOSS; self-host later and set NTFY_BASE_URL without
+# touching this workflow.
 #
 # Setup:
 #   1. Generate a random topic name: `openssl rand -hex 8`
 #   2. GitHub repo → Settings → Secrets and variables → Actions → New repo secret
-#        Name: NTFY_TOPIC
-#        Value: <the random hex string>
+#        Name: NTFY_TOPIC   Value: <the random hex string>
 #   3. (Optional) Set repo variable NTFY_BASE_URL if you self-host.
-#        Default is https://ntfy.sh (public free tier).
-#   4. Install the ntfy app on your phone, subscribe to your topic.
+#   4. Install the ntfy app on your phone AND subscribe to the topic — the
+#      push pipeline is useless if no device is subscribed.
 #
-# Cadence:
-#   GitHub Actions cron minimum is 5 minutes (and may jitter up to ~15 min on
-#   free tier under load). Acceptable for solo bootstrap. If a tighter SLA is
-#   ever needed, move the cron to a self-hosted runner or a small VPS cron.
+# Adding a service: append one entry to the matrix below. `expect` is a
+# fixed (non-regex) substring that must appear in a healthy response body;
+# pick one distinctive to a WORKING page so a soft-404 that still renders
+# the shared nav can't false-pass.
+#
+# Cadence: GitHub Actions cron minimum is 5 min (jitters up to ~15 on free
+# tier). 15 min is acceptable for solo bootstrap.
 
 name: uptime-check
 
@@ -35,41 +37,70 @@ concurrency:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false            # one service down must not cancel the others
+      matrix:
+        include:
+          # Platform app — DEEP readiness (verifies DB reachability, not just
+          # that the process is up). This is the check that catches a broken
+          # DATABASE_URL while /api/health stays green.
+          - name: app (platform)
+            url: https://app.onlinejourno.com/api/ready
+            expect: '"status":"ok"'
+          # Crawl-Budget Analyser — frontend proxy + FastAPI backend in one hop.
+          - name: crawl-budget-analyser
+            url: https://tools.onlinejourno.com/crawl-budget-analyser/api/health
+            expect: '"ok":true'
+          # Tare — backend has no health route; ping the rendered page. `expect`
+          # is a title-only phrase, absent from the shared nav.
+          - name: tare
+            url: https://tools.onlinejourno.com/tare
+            expect: 'Reader Respect'
+          - name: daybook
+            url: https://daybook.onlinejourno.com/
+            expect: 'predictive editorial calendar'
+          - name: galley
+            url: https://galley.onlinejourno.com/
+            expect: 'GTmetrix'
+          - name: frontmatter
+            url: https://frontmatter.onlinejourno.com/
+            expect: 'merit vs reach'
+          - name: marketing (onlinejourno.com)
+            url: https://onlinejourno.com/
+            expect: 'Tools for Journalists'
     steps:
-      - name: Ping health endpoint
+      - name: Ping
         id: ping
         env:
-          TARGET_URL: https://app.onlinejourno.com/api/ready
+          TARGET_URL: ${{ matrix.url }}
+          EXPECT: ${{ matrix.expect }}
         run: |
           set +e
-          # Capture HTTP status code and total time.
+          # -L follows redirects; generous timeout + retries so a Fly
+          # scale-to-zero cold start doesn't read as an outage.
           read -r status total_time < <(
-            curl -o /tmp/body -s -w "%{http_code} %{time_total}" \
-                 --max-time 10 \
-                 --retry 2 --retry-delay 5 \
+            curl -o /tmp/body -sL -w "%{http_code} %{time_total}" \
+                 --max-time 30 --retry 3 --retry-delay 5 --retry-connrefused \
                  "$TARGET_URL"
           )
           curl_exit=$?
           body="$(cat /tmp/body 2>/dev/null || true)"
 
-          echo "HTTP status: $status"
-          echo "Total time:  ${total_time}s"
+          echo "Service: $TARGET_URL"
+          echo "HTTP status: $status   time: ${total_time}s   curl_exit: $curl_exit"
           echo "Body (first 200 chars): ${body:0:200}"
 
-          # Persist for the alert step.
           {
             echo "status=$status"
             echo "total_time=$total_time"
-            echo "curl_exit=$curl_exit"
             echo "body_excerpt=${body:0:200}"
           } >> "$GITHUB_OUTPUT"
 
-          # Pass criteria: HTTP 200 AND body contains "ok".
-          # Anything else triggers the alert step (workflow itself still
-          # exits zero so we don't pile up failed-workflow noise — the
-          # ntfy push is the signal).
-          if [ "$status" = "200" ] && echo "$body" | grep -q '"status":"ok"'; then
+          # Pass = HTTP 200 AND the expected fixed substring is present.
+          # Workflow itself exits 0 even on fail — the ntfy push is the signal,
+          # so a real outage does not also spam failed-workflow noise.
+          if [ "$status" = "200" ] && printf '%s' "$body" | grep -qF -- "$EXPECT"; then
             echo "result=pass" >> "$GITHUB_OUTPUT"
           else
             echo "result=fail" >> "$GITHUB_OUTPUT"
@@ -80,6 +111,8 @@ jobs:
         env:
           NTFY_BASE_URL: ${{ vars.NTFY_BASE_URL || 'https://ntfy.sh' }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SERVICE: ${{ matrix.name }}
+          URL: ${{ matrix.url }}
           STATUS: ${{ steps.ping.outputs.status }}
           TIME: ${{ steps.ping.outputs.total_time }}
           BODY: ${{ steps.ping.outputs.body_excerpt }}
@@ -88,16 +121,16 @@ jobs:
             echo "::error::NTFY_TOPIC secret not set; cannot alert."
             exit 1
           fi
-          message="OnlineJourno app health check failed at $(date -u +"%Y-%m-%dT%H:%M:%SZ").
+          message="OnlineJourno service DOWN: ${SERVICE}
+          URL: ${URL}
           HTTP status: ${STATUS}
           Response time: ${TIME}s
           Body excerpt: ${BODY}
-          URL: https://app.onlinejourno.com/api/health"
+          Checked (UTC): $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
           curl -s -X POST \
-            -H "Title: OnlineJourno app DOWN" \
+            -H "Title: DOWN — ${SERVICE}" \
             -H "Priority: urgent" \
             -H "Tags: rotating_light,warning" \
-            -H "Click: https://fly.io/apps/onlinejourno-platform/monitoring" \
             -d "$message" \
             "${NTFY_BASE_URL%/}/${NTFY_TOPIC}"
