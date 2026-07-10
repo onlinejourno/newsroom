@@ -77,30 +77,38 @@ jobs:
           EXPECT: ${{ matrix.expect }}
         run: |
           set +e
-          # -L follows redirects; generous timeout + retries so a Fly
-          # scale-to-zero cold start doesn't read as an outage.
-          read -r status total_time < <(
-            curl -o /tmp/body -sL -w "%{http_code} %{time_total}" \
-                 --max-time 30 --retry 3 --retry-delay 5 --retry-connrefused \
-                 "$TARGET_URL"
-          )
+          # -L follows redirects; --compressed handles gzip/br; generous
+          # timeout + retries so a Fly scale-to-zero cold start doesn't read
+          # as an outage. Command substitution (not process substitution) so
+          # $? is curl's real exit, not read's.
+          resp=$(curl -o /tmp/body -sL --compressed \
+                   -A "OnlineJourno-UptimeBot/1.0 (+https://onlinejourno.com)" \
+                   -w "%{http_code} %{time_total}" \
+                   --max-time 30 --retry 3 --retry-delay 5 --retry-connrefused \
+                   "$TARGET_URL")
           curl_exit=$?
+          status=${resp%% *}
+          total_time=${resp##* }
           body="$(cat /tmp/body 2>/dev/null || true)"
+          # Collapse the excerpt to ONE line — a multi-line value (e.g. an HTML
+          # page) written as key=value corrupts $GITHUB_OUTPUT and fails the job.
+          excerpt=$(printf '%s' "${body:0:200}" | tr '\n\r\t' '   ' | tr -s ' ')
 
           echo "Service: $TARGET_URL"
           echo "HTTP status: $status   time: ${total_time}s   curl_exit: $curl_exit"
-          echo "Body (first 200 chars): ${body:0:200}"
+          echo "Body (first 200 chars): $excerpt"
 
           {
             echo "status=$status"
             echo "total_time=$total_time"
-            echo "body_excerpt=${body:0:200}"
+            echo "curl_exit=$curl_exit"
+            echo "body_excerpt=$excerpt"
           } >> "$GITHUB_OUTPUT"
 
-          # Pass = HTTP 200 AND the expected fixed substring is present.
+          # Pass = curl OK AND HTTP 200 AND the expected fixed substring present.
           # Workflow itself exits 0 even on fail — the ntfy push is the signal,
           # so a real outage does not also spam failed-workflow noise.
-          if [ "$status" = "200" ] && printf '%s' "$body" | grep -qF -- "$EXPECT"; then
+          if [ "$curl_exit" = "0" ] && [ "$status" = "200" ] && printf '%s' "$body" | grep -qF -- "$EXPECT"; then
             echo "result=pass" >> "$GITHUB_OUTPUT"
           else
             echo "result=fail" >> "$GITHUB_OUTPUT"
