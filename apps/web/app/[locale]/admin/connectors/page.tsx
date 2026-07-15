@@ -2,6 +2,7 @@ import { listConnectors } from "@/lib/db";
 import { currentTenantId } from "@/lib/tenant";
 import { deleteConnectorAction, toggleConnectorAction } from "./actions";
 import ConnectorForm from "./ConnectorForm";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function ConnectorsAdminPage({
       </header>
 
       <section className="ds-frame mb-10 overflow-x-auto">
-        <table className="w-full text-sm">
+        <ResponsiveTable><table className="w-full text-sm">
           <thead>
             <tr className="text-left" style={{ color: "var(--color-fg-tertiary)" }}>
               {["Category", "Provider", "Mode", "Secret", "Status", ""].map((h) => (
@@ -111,7 +112,7 @@ export default async function ConnectorsAdminPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></ResponsiveTable>
       </section>
 
       <section className="ds-frame p-5">

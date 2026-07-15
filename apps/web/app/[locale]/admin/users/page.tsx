@@ -9,6 +9,7 @@ import {
   setAccountStatus,
 } from "@/lib/auth";
 import { currentTenantId } from "@/lib/tenant";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ export default async function AdminUsersPage({
       </header>
 
       <div className="ds-frame overflow-x-auto p-4">
-      <table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
+      <ResponsiveTable><table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
         <thead>
           <tr
             className="text-xs uppercase tracking-wide text-left"
@@ -167,7 +168,7 @@ export default async function AdminUsersPage({
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></ResponsiveTable>
       </div>
     </main>
   );

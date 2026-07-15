@@ -18,6 +18,7 @@ import { fetchTopicDomains } from "@/lib/topicDomains";
 import { topicMomentum } from "@/lib/trends";
 
 import { MinScoreSlider } from "@/components/MinScoreSlider";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -254,7 +255,7 @@ export default async function PotentialPage({
         >
           How is the Discover Potential score calculated?
         </summary>
-        <table className="mt-3 text-xs w-full max-w-xl">
+        <ResponsiveTable><table className="mt-3 text-xs w-full max-w-xl">
           <tbody>
             <tr>
               <td className="py-1 font-semibold">Momentum</td>
@@ -300,7 +301,7 @@ export default async function PotentialPage({
               </td>
             </tr>
           </tbody>
-        </table>
+        </table></ResponsiveTable>
         <p className="mt-2 text-xs" style={{ color: "var(--color-fg-tertiary)" }}>
           HIGH ≥75 — take it up now · MEDIUM ≥55 — good candidate · LOW ≥35 —
           monitor · VERY LOW — weak trend match (may still hold editorial

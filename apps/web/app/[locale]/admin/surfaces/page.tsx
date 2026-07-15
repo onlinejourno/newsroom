@@ -2,6 +2,7 @@ import { listSurfaces } from "@/lib/db";
 import { currentTenantId } from "@/lib/tenant";
 import { deleteSurfaceAction, toggleSurfaceAction } from "./actions";
 import SurfaceForm from "./SurfaceForm";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function SurfacesAdminPage({
       </header>
 
       <section className="ds-frame mb-10 overflow-x-auto">
-        <table className="w-full text-sm">
+        <ResponsiveTable><table className="w-full text-sm">
           <thead>
             <tr className="text-left" style={{ color: "var(--color-fg-tertiary)" }}>
               {["Surface", "Category", "Origin", "Status", ""].map((h) => (
@@ -107,7 +108,7 @@ export default async function SurfacesAdminPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></ResponsiveTable>
       </section>
 
       <section className="ds-frame p-5">

@@ -2,6 +2,7 @@ import { listSources } from "@/lib/db";
 import { currentTenantId } from "@/lib/tenant";
 import { deleteSourceAction, toggleSourceAction } from "./actions";
 import SourceForm from "./SourceForm";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export default async function SourcesAdminPage({
 
       {/* ── list ── */}
       <section className="ds-frame mb-10 overflow-x-auto">
-        <table className="w-full text-sm">
+        <ResponsiveTable><table className="w-full text-sm">
           <thead>
             <tr
               className="text-left"
@@ -132,7 +133,7 @@ export default async function SourcesAdminPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></ResponsiveTable>
       </section>
 
       {/* ── add ── */}

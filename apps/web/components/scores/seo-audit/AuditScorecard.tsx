@@ -1,4 +1,5 @@
 import * as React from "react";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export interface AuditScorecardProps {
   score: number;
@@ -143,7 +144,7 @@ export function AuditScorecard({ score, grade, counts }: AuditScorecardProps) {
             Critical failures cost 12 points each; warnings cost 4. The result
             is clamped to 0–100.
           </p>
-          <table
+          <ResponsiveTable><table
             className="text-xs w-full"
             style={{
               borderCollapse: "collapse",
@@ -173,7 +174,7 @@ export function AuditScorecard({ score, grade, counts }: AuditScorecardProps) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></ResponsiveTable>
         </div>
       </details>
     </section>

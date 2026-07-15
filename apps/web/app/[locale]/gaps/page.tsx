@@ -1,5 +1,6 @@
 import { regionCoverage } from "@/lib/db";
 import { currentTenantId } from "@/lib/tenant";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ export default async function GapsPage() {
         <a className="underline" style={{ color: "var(--color-fg-secondary)" }} href="./coverage">Coverage gaps</a>
       </nav>
 
-      <table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
+      <ResponsiveTable><table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
         <thead>
           <tr
             className="text-xs uppercase tracking-wide text-left"
@@ -106,7 +107,7 @@ export default async function GapsPage() {
             );
           })}
         </tbody>
-      </table>
+      </table></ResponsiveTable>
     </main>
   );
 }
