@@ -1,3 +1,4 @@
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 export const dynamic = "force-static";
 
 // Compliance checkpoints for news websites, each mapped to what the probity
@@ -59,7 +60,7 @@ export default async function StandardsPage({
         </p>
       </header>
 
-      <table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
+      <ResponsiveTable><table className="w-full text-sm" style={{ fontFamily: "var(--font-ui)" }}>
         <thead>
           <tr
             className="text-xs uppercase tracking-wide text-left"
@@ -83,7 +84,7 @@ export default async function StandardsPage({
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></ResponsiveTable>
 
       <a
         href={`/${locale}/probity`}

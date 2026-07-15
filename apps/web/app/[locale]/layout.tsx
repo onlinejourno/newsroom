@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import {
@@ -134,6 +134,13 @@ const scriptFont: Partial<Record<string, LoadedFont>> = {
   te: notoTelugu,
   bn: notoBengali,
   am: notoEthiopic,
+};
+
+// Tell mobile browsers to render at device width (no forced desktop zoom-out),
+// so the responsive layout applies. Without this, phones assume a ~980px page.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export async function generateMetadata({

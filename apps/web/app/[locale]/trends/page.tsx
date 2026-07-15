@@ -25,6 +25,7 @@ import {
 import MomentumBar from "@/components/charts/MomentumBar";
 import InterestTrajectory from "@/components/charts/InterestTrajectory";
 import { currentTenantId } from "@/lib/tenant";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -335,7 +336,7 @@ export default async function TrendsPage({
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table
+            <ResponsiveTable><table
               className="w-full text-sm"
               style={{ fontFamily: "var(--font-ui)", borderCollapse: "collapse" }}
             >
@@ -444,7 +445,7 @@ export default async function TrendsPage({
                   );
                 })}
               </tbody>
-            </table>
+            </table></ResponsiveTable>
           </div>
         )}
       </section>
@@ -629,7 +630,7 @@ export default async function TrendsPage({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table
+            <ResponsiveTable><table
               className="w-full text-sm"
               style={{ fontFamily: "var(--font-ui)", borderCollapse: "collapse" }}
             >
@@ -684,7 +685,7 @@ export default async function TrendsPage({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></ResponsiveTable>
           </div>
         )}
       </section>
@@ -770,7 +771,7 @@ export default async function TrendsPage({
               By entity type
             </h3>
             <div className="overflow-x-auto">
-              <table
+              <ResponsiveTable><table
                 className="w-full text-sm"
                 style={{ fontFamily: "var(--font-ui)", borderCollapse: "collapse" }}
               >
@@ -823,7 +824,7 @@ export default async function TrendsPage({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></ResponsiveTable>
             </div>
           </>
         )}

@@ -3,6 +3,7 @@ import type { Route } from "next";
 
 import { getAccount } from "@/lib/auth";
 import { fetchTopicDomains } from "@/lib/topicDomains";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 export const dynamic = "force-dynamic";
 
@@ -153,7 +154,7 @@ export default async function TopicDomainsPage({
                 {res.days ? ` · last ${res.days} days` : ""}
               </p>
 
-              <table
+              <ResponsiveTable><table
                 className="w-full text-sm"
                 style={{ fontFamily: "var(--font-ui)" }}
               >
@@ -210,7 +211,7 @@ export default async function TopicDomainsPage({
                     );
                   })}
                 </tbody>
-              </table>
+              </table></ResponsiveTable>
             </div>
           ) : (
             <div

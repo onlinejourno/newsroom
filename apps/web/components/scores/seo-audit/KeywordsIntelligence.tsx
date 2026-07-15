@@ -1,4 +1,5 @@
 import * as React from "react";
+import ResponsiveTable from "@/components/ui/ResponsiveTable";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 // Matches keywords_everywhere.py `ranking_keywords()` return:
@@ -96,7 +97,7 @@ export function KeywordsIntelligence({ keywords }: KeywordsIntelligenceProps) {
       </div>
 
       <div className="ds-panel overflow-x-auto">
-        <table
+        <ResponsiveTable><table
           style={{ width: "100%", borderCollapse: "collapse" }}
           aria-label="Ranking keywords"
         >
@@ -133,7 +134,7 @@ export function KeywordsIntelligence({ keywords }: KeywordsIntelligenceProps) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></ResponsiveTable>
       </div>
     </section>
   );
