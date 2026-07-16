@@ -1,15 +1,18 @@
 """cluster-threads: group recent signals into story threads (precise velocity).
 
-One LLM call clusters the window's signals into named threads; thread_links
-then back the velocity shown on the shortlist. Re-clusters fresh each run
-(drops the window's links first). The completer is injected for testability.
+Signals are chunked across one or more LLM calls (each stays under the Groq
+free-tier per-request limit); the returned threads back the velocity shown on
+the shortlist. Re-clusters fresh each run (drops the window's links first). The
+completer is injected for testability.
 """
 
 from __future__ import annotations
 
+import os
 import re
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass, replace
+from typing import Any
 
 from onlinejourno_agents import db
 from onlinejourno_agents.client import Completion
@@ -18,6 +21,48 @@ from onlinejourno_agents.prompts import build_cluster_prompt, default_editorial_
 Completer = Callable[..., Completion]
 CLUSTER_AGENT = "cluster-threads"
 CLUSTER_PATH = "thread"
+
+# Groq's free tier rejects an over-large clustering prompt with HTTP 413 (or
+# dies on TPD-429 first on 70b). Cap signals per LLM call and batch the rest so
+# each request stays under the per-request limit; threads merge across chunks.
+_DEFAULT_MAX_SIGNALS = 60
+
+
+def _max_signals_per_call() -> int:
+    """Signals per clustering call. Env-tunable without a redeploy."""
+    raw = os.environ.get("CLUSTER_MAX_SIGNALS")
+    if raw and raw.isdigit() and int(raw) > 0:
+        return int(raw)
+    return _DEFAULT_MAX_SIGNALS
+
+
+def _chunk_signals(
+    signals: list[dict[str, Any]], size: int
+) -> Iterator[tuple[int, list[dict[str, Any]]]]:
+    """Yield (base, chunk); base = count of signals before this chunk."""
+    for base in range(0, len(signals), size):
+        yield base, signals[base:base + size]
+
+
+def _remap_threads(raw: object, base: int) -> list[dict[str, Any]]:
+    """Remap a chunk's threads to global 1-based item indices (base + i).
+
+    Items are 1-based within the chunk; malformed threads/items are dropped so
+    the merged result matches the single-call shape the persist loop expects.
+    """
+    threads = raw if isinstance(raw, list) else []
+    out: list[dict[str, Any]] = []
+    for t in threads:
+        if not isinstance(t, dict) or not isinstance(t.get("items"), list):
+            continue
+        items: list[int] = []
+        for it in t["items"]:
+            try:
+                items.append(base + int(it))
+            except (TypeError, ValueError):
+                continue
+        out.append({"title": t.get("title"), "slug": t.get("slug"), "items": items})
+    return out
 
 
 @dataclass(slots=True)
@@ -49,9 +94,20 @@ def run_cluster(
     if not signals:
         return ClusterResult(0, 0, 0.0, "empty")
 
-    parts = build_cluster_prompt(signals, editorial_dna=default_editorial_dna(beat_slug))
+    dna = default_editorial_dna(beat_slug)
+    threads: list[dict[str, Any]] = []
+    last: Completion | None = None
+    in_tokens = out_tokens = 0
+    total_cost = 0.0
     try:
-        completion = completer(system=parts.system, user=parts.user, max_tokens=4096)
+        for base, chunk in _chunk_signals(signals, _max_signals_per_call()):
+            parts = build_cluster_prompt(chunk, editorial_dna=dna)
+            completion = completer(system=parts.system, user=parts.user, max_tokens=4096)
+            last = completion
+            total_cost += completion.cost_usd
+            in_tokens += completion.input_tokens
+            out_tokens += completion.output_tokens
+            threads.extend(_remap_threads(completion.data.get("threads"), base))
     except Exception as exc:
         with db.connect(tenant_id) as conn:
             db.record_trace(
@@ -60,9 +116,14 @@ def run_cluster(
             )
         return ClusterResult(0, 0, 0.0, "failed")
 
+    if last is None:
+        return ClusterResult(0, 0, 0.0, "empty")
+    trace_completion = replace(
+        last, cost_usd=total_cost, input_tokens=in_tokens, output_tokens=out_tokens
+    )
+    chunks = -(-len(signals) // _max_signals_per_call())
+
     ids = [s["id"] for s in signals]
-    raw = completion.data.get("threads")
-    threads = raw if isinstance(raw, list) else []
     made = linked = 0
 
     with db.connect(tenant_id) as conn:
@@ -90,7 +151,7 @@ def run_cluster(
     with db.connect(tenant_id) as conn:
         db.record_trace(
             conn, tenant_id=tenant_id, agent_name=CLUSTER_AGENT, path=CLUSTER_PATH,
-            completion=completion, status="success",
-            reasoning={"threads": made, "linked": linked},
+            completion=trace_completion, status="success",
+            reasoning={"threads": made, "linked": linked, "chunks": chunks},
         )
-    return ClusterResult(made, linked, completion.cost_usd, "success")
+    return ClusterResult(made, linked, total_cost, "success")
