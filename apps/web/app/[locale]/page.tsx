@@ -89,6 +89,8 @@ export default async function Home({
           height={110}
           priority
           className="mx-auto mb-8"
+          // keep aspect ratio when a responsive width cap shrinks the logo
+          style={{ height: "auto" }}
         />
 
         <p className="ds-label mb-4">{LANDING.hero.eyebrow}</p>
