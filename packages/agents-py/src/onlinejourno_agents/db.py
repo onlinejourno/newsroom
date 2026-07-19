@@ -555,11 +555,18 @@ def insert_brief(
         cols.append("ai_disclosure")
         vals.append(Json(ai_disclosure))
     placeholders = ", ".join(["%s"] * len(vals))
+    # On recompose (same tenant/user/edition) reset ai_disclosure too — fresh AI
+    # output must NOT inherit a prior curate/publish "reviewed by an editor" claim
+    # (disclosure integrity, ADR 0029). Only when a disclosure is being written, so
+    # an absent disclosure never nulls out an existing one.
+    update_set = "content = excluded.content, composed_at = now()"
+    if has_disclosure:
+        update_set += ", ai_disclosure = excluded.ai_disclosure"
     with conn.cursor() as cur:
         cur.execute(
             f"insert into briefs ({', '.join(cols)}) values ({placeholders}) "
             f"on conflict (tenant_id, for_user, edition_date) do update "
-            f"set content = excluded.content, composed_at = now() returning id",
+            f"set {update_set} returning id",
             vals,
         )
         row = cur.fetchone()
