@@ -39,9 +39,9 @@ export default function SiteFooter() {
                 maxWidth: "34ch",
               }}
             >
-              Source-available under FSL-1.1; converts to Apache 2.0 after two years.
-              The free tools (Tare, Crawl-Budget Analyser) are MIT. Pulse is a
-              proprietary showcase of the engine.
+              OnlineJourno Newsroom / Platform is proprietary software. The free
+              tools (Tare, Crawl-Budget Analyser) are MIT. Daybook, Frontmatter,
+              and Galley are source-available under FSL-1.1.
             </p>
           </div>
           <Col title="Product" links={PRODUCTS} />

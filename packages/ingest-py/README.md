@@ -51,4 +51,4 @@ DATABASE_URL=postgres://localhost:5432/onlinejourno_dev
 
 ## License
 
-Apache-2.0. See repo-root `LICENSE.md` and `NOTICE`.
+Proprietary — All Rights Reserved. See repo-root `LICENSE.md`.

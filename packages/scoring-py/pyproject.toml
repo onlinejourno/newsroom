@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "SEO + E-E-A-T audit engine (ported from discover-dashboard): SEJ periodic-table checks, channel scorers, SQEG, recirculation, potential, CWV."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "FSL-1.1-ALv2" }
+license = { text = "Proprietary" }
 authors = [{ name = "Subhash Rai" }]
 dependencies = [
   "requests>=2.31",

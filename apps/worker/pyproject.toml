@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Placeholder. Python worker process (cron + scheduled collectors). Built out Wk 2+."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "FSL-1.1-ALv2" }
+license = { text = "Proprietary" }
 authors = [{ name = "Subhash Rai" }]
 dependencies = []
 

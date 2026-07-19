@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "OnlineJourno LLM agents — ingest-score (shortlist) and brief-compose (daily brief). Single-shot structured calls, provider-agnostic (Claude / OpenAI-compatible / self-hosted), cost-capped, fully traced."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "FSL-1.1-ALv2" }
+license = { text = "Proprietary" }
 authors = [{ name = "Subhash Rai" }]
 
 dependencies = [

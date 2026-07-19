@@ -16,7 +16,7 @@ const L = `${BASE}/${defaultLocale}`;
 
 const BODY = `# OnlineJourno Newsroom
 
-> The agentic newsroom: open-source editorial intelligence for working reporters. It watches the public record coming in, contextualises it against a newsroom's own archive, and returns ranked beat briefs — plus a pre-publish "fair chance" cue and a post-publish diagnostic for every story. Grounded in journalism scholarship (PEJ framing, the Deuze typology, BBC/smartocto user needs), not vibes. Vendor-neutral and self-hostable; source-available (FSL-1.1). By journalists, for journalists.
+> The agentic newsroom: proprietary editorial intelligence for working reporters. It watches the public record coming in, contextualises it against a newsroom's own archive, and returns ranked beat briefs — plus a pre-publish "fair chance" cue and a post-publish diagnostic for every story. Grounded in journalism scholarship (PEJ framing, the Deuze typology, BBC/smartocto user needs), not vibes. By journalists, for journalists.
 
 ## Core pages
 

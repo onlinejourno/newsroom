@@ -14,6 +14,7 @@ export const SITE = {
   galley: "https://galley.onlinejourno.com",
   daybook: "https://daybook.onlinejourno.com",
   frontmatter: "https://frontmatter.onlinejourno.com",
+  lawwatch: "https://lawwatch.onlinejourno.com",
   pulse: "https://onlinejourno.com/in",
   github: "https://github.com/onlinejourno",
 } as const;
@@ -44,8 +45,8 @@ export const PROJECT_NAV: NavLink[] = [
   { label: "About", href: `${SITE.portal}/about` },
 ];
 
-// Access funnel — the free tools are open source (MIT); the products are
-// source-available (FSL), code on request.
+// Access funnel — the free tools are open source (MIT); some products are
+// source-available (FSL); Newsroom / Platform is proprietary.
 export const PROJECT: NavLink[] = [
   { label: "Source on GitHub", href: SITE.github },
   { label: "Request access", href: `${SITE.portal}/contact` },

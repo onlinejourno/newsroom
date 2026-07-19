@@ -1,105 +1,35 @@
-# Functional Source License, Version 1.1, ALv2 Future License
+# Proprietary License
 
-## Abbreviation
+Copyright 2026 Subhash Rai. All rights reserved.
 
-FSL-1.1-ALv2
+## The Software
 
-## Notice
+The software in this repository ("OnlineJourno Newsroom" / "OnlineJourno Platform") is the proprietary and confidential information of Subhash Rai and OnlineJourno. It is made available in source form for reference, audit, and review only.
 
-Copyright 2026 Subhash Rai
+## Permitted use
 
-## Terms and Conditions
+You may:
 
-### Licensor ("We")
+1. View and read the source code.
+2. Build and run the software for your own internal evaluation and development.
+3. Report security vulnerabilities through the process described in `SECURITY.md`.
 
-The party offering the Software under these Terms and Conditions.
+## Restricted use
 
-### The Software
+Unless you have a separate written agreement with Subhash Rai / OnlineJourno, you may not:
 
-The "Software" is each version of the software that we make available under
-these Terms and Conditions, as indicated by our inclusion of these Terms and
-Conditions with the Software.
+1. Use the software in production for any commercial or non-commercial purpose.
+2. Modify, adapt, translate, or create derivative works based on the software.
+3. Copy, reproduce, distribute, display, perform, or transmit the software or any portion of it.
+4. Sell, sublicense, rent, lease, loan, or otherwise transfer rights to the software.
+5. Use the software to provide a service to third parties, whether hosted or embedded.
+6. Remove or alter any copyright, trademark, or proprietary notices.
+7. Use the software to build a product or service that competes with OnlineJourno.
 
-### License Grant
+## No warranty
 
-Subject to your compliance with this License Grant and the Patents,
-Redistribution and Trademark clauses below, we hereby grant you the right to
-use, copy, modify, create derivative works, publicly perform, publicly display
-and redistribute the Software for any Permitted Purpose identified below.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
-### Permitted Purpose
+## Enforcement
 
-A Permitted Purpose is any purpose other than a Competing Use. A Competing Use
-means making the Software available to others in a commercial product or
-service that:
-
-1. substitutes for the Software;
-
-2. substitutes for any other product or service we offer using the Software
-   that exists as of the date we make the Software available; or
-
-3. offers the same or substantially similar functionality as the Software.
-
-Permitted Purposes specifically include using the Software:
-
-1. for your internal use and access;
-
-2. for non-commercial education;
-
-3. for non-commercial research; and
-
-4. in connection with professional services that you provide to a licensee
-   using the Software in accordance with these Terms and Conditions.
-
-### Patents
-
-To the extent your use for a Permitted Purpose would necessarily infringe our
-patents, the license grant above includes a license under our patents. If you
-make a claim against any party that the Software infringes or contributes to
-the infringement of any patent, then your patent license to the Software ends
-immediately.
-
-### Redistribution
-
-The Terms and Conditions apply to all copies, modifications and derivatives of
-the Software.
-
-If you redistribute any copies, modifications or derivatives of the Software,
-you must include a copy of or a link to these Terms and Conditions and not
-remove any copyright notices provided in or with the Software.
-
-### Disclaimer
-
-THE SOFTWARE IS PROVIDED "AS IS" AND WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF FITNESS FOR A PARTICULAR
-PURPOSE, MERCHANTABILITY, TITLE OR NON-INFRINGEMENT.
-
-IN NO EVENT WILL WE HAVE ANY LIABILITY TO YOU ARISING OUT OF OR RELATED TO THE
-SOFTWARE, INCLUDING INDIRECT, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES,
-EVEN IF WE HAVE BEEN INFORMED OF THEIR POSSIBILITY IN ADVANCE.
-
-### Trademarks
-
-Except for displaying the License Details and identifying us as the origin of
-the Software, you have no right under these Terms and Conditions to use our
-trademarks, trade names, service marks or product names.
-
-## Grant of Future License
-
-We hereby irrevocably grant you an additional license to use the Software under
-the Apache License, Version 2.0 that is effective on the second anniversary of
-the date we make the Software available. On or after that date, you may use the
-Software under the Apache License, Version 2.0, in which case the following
-will apply:
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License.
-
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed
-under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-CONDITIONS OF ANY KIND, either express or implied. See the License for the
-specific language governing permissions and limitations under the License.
+Any use outside the terms above is unauthorised and may result in legal action. For licensing enquiries, contact licensing@onlinejourno.com.

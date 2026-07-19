@@ -43,15 +43,20 @@ files and fill in your own values. No credentials are committed to this repo.
 
 ## Licence
 
-Source-available under the **Functional Source License 1.1 (FSL-1.1-ALv2)** —
-use, modify, and self-host for any Permitted Purpose, including professional
-services. Competing commercial use is restricted for two years per release,
-after which each release converts to Apache-2.0. See
-[`LICENSE.md`](LICENSE.md) and [`COMMERCIAL_LICENSE.md`](COMMERCIAL_LICENSE.md);
-methodology and docs are CC BY 4.0 (see [`METHODOLOGY-LICENSE.md`](METHODOLOGY-LICENSE.md)).
+**Proprietary — All Rights Reserved.**
 
-The free tools in the OnlineJourno suite — **Tare** (web-bloat & tracker audit)
-and the **Crawl-Budget Analyser** — are MIT.
+OnlineJourno Newsroom / Platform is proprietary software. The source is made
+available for reference, audit, and review only. Production use, modification,
+redistribution, or competitive use requires a separate written licence from
+Subhash Rai / OnlineJourno. See [`LICENSE.md`](LICENSE.md) for full terms.
+
+For licensing enquiries: licensing@onlinejourno.com.
+
+Other products in the OnlineJourno suite remain under their own licences:
+- **Tare** and **Crawl-Budget Analyser** — MIT.
+- **Daybook**, **Frontmatter**, and **Galley** — Functional Source License 1.1
+  (FSL-1.1-ALv2), converting to Apache-2.0 after two years.
+- **Pulse**, **Regwatch**, **LawWatch**, and **Loupe** — proprietary.
 
 ## Contributing
 
